@@ -38,13 +38,15 @@ vector<particle*> particlegrid::getCellNeighbors(vec3 index, vec3 numberOfNeighb
 				int cellindex = grid->getCell(vec3(sx, sy, sz));
 				if(cellindex>=0){
 					int cellparticlecount = cells[cellindex].size();
-					for(int a=0; cellparticlecount; a++){
+					for(int a=0; a<cellparticlecount; a++){
 						neighbors.push_back(cells[cellindex][a]);
 					}
 				}	
 			}
 		}
 	}
+	// cout << neighbors.size() << endl;
+	// cout << index.x << " " << index.y << " " << index.z << endl;
 	return neighbors;
 }
 
@@ -60,8 +62,12 @@ void particlegrid::sort(const vector<particle*>& particles){
 	for(int i=0; i<particlecount; i++){
 		particle* p = particles[i];
 		vec3 pos = p->p;
-		pos = glm::max(vec3(0), glm::min(dimensions-vec3(1), dimensions*pos));
+		pos.x = (int)fmax(0, fmin((int)dimensions.x-1, (int)dimensions.x*pos.x));
+		pos.y = (int)fmax(0, fmin((int)dimensions.y-1, (int)dimensions.y*pos.y));
+		pos.z = (int)fmax(0, fmin((int)dimensions.z-1, (int)dimensions.z*pos.z));
 		int cellindex = grid->getCell(pos);
+		// cout << p->p.x << " " << p->p.y << " " << p->p.z << endl;
+
 		if(cellindex>=0){ //if grid has value here, a cell already exists for it
 			cells[cellindex].push_back(p);
 		}else{ //if grid has no value, create new cell and push index to grid
@@ -73,7 +79,7 @@ void particlegrid::sort(const vector<particle*>& particles){
 		}
 	}
 
-	for(int i=0; i<cells.size(); i++){
-		cout << cells[i].size() << endl;
-	}
+	// for(int i=0; i<cells.size(); i++){
+	// 	cout << cells[i].size() << endl;
+	// }
 }

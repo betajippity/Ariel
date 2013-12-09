@@ -12,7 +12,6 @@ using namespace utilityCore;
 intgrid::intgrid(const int& background){
 	openvdb::initialize();
 	grid = openvdb::Int32Grid::create(background);
-	coord = openvdb::Coord(0,0,0);
 }
 
 intgrid::~intgrid(){
@@ -24,7 +23,7 @@ int intgrid::getCell(const vec3& index){
 }
 
 int intgrid::getCell(const int& x, const int& y, const int& z){
-	coord.reset(x, y, z);
+	openvdb::Coord coord = openvdb::Coord(x,y,z);
 
 	openvdb::Int32Grid::Accessor accessor = grid->getAccessor();
 	return accessor.getValue(coord);
@@ -35,7 +34,7 @@ void intgrid::setCell(const vec3& index, const int& value){
 }
 
 void intgrid::setCell(const int& x, const int& y, const int& z, const int& value){
-	coord.reset(x, y, z);
+	openvdb::Coord coord = openvdb::Coord(x,y,z);
 
 	openvdb::Int32Grid::Accessor accessor = grid->getAccessor();
 

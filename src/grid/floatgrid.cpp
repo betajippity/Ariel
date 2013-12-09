@@ -12,7 +12,6 @@ using namespace utilityCore;
 floatgrid::floatgrid(const float& background){
 	openvdb::initialize();
 	grid = openvdb::FloatGrid::create(background);
-	coord = openvdb::Coord(0,0,0);
 }
 
 floatgrid::~floatgrid(){
@@ -24,7 +23,7 @@ float floatgrid::getCell(const vec3& index){
 }
 
 float floatgrid::getCell(const int& x, const int& y, const int& z){
-	coord.reset(x, y, z);
+	openvdb::Coord coord = openvdb::Coord(x,y,z);
 
 	openvdb::FloatGrid::Accessor accessor = grid->getAccessor();
 	return accessor.getValue(coord);
@@ -35,7 +34,7 @@ void floatgrid::setCell(const vec3& index, const float& value){
 }
 
 void floatgrid::setCell(const int& x, const int& y, const int& z, const float& value){
-	coord.reset(x, y, z);
+	openvdb::Coord coord = openvdb::Coord(x,y,z);
 
 	openvdb::FloatGrid::Accessor accessor = grid->getAccessor();
 

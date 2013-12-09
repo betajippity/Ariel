@@ -34,7 +34,6 @@ class floatgrid{
 
 	private:
 		openvdb::FloatGrid::Ptr grid;
-		openvdb::Coord coord;
 
 };
 }

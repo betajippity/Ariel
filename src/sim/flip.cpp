@@ -26,7 +26,17 @@ flipsim::flipsim(const vec3& maxres, const float& density){
 		particles.push_back(p);
 	}
 	pgrid->sort(particles);
-	// max_dens = 1.0;
+	max_density = 1.0f;
+	computeDensity();
+	max_density = 0.0f;
+
+	for( int n=0; n<particles.size(); n++ ) {
+		particle *p = particles[n];
+		max_density = fmax(max_density,p->density);
+		delete p;
+	}
+
+	cout << max_density << endl;
 }
 
 flipsim::~flipsim(){
@@ -42,7 +52,6 @@ flipsim::~flipsim(){
 void flipsim::computeDensity(){
 
 	int particlecount = particles.size();
-
 	#pragma omp parallel for
 	for(int i=0; i<particlecount; i++){
 		//Find neighbours
@@ -50,17 +59,20 @@ void flipsim::computeDensity(){
 			particles[i]->density = 1.0f;
 		}else{
 			vec3 position = particles[i]->p;
-			position = glm::max(vec3(0), glm::min(dimensions-vec3(1), dimensions*position));
-			vector<particle *> neighbors = pgrid->getCellNeighbors(position, vec3(1));
 
+			position.x = (int)fmax(0,fmin((int)dimensions.x-1,(int)dimensions.x*position.x));
+			position.y = (int)fmax(0,fmin((int)dimensions.y-1,(int)dimensions.y*position.y));
+			position.z = (int)fmax(0,fmin((int)dimensions.z-1,(int)dimensions.z*position.z));
+			vector<particle *> neighbors;
+			neighbors = pgrid->getCellNeighbors(position, vec3(1));
 			float weightsum = 0.0f;
 			int neighborscount = neighbors.size();
 			for(int m=0; m<neighborscount; m++){
 				if(neighbors[m]->type!=SOLID){
-					float sqd = mathCore::sqrlength(neighbors[m]->p, position);
+					float sqd = mathCore::sqrlength(neighbors[m]->p, particles[i]->p);
 					//TODO: figure out a better density smooth approx than density/dimensions.x
 					float weight = neighbors[m]->mass * mathCore::smooth(sqd, 4.0f*density/dimensions.x);
-					float weightsum = weightsum + weight;
+					weightsum = weightsum + weight;
 				}
 			}
 			particles[i]->density = weightsum/max_density;
