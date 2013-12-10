@@ -24,7 +24,7 @@ sphere::~sphere(){
 
 }
 
-bool sphere::isParticleInside(const vec3& point){
+bool sphere::isPointInside(const vec3& point){
 	float distanceFromCenter = length(point-center);
 	if(distanceFromCenter<radius){
 		return true;
@@ -37,7 +37,7 @@ geomtype sphere::getType(){
 	return type;
 }
 
-bool sphere::isParticleInsideWithThickness(const vec3& point, const float& thickness){
+bool sphere::isPointInsideWithThickness(const vec3& point, const float& thickness){
 	float distanceFromCenter = length(point-center);
 	if(distanceFromCenter<radius-thickness){
 		return true;

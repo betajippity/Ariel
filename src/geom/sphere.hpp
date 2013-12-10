@@ -17,14 +17,14 @@ namespace geomCore {
 // Class Declarations
 //====================================
 
-class sphere {
+class sphere: public geom {
 	public:
 		sphere(const float& radius, const vec3& center, const geomtype& type);
 		sphere();
 		~sphere();
 
-		bool isParticleInside(const vec3& point);
-		bool isParticleInsideWithThickness(const vec3& point, const float& thickness);
+		bool isPointInside(const vec3& point);
+		bool isPointInsideWithThickness(const vec3& point, const float& thickness);
 		geomtype getType();
 
 	private:

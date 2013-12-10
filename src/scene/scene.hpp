@@ -30,8 +30,11 @@ class scene {
 							   const float& density);
 
 	private:
-		vector<geomCore::geom*> barriers;
-		vector<geomCore::geom*> fluid;
+
+		void addParticle(const vec3& pos, const geomtype& type, const float& thickness, 
+						 vector<fluidCore::particle*>& particles);
+
+		vector<geomCore::geom*> objects;
 
 };
 }

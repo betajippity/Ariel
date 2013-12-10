@@ -17,14 +17,14 @@ namespace geomCore {
 // Class Declarations
 //====================================
 
-class box {
+class box: public geom {
 	public:
 		box(const vec3& lowerCorner, const vec3& upperCorner, const geomtype& type);
 		box();
 		~box();
 
-		bool isParticleInside(const vec3& point);
-		bool isParticleInsideWithThickness(const vec3& point, const float& thickness);
+		bool isPointInside(const vec3& point);
+		bool isPointInsideWithThickness(const vec3& point, const float& thickness);
 		geomtype getType();
 
 	private:

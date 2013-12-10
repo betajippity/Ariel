@@ -9,7 +9,7 @@
 
 #include "../grid/macgrid.inl"
 #include "../grid/particlegrid.hpp"
-#include "../geom/geom.inl"
+#include "../scene/scene.hpp"
 #include <vector>
 #include <omp.h>
 
@@ -23,7 +23,7 @@ namespace fluidCore {
 
 class flipsim{
 	public:
-		flipsim(const vec3& maxres, const float& density);
+		flipsim(const vec3& maxres, sceneCore::scene* scene, const float& density);
 		~flipsim();
 
 	private:
@@ -36,6 +36,8 @@ class flipsim{
 
 		float density;
 		float max_density;
+
+		sceneCore::scene* scene;
 
 };
 }

@@ -24,7 +24,7 @@ box::~box(){
 
 }
 
-bool box::isParticleInside(const vec3& point){
+bool box::isPointInside(const vec3& point){
 	if( point.x > lowerCorner.x && point.x < upperCorner.x &&
 	    point.y > lowerCorner.y && point.y < upperCorner.y &&
 	    point.z > lowerCorner.z && point.z < upperCorner.z ){
@@ -38,7 +38,7 @@ geomtype box::getType(){
 	return type;
 }
 
-bool box::isParticleInsideWithThickness(const vec3& point, const float& thickness){
+bool box::isPointInsideWithThickness(const vec3& point, const float& thickness){
 	if( point.x > lowerCorner.x+thickness && point.x < upperCorner.x-thickness &&
 	    point.y > lowerCorner.y+thickness && point.y < upperCorner.y-thickness &&
 	    point.z > lowerCorner.z+thickness && point.z < upperCorner.z-thickness ){
