@@ -128,14 +128,16 @@ void viewer::mainLoop(){
             int psize = particles->size();
 
             vec3 gridSize = sim->getDimensions();
+            float maxd = glm::max(glm::max(gridSize.x, gridSize.z), gridSize.y);
 
             for(int j=0; j<psize; j++){
                 if(particles->operator[](j)->type==1){
-                    vertexData.push_back(particles->operator[](j)->p[0]*gridSize.x-float(gridSize.x)/2.0f);
-                    vertexData.push_back(particles->operator[](j)->p[1]*gridSize.y-0.4f);
-                    vertexData.push_back(particles->operator[](j)->p[2]*gridSize.z-float(gridSize.z)/2.0f);
+                    vertexData.push_back(particles->operator[](j)->p[0]*maxd-(gridSize.x/2.0f));
+                    vertexData.push_back(particles->operator[](j)->p[1]*maxd-0.4f);
+                    vertexData.push_back(particles->operator[](j)->p[2]*maxd-(gridSize.z/2.0f));
                 }
             }
+
             data.color = vbos[vbokeys["fluid"]].color;
             string key = "fluid";
             data = createVBO(data, (float*)&vertexData[0], vertexData.size(), POINTS, key);

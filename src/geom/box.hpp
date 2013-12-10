@@ -23,8 +23,8 @@ class box: public geom {
 		box();
 		~box();
 
-		bool isPointInside(const vec3& point);
-		bool isPointInsideWithThickness(const vec3& point, const float& thickness);
+		bool isPointInside(const vec3& point, const float& scale);
+		bool isPointInsideWithThickness(const vec3& point, const float& thickness, const float& scale);
 		geomtype getType();
 
 	private:

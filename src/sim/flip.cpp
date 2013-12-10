@@ -31,7 +31,8 @@ flipsim::~flipsim(){
 void flipsim::init(){
 	//We need to figure out maximum particle pressure, so we generate a bunch of temporary particles
 	//inside of a known area, sort them back onto the underlying grid, and calculate the density
-	vec3 h = vec3(density)/dimensions;
+	float maxd = glm::max(glm::max(dimensions.x, dimensions.z), dimensions.y);
+	float h = density/maxd;
 	FOR_EACH_CELL(10, 10, 10){ //generate temp particles
 		particle* p = new particle;
 		p->p = (vec3(i,j,k) + vec3(0.5f))*h;
@@ -57,6 +58,8 @@ void flipsim::init(){
 
 void flipsim::computeDensity(){
 
+	float maxd = glm::max(glm::max(dimensions.x, dimensions.z), dimensions.y);
+
 	int particlecount = particles.size();
 	#pragma omp parallel for
 	for(int i=0; i<particlecount; i++){
@@ -76,8 +79,8 @@ void flipsim::computeDensity(){
 			for(int m=0; m<neighborscount; m++){
 				if(neighbors[m]->type!=SOLID){
 					float sqd = mathCore::sqrlength(neighbors[m]->p, particles[i]->p);
-					//TODO: figure out a better density smooth approx than density/dimensions.x
-					float weight = neighbors[m]->mass * mathCore::smooth(sqd, 4.0f*density/dimensions.x);
+					//TODO: figure out a better density smooth approx than density/maxd
+					float weight = neighbors[m]->mass * mathCore::smooth(sqd, 4.0f*density/maxd);
 					weightsum = weightsum + weight;
 				}
 			}

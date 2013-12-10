@@ -22,12 +22,15 @@ void scene::addGeom(geomCore::geom* object){
 
 void scene::generateParticles(vector<fluidCore::particle*>& particles, const vec3& dimensions, 
 					   		  const float& density){
-	float thickness = 1.0f/dimensions.x;
+
+	float maxdimension = glm::max(glm::max(dimensions.x, dimensions.y), dimensions.z);
+
+	float thickness = 1.0f/maxdimension;
 
 	float w = density*thickness;
 	for(int i=0; i<dimensions.x/density; i++){
-		for(int j=0; j<dimensions.x/density; j++){
-			for(int k=0; k<dimensions.x/density; k++){
+		for(int j=0; j<dimensions.y/density; j++){
+			for(int k=0; k<dimensions.z/density; k++){
 				float x = i*w+w/2.0f;
 				float y = j*w+w/2.0f;
 				float z = k*w+w/2.0f;
@@ -35,7 +38,7 @@ void scene::generateParticles(vector<fluidCore::particle*>& particles, const vec
 				if( x > thickness && x < 1.0-thickness &&
 					y > thickness && y < 1.0-thickness &&
 					z > thickness && z < 1.0-thickness ) {
-						addParticle(vec3(x,y,z), FLUID, 3.0f/dimensions.x, particles);
+						addParticle(vec3(x,y,z), FLUID, 3.0f/maxdimension, 1.0f/maxdimension, particles);
 				}
 			}
 		}
@@ -43,16 +46,16 @@ void scene::generateParticles(vector<fluidCore::particle*>& particles, const vec
 	cout << particles.size() << endl;
 }
 
-void scene::addParticle(const vec3& pos, const geomtype& type, const float& thickness, 
+void scene::addParticle(const vec3& pos, const geomtype& type, const float& thickness, const float& scale,
 						vector<fluidCore::particle*>& particles){
 	geomCore::geom* boundingObject = NULL;
 	for(int n=0; n<objects.size(); n++){
 
 		bool found = false;
 		
-		if(objects[n]->isPointInside(pos)==true){
+		if(objects[n]->isPointInside(pos, scale)==true){
 			found = true;
-			if(objects[n]->isPointInsideWithThickness(pos, thickness)==true){
+			if(objects[n]->isPointInsideWithThickness(pos, thickness, scale)==true){
 				boundingObject = NULL;
 			}
 		}

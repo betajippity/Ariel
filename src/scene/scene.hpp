@@ -31,7 +31,7 @@ class scene {
 
 	private:
 
-		void addParticle(const vec3& pos, const geomtype& type, const float& thickness, 
+		void addParticle(const vec3& pos, const geomtype& type, const float& thickness, const float& scale,
 						 vector<fluidCore::particle*>& particles);
 
 		vector<geomCore::geom*> objects;

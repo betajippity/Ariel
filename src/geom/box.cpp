@@ -24,10 +24,10 @@ box::~box(){
 
 }
 
-bool box::isPointInside(const vec3& point){
-	if( point.x > lowerCorner.x && point.x < upperCorner.x &&
-	    point.y > lowerCorner.y && point.y < upperCorner.y &&
-	    point.z > lowerCorner.z && point.z < upperCorner.z ){
+bool box::isPointInside(const vec3& point, const float& scale){
+	if( point.x > (lowerCorner.x*scale) && point.x < (upperCorner.x*scale) &&
+	    point.y > (lowerCorner.y*scale) && point.y < (upperCorner.y*scale) &&
+	    point.z > (lowerCorner.z*scale) && point.z < (upperCorner.z*scale) ){
 		return true;
 	}else{
 		return false;
@@ -38,10 +38,10 @@ geomtype box::getType(){
 	return type;
 }
 
-bool box::isPointInsideWithThickness(const vec3& point, const float& thickness){
-	if( point.x > lowerCorner.x+thickness && point.x < upperCorner.x-thickness &&
-	    point.y > lowerCorner.y+thickness && point.y < upperCorner.y-thickness &&
-	    point.z > lowerCorner.z+thickness && point.z < upperCorner.z-thickness ){
+bool box::isPointInsideWithThickness(const vec3& point, const float& thickness, const float& scale){
+	if( point.x > (lowerCorner.x*scale)+thickness && point.x < (upperCorner.x*scale)-thickness &&
+	    point.y > (lowerCorner.y*scale)+thickness && point.y < (upperCorner.y*scale)-thickness &&
+	    point.z > (lowerCorner.z*scale)+thickness && point.z < (upperCorner.z*scale)-thickness ){
 		return true;
 	}else{
 		return false;

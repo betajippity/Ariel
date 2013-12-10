@@ -24,8 +24,9 @@ class geom {
 		geom(){};
 		virtual ~geom(){};
 
-		virtual bool isPointInside(const vec3& point) = 0;
-		virtual bool isPointInsideWithThickness(const vec3& point, const float& thickness) = 0;
+		virtual bool isPointInside(const vec3& point, const float& scale) = 0;
+		virtual bool isPointInsideWithThickness(const vec3& point, const float& thickness, 
+												const float& scale) = 0;
 		virtual geomtype getType() = 0;
 };
 }
