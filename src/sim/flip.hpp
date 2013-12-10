@@ -9,6 +9,7 @@
 
 #include "../grid/macgrid.inl"
 #include "../grid/particlegrid.hpp"
+#include "../geom/geom.inl"
 #include <vector>
 #include <omp.h>
 

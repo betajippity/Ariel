@@ -88,6 +88,9 @@ set(SOURCE_FILES "src/main.cpp"
 				 "src/grid/intgrid.cpp"
 				 "src/sim/flip.cpp"
 				 "src/grid/particlegrid.cpp"
+				 "src/geom/sphere.cpp"
+				 "src/geom/box.cpp"
+				 "src/scene/scene.cpp"
 				 )
 
 

@@ -14,10 +14,6 @@
 using namespace std;
 using namespace glm;
 
-#define AIR 0
-#define FLUID 1
-#define SOLID 2
-
 namespace fluidCore {
 //====================================
 // Struct and Function Declarations

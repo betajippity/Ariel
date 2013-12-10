@@ -16,9 +16,10 @@ flipsim::flipsim(const vec3& maxres, const float& density){
 	max_density = 0.0f;
 	this->density = density;
 
-
+	//We need to figure out maximum particle pressure, so we generate a bunch of temporary particles
+	//inside of a known area, sort them back onto the underlying grid, and calculate the density
 	float h = density/dimensions.x;
-	FOR_EACH_CELL(10, 10, 10){
+	FOR_EACH_CELL(10, 10, 10){ //generate temp particles
 		particle* p = new particle;
 		p->p = (vec3(i,j,k) + vec3(0.5f))*h;
 		p->type = FLUID;
@@ -27,16 +28,16 @@ flipsim::flipsim(const vec3& maxres, const float& density){
 	}
 	pgrid->sort(particles);
 	max_density = 1.0f;
-	computeDensity();
+	computeDensity(); 
 	max_density = 0.0f;
-
+	//sum densities across particles
 	for( int n=0; n<particles.size(); n++ ) {
 		particle *p = particles[n];
 		max_density = fmax(max_density,p->density);
 		delete p;
 	}
+	particles.clear();
 
-	cout << max_density << endl;
 }
 
 flipsim::~flipsim(){
