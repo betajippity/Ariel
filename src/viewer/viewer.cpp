@@ -167,6 +167,10 @@ void viewer::mainLoop(){
                 glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
                 glColor4f(vbos[i].color.x, vbos[i].color.y, vbos[i].color.z, 0.5f);
 
+                if(i==vbokeys["boundingbox"]){
+                    glLineWidth(2.0f);
+                }
+
                 if(vbos[i].type==QUADS){
                     glDrawArrays(GL_QUADS, 0, vbos[i].size/3);
                 }else if(vbos[i].type==TRIANGLES){
@@ -251,16 +255,43 @@ bool viewer::init(){
 
     glMatrixMode(GL_MODELVIEW);
 
+    //dummy buffer for particles
     vboData data;
     vector<float> vertexData;
-    int psize = particles->size();
     data.color = vec3(0,0,1);
     string key = "fluid";
     data = createVBO(data, (float*)&vertexData[0], vertexData.size(), POINTS, key);
     vertexData.clear();
     vbos.push_back(data);
     vbokeys["fluid"] = vbos.size()-1;
-    vertexData.clear();
+
+    //buffer for sim bounding box
+    data.color = vec3(.2,.2,.2);
+    key = "boundingbox";
+    vector<vec3> boxData;
+    vec3 res = sim->getDimensions();
+    res.x = res.x/2.0f;
+    res.z = res.z/2.0f;
+
+    boxData.push_back(vec3(res.x, res.y, res.z));   boxData.push_back(vec3(-res.x, res.y, res.z));
+    boxData.push_back(vec3(-res.x, res.y, res.z));  boxData.push_back(vec3(-res.x, 0.0f, res.z));
+    boxData.push_back(vec3(-res.x, 0.0f, res.z));   boxData.push_back(vec3(res.x, 0.0f, res.z));
+    boxData.push_back(vec3(res.x, 0.0f, res.z));    boxData.push_back(vec3(res.x, res.y, res.z));
+
+    boxData.push_back(vec3(res.x, res.y, -res.z));  boxData.push_back(vec3(-res.x, res.y, -res.z));
+    boxData.push_back(vec3(-res.x, res.y, -res.z)); boxData.push_back(vec3(-res.x, 0.0f, -res.z));
+    boxData.push_back(vec3(-res.x, 0.0f, -res.z));  boxData.push_back(vec3(res.x, 0.0f, -res.z));
+    boxData.push_back(vec3(res.x, 0.0f, -res.z));   boxData.push_back(vec3(res.x, res.y, -res.z));
+
+    boxData.push_back(vec3(res.x, res.y, res.z));   boxData.push_back(vec3(res.x, res.y, -res.z));
+    boxData.push_back(vec3(-res.x, res.y, res.z));  boxData.push_back(vec3(-res.x, res.y, -res.z));
+    boxData.push_back(vec3(-res.x, 0.0f, res.z));   boxData.push_back(vec3(-res.x, 0.0f, -res.z));
+    boxData.push_back(vec3(res.x, 0.0f, res.z));    boxData.push_back(vec3(res.x, 0.0f, -res.z));
+
+    data = createVBO(data, (float*)&boxData[0], boxData.size()*3, LINES, key);
+    boxData.clear();
+    vbos.push_back(data);
+    vbokeys["boundingbox"] = vbos.size()-1;
 
     return true;
 }
