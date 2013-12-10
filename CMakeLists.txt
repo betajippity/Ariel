@@ -91,6 +91,7 @@ set(SOURCE_FILES "src/main.cpp"
 				 "src/geom/sphere.cpp"
 				 "src/geom/box.cpp"
 				 "src/scene/scene.cpp"
+				 "src/viewer/viewer.cpp"
 				 )
 
 

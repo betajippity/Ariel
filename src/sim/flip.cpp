@@ -16,7 +16,19 @@ flipsim::flipsim(const vec3& maxres, sceneCore::scene* s, const float& density){
 	max_density = 0.0f;
 	this->density = density;
 	scene = s;
+}
 
+flipsim::~flipsim(){
+	delete pgrid;
+	int particlecount = particles.size();
+	for(int i=0; i<particlecount; i++){
+		delete particles[i];
+	}
+	particles.clear();
+	clearMacgrid(mgrid);
+}
+
+void flipsim::init(){
 	//We need to figure out maximum particle pressure, so we generate a bunch of temporary particles
 	//inside of a known area, sort them back onto the underlying grid, and calculate the density
 	vec3 h = vec3(density)/dimensions;
@@ -41,17 +53,6 @@ flipsim::flipsim(const vec3& maxres, sceneCore::scene* s, const float& density){
 	cout << "Maxdensity: " << max_density << endl;
 
 	scene->generateParticles(particles, dimensions, density);
-
-}
-
-flipsim::~flipsim(){
-	delete pgrid;
-	int particlecount = particles.size();
-	for(int i=0; i<particlecount; i++){
-		delete particles[i];
-	}
-	particles.clear();
-	clearMacgrid(mgrid);
 }
 
 void flipsim::computeDensity(){
@@ -83,4 +84,12 @@ void flipsim::computeDensity(){
 			particles[i]->density = weightsum/max_density;
 		}
 	}
+}
+
+vector<particle*>* flipsim::getParticles(){
+	return &particles;
+}
+
+vec3 flipsim::getDimensions(){
+	return dimensions;
 }

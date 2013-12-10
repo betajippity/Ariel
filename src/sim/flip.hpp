@@ -26,6 +26,11 @@ class flipsim{
 		flipsim(const vec3& maxres, sceneCore::scene* scene, const float& density);
 		~flipsim();
 
+		void init();
+
+		vector<particle*>* getParticles();
+		vec3 getDimensions();
+
 	private:
 		void computeDensity();
 

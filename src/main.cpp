@@ -7,6 +7,7 @@
 #include <iostream>
 #include "grid/particlegrid.hpp"
 #include "sim/flip.hpp"
+#include "viewer/viewer.hpp"
 
 using namespace std;
 using namespace glm;
@@ -48,6 +49,8 @@ int main(int argc, char** argv){
 
     fluidCore::flipsim* f = new fluidCore::flipsim(dimensions, dambreak, density);
 
-    //lol i don't do anything yet...
+    viewerCore::viewer* glview = new viewerCore::viewer();
+    glview->load(f);
+    glview->launch();
 
 }
