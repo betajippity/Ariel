@@ -25,11 +25,10 @@ void viewer::load(fluidCore::flipsim* sim){
 
     loaded = true;
 
-    int frame = 0;
+    frame = 0;
     // flip3D::init(frame);
     // particles = flip3D::getParticles();
     newframe = 0;
-    frame = 0;
 
     recordWidth = 1000;
     recordHeight = 1000;
@@ -131,19 +130,32 @@ void viewer::mainLoop(){
             float maxd = glm::max(glm::max(gridSize.x, gridSize.z), gridSize.y);
 
             for(int j=0; j<psize; j++){
-                if(particles->operator[](j)->type==1){
+                if(particles->operator[](j)->type==FLUID){
                     vertexData.push_back(particles->operator[](j)->p[0]*maxd-(gridSize.x/2.0f));
                     vertexData.push_back(particles->operator[](j)->p[1]*maxd-0.4f);
                     vertexData.push_back(particles->operator[](j)->p[2]*maxd-(gridSize.z/2.0f));
                 }
             }
-
             data.color = vbos[vbokeys["fluid"]].color;
             string key = "fluid";
             data = createVBO(data, (float*)&vertexData[0], vertexData.size(), POINTS, key);
             vertexData.clear();
             vbos[vbokeys["fluid"]] = data;
-            vertexData.clear();
+
+            vboData data2;
+            vector<float> vertexData2;
+            for(int j=0; j<psize; j++){
+                if(particles->operator[](j)->type==SOLID){
+                    vertexData2.push_back(particles->operator[](j)->p[0]*maxd-(gridSize.x/2.0f));
+                    vertexData2.push_back(particles->operator[](j)->p[1]*maxd-0.4f);
+                    vertexData2.push_back(particles->operator[](j)->p[2]*maxd-(gridSize.z/2.0f));
+                }
+            }
+            data2.color = vbos[vbokeys["walls"]].color;
+            key = "walls";
+            data2 = createVBO(data2, (float*)&vertexData2[0], vertexData2.size(), POINTS, key);
+            vertexData2.clear();
+            vbos[vbokeys["walls"]] = data2;
         }
 
         glClearColor(0.325, 0.325, 0.325, 1.0);
@@ -266,6 +278,13 @@ bool viewer::init(){
     vertexData.clear();
     vbos.push_back(data);
     vbokeys["fluid"] = vbos.size()-1;
+
+    data.color = vec3(1,0,0);
+    key = "walls";
+    data = createVBO(data, (float*)&vertexData[0], vertexData.size(), POINTS, key);
+    vertexData.clear();
+    vbos.push_back(data);
+    vbokeys["walls"] = vbos.size()-1;
 
     //buffer for sim bounding box
     data.color = vec3(.2,.2,.2);
