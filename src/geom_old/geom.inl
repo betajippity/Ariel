@@ -8,7 +8,6 @@
 #define GEOM_INL
 
 #include "sphere.hpp"
-#include "cube.hpp"
-#include "obj/objcontainer.hpp"
+#include "box.hpp"
 
 #endif

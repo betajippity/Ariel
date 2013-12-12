@@ -1,33 +1,31 @@
-// Kai: FLIP Fluid Simulator
+// TAKUA Render: Physically Based Renderer
 // Written by Yining Karl Li
 //
 // File: geom.hpp
-// Geometry pure virtual base class, meant for fluid initialization and barrier placement
+// Defines the generic geometry pure virtual class that all geometry will inherit from
 
 #ifndef GEOM_HPP
 #define GEOM_HPP
 
-#include "../utilities/utilities.h"
+#include <glm/glm.hpp>
+#include "obj/objcontainer.hpp"
 
 using namespace std;
 using namespace glm;
-
-enum geomtype {SOLID, FLUID};
 
 namespace geomCore {
 //====================================
 // Class Declarations
 //====================================
 
-class geom {
+class geom{
 	public:
+		//Initializers
 		geom(){};
 		virtual ~geom(){};
 
-		virtual bool isPointInside(const vec3& point, const float& scale) = 0;
-		virtual bool isPointInsideWithThickness(const vec3& point, const float& thickness, 
-												const float& scale) = 0;
-		virtual geomtype getType() = 0;
+		//Interactions
+		virtual objCore::objContainer* tesselate() = 0;
 };
 }
 

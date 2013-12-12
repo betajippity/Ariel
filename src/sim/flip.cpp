@@ -53,7 +53,7 @@ void flipsim::init(){
 	particles.clear();
 	cout << "Maxdensity: " << max_density << endl;
 
-	scene->generateParticles(particles, dimensions, density);
+	scene->generateParticles(particles, dimensions, density, pgrid);
 }
 
 void flipsim::computeDensity(){
@@ -95,4 +95,8 @@ vector<particle*>* flipsim::getParticles(){
 
 vec3 flipsim::getDimensions(){
 	return dimensions;
+}
+
+sceneCore::scene* flipsim::getScene(){
+	return scene;	
 }

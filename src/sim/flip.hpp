@@ -30,6 +30,7 @@ class flipsim{
 
 		vector<particle*>* getParticles();
 		vec3 getDimensions();
+		sceneCore::scene* getScene();
 
 	private:
 		void computeDensity();

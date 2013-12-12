@@ -14,6 +14,8 @@
 using namespace std;
 using namespace glm;
 
+enum geomtype {SOLID, FLUID};
+
 namespace fluidCore {
 //====================================
 // Struct and Function Declarations

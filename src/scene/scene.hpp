@@ -10,6 +10,7 @@
 #include "../utilities/utilities.h"
 #include "../grid/macgrid.inl"
 #include "../geom/geom.inl"
+#include "../grid/particlegrid.hpp"
 #include <vector>
 
 using namespace std;
@@ -25,17 +26,25 @@ class scene {
 		scene();
 		~scene();
 
-		void addGeom(geomCore::geom* object);
+		void addSolidObject(objCore::objContainer* object);
+		void addLiquidObject(objCore::objContainer* object);
 		void generateParticles(vector<fluidCore::particle*>& particles, const vec3& dimensions, 
-							   const float& density);
+							   const float& density, fluidCore::particlegrid* pgrid);
+
+		vector<objCore::objContainer*>& getSolidObjects();
+		vector<objCore::objContainer*>& getLiquidObjects();
 
 	private:
 
 		void addParticle(const vec3& pos, const geomtype& type, const float& thickness, const float& scale,
 						 vector<fluidCore::particle*>& particles);
+		void meshToSDF(openvdb::FloatGrid::Ptr& grid, objCore::objContainer* mesh);
 
-		vector<geomCore::geom*> objects;
+		vector<objCore::objContainer*> solidObjects;
+		vector<objCore::objContainer*> liquidObjects;
 
+		vector<fluidCore::floatgrid*> solidSDFs;
+		vector<fluidCore::floatgrid*> liquidSDFs;
 };
 }
 

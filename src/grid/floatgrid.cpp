@@ -14,6 +14,10 @@ floatgrid::floatgrid(const float& background){
 	grid = openvdb::FloatGrid::create(background);
 }
 
+floatgrid::floatgrid(openvdb::FloatGrid::Ptr newgrid){
+	grid = newgrid;
+}
+
 floatgrid::~floatgrid(){
 
 }
@@ -43,4 +47,15 @@ void floatgrid::setCell(const int& x, const int& y, const int& z, const float& v
 	}else{
 		accessor.setValue(coord, value);
 	}
+}
+
+float floatgrid::getInterpolatedCell(const vec3& index){
+	return getInterpolatedCell(index.x, index.y, index.z);
+}
+
+float floatgrid::getInterpolatedCell(const float& x, const float& y, const float& z){
+	openvdb::Vec3f p(x,y,z);
+	openvdb::tools::GridSampler<openvdb::FloatTree, openvdb::tools::BoxSampler> interpolator(
+														 grid->constTree(), grid->transform());
+	return interpolator.wsSample(p);
 }

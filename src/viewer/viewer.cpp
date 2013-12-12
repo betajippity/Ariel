@@ -6,6 +6,7 @@
 
 #include "viewer.hpp"
 #include "../utilities/utilities.h"
+#include <sstream>
 
 using namespace viewerCore;
 
@@ -131,11 +132,12 @@ void viewer::mainLoop(){
 
             for(int j=0; j<psize; j++){
                 if(particles->operator[](j)->type==FLUID){
-                    vertexData.push_back(particles->operator[](j)->p[0]*maxd-(gridSize.x/2.0f));
-                    vertexData.push_back(particles->operator[](j)->p[1]*maxd-0.4f);
-                    vertexData.push_back(particles->operator[](j)->p[2]*maxd-(gridSize.z/2.0f));
+                    vertexData.push_back(particles->operator[](j)->p[0]*maxd);
+                    vertexData.push_back(particles->operator[](j)->p[1]*maxd);
+                    vertexData.push_back(particles->operator[](j)->p[2]*maxd);
                 }
             }
+            glDeleteBuffers(1, &data.vboID);
             data.color = vbos[vbokeys["fluid"]].color;
             string key = "fluid";
             data = createVBO(data, (float*)&vertexData[0], vertexData.size(), POINTS, key);
@@ -180,6 +182,9 @@ void viewer::mainLoop(){
                 glEnableClientState(GL_VERTEX_ARRAY);
                 glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
                 glColor4f(vbos[i].color.x, vbos[i].color.y, vbos[i].color.z, 0.5f);
+
+                vec3 res = sim->getDimensions();
+                glTranslatef(-res.x/2, 0, -res.y/2);
 
                 if(i==vbokeys["boundingbox"]){
                     glLineWidth(2.0f);
@@ -291,40 +296,84 @@ bool viewer::init(){
     key = "boundingbox";
     vector<vec3> boxData;
     vec3 res = sim->getDimensions();
-    res.x = res.x/2.0f;
-    res.z = res.z/2.0f;
 
-    boxData.push_back(vec3(res.x, res.y, res.z));   boxData.push_back(vec3(-res.x, res.y, res.z));
-    boxData.push_back(vec3(-res.x, res.y, res.z));  boxData.push_back(vec3(-res.x, 0.0f, res.z));
-    boxData.push_back(vec3(-res.x, 0.0f, res.z));   boxData.push_back(vec3(res.x, 0.0f, res.z));
+    boxData.push_back(vec3(res.x, res.y, res.z));   boxData.push_back(vec3(0.0f, res.y, res.z));
+    boxData.push_back(vec3(0.0f, res.y, res.z));    boxData.push_back(vec3(0.0f, 0.0f, res.z));
+    boxData.push_back(vec3(0.0f, 0.0f, res.z));     boxData.push_back(vec3(res.x, 0.0f, res.z));
     boxData.push_back(vec3(res.x, 0.0f, res.z));    boxData.push_back(vec3(res.x, res.y, res.z));
 
-    boxData.push_back(vec3(res.x, res.y, -res.z));  boxData.push_back(vec3(-res.x, res.y, -res.z));
-    boxData.push_back(vec3(-res.x, res.y, -res.z)); boxData.push_back(vec3(-res.x, 0.0f, -res.z));
-    boxData.push_back(vec3(-res.x, 0.0f, -res.z));  boxData.push_back(vec3(res.x, 0.0f, -res.z));
-    boxData.push_back(vec3(res.x, 0.0f, -res.z));   boxData.push_back(vec3(res.x, res.y, -res.z));
+    boxData.push_back(vec3(res.x, res.y, 0.0f));    boxData.push_back(vec3(0.0f, res.y, 0.0f));
+    boxData.push_back(vec3(0.0f, res.y, 0.0f));     boxData.push_back(vec3(0.0f, 0.0f, 0.0f));
+    boxData.push_back(vec3(0.0f, 0.0f, 0.0f));      boxData.push_back(vec3(res.x, 0.0f, 0.0f));
+    boxData.push_back(vec3(res.x, 0.0f, 0.0f));     boxData.push_back(vec3(res.x, res.y, 0.0f));
 
-    boxData.push_back(vec3(res.x, res.y, res.z));   boxData.push_back(vec3(res.x, res.y, -res.z));
-    boxData.push_back(vec3(-res.x, res.y, res.z));  boxData.push_back(vec3(-res.x, res.y, -res.z));
-    boxData.push_back(vec3(-res.x, 0.0f, res.z));   boxData.push_back(vec3(-res.x, 0.0f, -res.z));
-    boxData.push_back(vec3(res.x, 0.0f, res.z));    boxData.push_back(vec3(res.x, 0.0f, -res.z));
+    boxData.push_back(vec3(res.x, res.y, res.z));   boxData.push_back(vec3(res.x, res.y, 0.0f));
+    boxData.push_back(vec3(0.0f, res.y, res.z));    boxData.push_back(vec3(0.0f, res.y, 0.0f));
+    boxData.push_back(vec3(0.0f, 0.0f, res.z));     boxData.push_back(vec3(0.0f, 0.0f, 0.0f));
+    boxData.push_back(vec3(res.x, 0.0f, res.z));    boxData.push_back(vec3(res.x, 0.0f, 0.0f));
 
     data = createVBO(data, (float*)&boxData[0], boxData.size()*3, LINES, key);
     boxData.clear();
     vbos.push_back(data);
     vbokeys["boundingbox"] = vbos.size()-1;
 
+    int numberOfSolidObjects = sim->getScene()->getSolidObjects().size();
+    vector<objCore::objContainer*> solids = sim->getScene()->getSolidObjects();
+    for(int i=0; i<numberOfSolidObjects; i++){
+        vboData objectdata;
+        objectdata.color = vec3(1, 0, 0);
+        key = "solid"+utilityCore::convertIntToString(i);
+        objectdata = createVBOFromObj(solids[i], objectdata.color, key);
+        vbos.push_back(objectdata);
+        vbokeys[key] = vbos.size()-1;
+    }
+
+    int numberOfLiquidObjects = sim->getScene()->getLiquidObjects().size();
+    vector<objCore::objContainer*> liquids = sim->getScene()->getLiquidObjects();
+    for(int i=0; i<numberOfLiquidObjects; i++){
+        vboData objectdata;
+        objectdata.color = vec3(0, 0, 1);
+        key = "liquid"+utilityCore::convertIntToString(i);
+        objectdata = createVBOFromObj(liquids[i], objectdata.color, key);
+        vbos.push_back(objectdata);
+        vbokeys[key] = vbos.size()-1;
+    }
+
     return true;
 }
 
 vboData viewer::createVBO(vboData data, float* vertices, int numberOfVertices, vbotype type, string key){
     data.size = numberOfVertices;
-    glDeleteBuffers(1, &data.vboID);
     glGenBuffers(1, &data.vboID);
     glBindBuffer(GL_ARRAY_BUFFER, data.vboID);
     glBufferData(GL_ARRAY_BUFFER, data.size*sizeof(float), vertices, GL_STATIC_DRAW);
     data.type = type;
     data.key = key;
+    return data;
+}
+
+vboData viewer::createVBOFromObj(objCore::objContainer* o, vec3 color, string key){
+    objCore::obj* oData = o->getObj();
+    vboData data;
+    vector<vec3> vertexData;
+    for(int i=0; i<oData->numberOfPolys; i++){
+        vec4 f = oData->polyVertexIndices[i];
+        vec3 p0 = oData->vertices[int(f[0])-1];
+        vec3 p1 = oData->vertices[int(f[1])-1];
+        vec3 p2 = oData->vertices[int(f[2])-1];
+        vertexData.push_back(p0);
+        vertexData.push_back(p1);
+        vertexData.push_back(p2);      
+        if(f[3]>0){
+            vec3 p3 = oData->vertices[int(f[3])-1];
+            vertexData.push_back(p0);
+            vertexData.push_back(p3);
+            vertexData.push_back(p2);  
+        }
+    }
+    data.color = color;
+    data = createVBO(data, (float*)&vertexData[0], vertexData.size()*3, TRIANGLES, key);
+    vertexData.clear();
     return data;
 }
 

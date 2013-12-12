@@ -1,8 +1,8 @@
-// Kai: FLIP Fluid Simulator
+// TAKUA Render: Physically Based Renderer
 // Written by Yining Karl Li
 //
 // File: sphere.hpp
-// Sphere class, meant for fluid initialization and barrier placement. Implements geom.hpp
+// Defines the unit sphere geometry class, inherits from the generic geom class 
 
 #ifndef SPHERE_HPP
 #define SPHERE_HPP
@@ -16,21 +16,23 @@ namespace geomCore {
 //====================================
 // Class Declarations
 //====================================
-
+	
 class sphere: public geom {
 	public:
-		sphere(const float& radius, const vec3& center, const geomtype& type);
+		//Initializers
 		sphere();
+		sphere(int subdivCount);
 		~sphere();
 
-		bool isPointInside(const vec3& point, const float& scale);
-		bool isPointInsideWithThickness(const vec3& point, const float& thickness, const float& scale);
-		geomtype getType();
+		//Getters
+		objCore::objContainer* tesselate();
+		objCore::objContainer* tesselate(const vec3& center, const float& radius);
+
+		//Data
+		int subdivs;
 
 	private:
-		float radius;
-		vec3 center;
-		geomtype type;
+		vec3 getPointOnSphereByAngles(float angle1, float angle2);
 };
 }
 

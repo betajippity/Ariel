@@ -10,6 +10,7 @@
 #include "../utilities/utilities.h"
 #include "gridutils.inl"
 #include <openvdb/openvdb.h>
+#include <openvdb/tools/Interpolation.h>
 
 using namespace std;
 using namespace glm;
@@ -23,6 +24,8 @@ class floatgrid{
 	public:
 		//Initializers
 		floatgrid(const float& background);
+		floatgrid();
+		floatgrid(openvdb::FloatGrid::Ptr grid);
 		~floatgrid();
 
 		//Cell accessors and setters and whatever
@@ -31,6 +34,9 @@ class floatgrid{
 
 		void setCell(const vec3& index, const float& value);
 		void setCell(const int& x, const int& y, const int& z, const float& value);
+
+		float getInterpolatedCell(const vec3& index);
+		float getInterpolatedCell(const float& x, const float& y, const float& z);
 
 	private:
 		openvdb::FloatGrid::Ptr grid;
