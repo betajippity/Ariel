@@ -54,6 +54,9 @@ int main(int argc, char** argv){
 	p1 = vec3(dimensions.x, dimensions.y, dimensions.z);
 	scene->addSolidObject(cubebuilder.tesselate(p0, p1));
 
+	geomCore::sphere spherebuilder;
+	// scene->addSolidObject(spherebuilder.tesselate(dimensions/2.0f, 10.0f));
+
     fluidCore::particlegrid* test = new fluidCore::particlegrid(dimensions.x,
     															dimensions.y,
     															dimensions.z);

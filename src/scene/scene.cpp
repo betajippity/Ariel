@@ -9,6 +9,7 @@
 #include <openvdb/tools/Interpolation.h>
 #include <openvdb/tools/MeshToVolume.h>
 #include <openvdb/tools/LevelSetSphere.h>
+#include <openvdb/tools/Composite.h>
 
 using namespace sceneCore;
 
@@ -24,16 +25,24 @@ void scene::addSolidObject(objCore::objContainer* object){
 	solidObjects.push_back(object);
 	openvdb::FloatGrid::Ptr objectSDF;
 	meshToSDF(objectSDF, object);
-	fluidCore::floatgrid* grid = new fluidCore::floatgrid(objectSDF);
-	solidSDFs.push_back(grid);
+	if(solidObjects.size()==1){
+		solidSDF = objectSDF->deepCopy();
+	}else{
+		openvdb::tools::csgUnion(*solidSDF, *objectSDF);
+	}
+	objectSDF->clear();
 }
 
 void scene::addLiquidObject(objCore::objContainer* object){
 	liquidObjects.push_back(object);
 	openvdb::FloatGrid::Ptr objectSDF;
 	meshToSDF(objectSDF, object);
-	fluidCore::floatgrid* grid = new fluidCore::floatgrid(objectSDF);
-	liquidSDFs.push_back(grid);
+	if(liquidObjects.size()==1){
+		liquidSDF = objectSDF->deepCopy();
+	}else{
+		openvdb::tools::csgUnion(*liquidSDF, *objectSDF);
+	}
+	objectSDF->clear();
 }
 
 vector<objCore::objContainer*>& scene::getSolidObjects(){
@@ -63,12 +72,11 @@ void scene::meshToSDF(openvdb::FloatGrid::Ptr& grid, objCore::objContainer* mesh
 		}
 		vdbpolys.push_back(vdbpoly);
 	}	
-	// //call vdb tools for creating level set
-	
+	 //call vdb tools for creating level set
 	openvdb::tools::MeshToVolume<openvdb::FloatGrid> sdfmaker(transform);
 	sdfmaker.convertToLevelSet(vdbpoints, vdbpolys);
 	grid = sdfmaker.distGridPtr();
-	// //cleanup
+	//cleanup
 	vdbpoints.clear();
 	vdbpolys.clear();
 }
@@ -97,19 +105,37 @@ void scene::generateParticles(vector<fluidCore::particle*>& particles, const vec
 		}
 	}
 	cout << "Fluid particles: " << particles.size() << endl;
+
+	// for( vector<particle *>::iterator iter=particles.begin(); iter!=particles.end(); ){
+	// 	particle &p = **iter;
+
 }
 
 void scene::addParticle(const vec3& pos, const geomtype& type, const float& thickness, const float& scale,
 						vector<fluidCore::particle*>& particles){
-	bool inbound = false;
-	for(int n=0; n<liquidSDFs.size(); n++){
+	bool inside = false;
+
+	fluidCore::floatgrid* solidGrid = new fluidCore::floatgrid(solidSDF);
+	fluidCore::floatgrid* liquidGrid = new fluidCore::floatgrid(liquidSDF);
+
+	if(type==FLUID){
 		vec3 worldpos = pos*scale;
-		if(liquidSDFs[n]->getInterpolatedCell(worldpos)<0){
-			inbound = true;
+		if(liquidGrid->getInterpolatedCell(worldpos)<thickness){
+			inside = true;
 		}
+		//if particles are in a wall, don't generate them
+		if(solidGrid->getInterpolatedCell(worldpos)<thickness){ 
+			inside = false; 
+		}	
+
+	}else if(type==SOLID){
+		vec3 worldpos = pos*scale;
+		if(solidGrid->getInterpolatedCell(worldpos)<thickness){
+			inside = true;
+		}	
 	}
 
-	if(inbound){
+	if(inside){
 		fluidCore::particle* p = new fluidCore::particle;
 		p->p = pos;
 		p->u = vec3(0,0,0);

@@ -25,7 +25,7 @@ sphere::~sphere(){
 }
 
 objCore::objContainer* sphere::tesselate(const vec3& center, const float& radius){
-	vec3 scale = vec3(radius);
+	vec3 scale = vec3(radius*2.0f);
 	mat4 transform = utilityCore::buildTransformationMatrix(center, vec3(0,0,0), scale);
 
 	objCore::objContainer* o = tesselate();

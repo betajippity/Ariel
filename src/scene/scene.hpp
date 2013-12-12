@@ -43,8 +43,12 @@ class scene {
 		vector<objCore::objContainer*> solidObjects;
 		vector<objCore::objContainer*> liquidObjects;
 
-		vector<fluidCore::floatgrid*> solidSDFs;
-		vector<fluidCore::floatgrid*> liquidSDFs;
+		// vector<fluidCore::floatgrid*> solidSDFs;
+		// vector<fluidCore::floatgrid*> liquidSDFs;
+
+		openvdb::FloatGrid::Ptr solidSDF;
+		openvdb::FloatGrid::Ptr liquidSDF;
+
 };
 }
 

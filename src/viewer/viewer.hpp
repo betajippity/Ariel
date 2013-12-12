@@ -106,6 +106,7 @@ class viewer{
 
     	fluidCore::flipsim* sim;
     	bool siminitialized;
+    	bool drawobjects;
 };
 }
 
