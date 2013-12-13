@@ -27,8 +27,9 @@ class particlegrid{
 		~particlegrid();
 
 		//Sorting tools
-		void sort(const vector<particle*>& particles);
+		void sort(vector<particle*>& particles);
 		vector<particle*> getCellNeighbors(vec3 index, vec3 numberOfNeighbors);
+		vector<particle*> getWallNeighbors(vec3 index, vec3 numberOfNeighbors);
 
 	private:
 		void init(const int& x, const int& y, const int& z);

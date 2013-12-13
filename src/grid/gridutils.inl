@@ -8,9 +8,9 @@
 #define GRIDUTILS_INL
 
 #define FOR_EACH_CELL(x, y, z) \
-	for(int i = 0; i < x; i++)  \
+	for(int i = 0; i < x; i++) \
 		for(int j = 0; j < y; j++) \
-			for(int k = 0; k < z; k++) 
+			for(int k = 0; k < z; k++)
 
 #define FOR_EACH_FLOW_X(x, y, z) \
 	for(int i = 0; i < x+1; i++)  \

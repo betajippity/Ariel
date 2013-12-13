@@ -58,13 +58,15 @@ bool viewer::launch(){
                 {
                     if(frame==0){
                         sim->init();
+                        particles = sim->getParticles();
                         siminitialized = true;
                     }
-                    while(1){
-                        // flip3D::simulateStep();
+                    sim->step();
+                    // while(1){
+                    //     // flip3D::simulateStep();
                         particles = sim->getParticles();
-                        frame++;
-                    }
+                    //     frame++;
+                    // }
                 }
             }
 
@@ -82,52 +84,6 @@ bool viewer::launch(){
 //====================================
 // Draw/Interaction Loop
 //====================================
-
-void viewer::updateInputs(){
-    double x; double y;
-    glfwGetCursorPos(window, &x, &y);
-    vec2 d;
-    d.x = float(x-cam.mouseOld.x);
-    d.y = float(y-cam.mouseOld.y);
-    cam.mouseOld.x = x;
-    cam.mouseOld.y = y;
-    if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == 1 || 
-        glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == 1 ||
-        glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE) == 1){
-
-        bool doCamera = false;
-
-        if(glfwGetKey(window, GLFW_KEY_RIGHT_ALT) == GLFW_PRESS || 
-           glfwGetKey(window, GLFW_KEY_LEFT_ALT) == GLFW_PRESS){
-            doCamera = true;
-        }
-        if(doCamera==true){
-            if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == 1){
-                cam.rotate.x += d.y * cam.rotateSpeed;
-                cam.rotate.y += d.x * cam.rotateSpeed;
-            }
-            if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == 1){
-                cam.translate.z += d.y * cam.zoomSpeed;
-            }
-            if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE) == 1){
-                cam.translate.x += d.x * cam.panSpeed;
-                cam.translate.y -= d.y * cam.panSpeed;
-            } 
-        }else{
-            if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == 1){
-                //mouseclick event goes here
-            }
-        }
-    }
-    if(glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS){
-        if(cam.currentKey!=GLFW_KEY_Q){
-            drawobjects = !drawobjects;
-            cam.currentKey = GLFW_KEY_Q;
-        }
-    }else{
-        cam.currentKey = 0;
-    }
-}
 
 void viewer::mainLoop(){
     while (!glfwWindowShouldClose(window)){
@@ -233,6 +189,52 @@ void viewer::mainLoop(){
     }
     glfwDestroyWindow(window);
     glfwTerminate();
+}
+
+void viewer::updateInputs(){
+    double x; double y;
+    glfwGetCursorPos(window, &x, &y);
+    vec2 d;
+    d.x = float(x-cam.mouseOld.x);
+    d.y = float(y-cam.mouseOld.y);
+    cam.mouseOld.x = x;
+    cam.mouseOld.y = y;
+    if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == 1 || 
+        glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == 1 ||
+        glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE) == 1){
+
+        bool doCamera = false;
+
+        if(glfwGetKey(window, GLFW_KEY_RIGHT_ALT) == GLFW_PRESS || 
+           glfwGetKey(window, GLFW_KEY_LEFT_ALT) == GLFW_PRESS){
+            doCamera = true;
+        }
+        if(doCamera==true){
+            if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == 1){
+                cam.rotate.x += d.y * cam.rotateSpeed;
+                cam.rotate.y += d.x * cam.rotateSpeed;
+            }
+            if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == 1){
+                cam.translate.z += d.y * cam.zoomSpeed;
+            }
+            if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE) == 1){
+                cam.translate.x += d.x * cam.panSpeed;
+                cam.translate.y -= d.y * cam.panSpeed;
+            } 
+        }else{
+            if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == 1){
+                //mouseclick event goes here
+            }
+        }
+    }
+    if(glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS){
+        if(cam.currentKey!=GLFW_KEY_Q){
+            drawobjects = !drawobjects;
+            cam.currentKey = GLFW_KEY_Q;
+        }
+    }else{
+        cam.currentKey = 0;
+    }
 }
 
 //====================================

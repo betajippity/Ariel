@@ -27,6 +27,7 @@ class flipsim{
 		~flipsim();
 
 		void init();
+		void step();
 
 		vector<particle*>* getParticles();
 		vec3 getDimensions();
@@ -34,6 +35,7 @@ class flipsim{
 
 	private:
 		void computeDensity();
+		void applyExternalForces();
 
 		vec3 dimensions;
 		vector<particle*> particles;
@@ -44,6 +46,9 @@ class flipsim{
 		float max_density;
 
 		sceneCore::scene* scene;
+
+		int timestep;
+		float stepsize;
 
 };
 }
