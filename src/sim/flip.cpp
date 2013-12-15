@@ -70,10 +70,13 @@ void flipsim::step(){
 	//Compute density
 	pgrid->sort(particles);
 	computeDensity();
-	//Add forces
+	// //Add forces
 	applyExternalForces(); 
 
 	splatParticlesToMACGrid(pgrid, particles, mgrid, dimensions);
+
+	fluidCore::levelset ls(particles);
+	ls.writeVDBGridToFile("frame.vdb");
 }
 
 void flipsim::applyExternalForces(){

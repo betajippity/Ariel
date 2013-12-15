@@ -32,6 +32,10 @@ class intgrid{
 		void setCell(const vec3& index, const int& value);
 		void setCell(const int& x, const int& y, const int& z, const int& value);
 
+		openvdb::Int32Grid::Ptr& getVDBGrid();
+
+		void writeVDBGridToFile(string filename);
+
 	private:
 		openvdb::Int32Grid::Ptr grid;
 

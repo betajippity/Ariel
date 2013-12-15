@@ -11,6 +11,7 @@
 #include "../grid/macgrid.inl"
 #include "../geom/geom.inl"
 #include "../grid/particlegrid.hpp"
+#include "../grid/levelset.hpp"
 #include <vector>
 
 using namespace std;
@@ -38,16 +39,12 @@ class scene {
 
 		void addParticle(const vec3& pos, const geomtype& type, const float& thickness, const float& scale,
 						 vector<fluidCore::particle*>& particles);
-		void meshToSDF(openvdb::FloatGrid::Ptr& grid, objCore::objContainer* mesh);
 
 		vector<objCore::objContainer*> solidObjects;
 		vector<objCore::objContainer*> liquidObjects;
 
-		// vector<fluidCore::floatgrid*> solidSDFs;
-		// vector<fluidCore::floatgrid*> liquidSDFs;
-
-		openvdb::FloatGrid::Ptr solidSDF;
-		openvdb::FloatGrid::Ptr liquidSDF;
+		fluidCore::levelset* solidLevelSet;
+		fluidCore::levelset* liquidLevelSet;
 
 };
 }

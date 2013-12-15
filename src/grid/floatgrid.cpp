@@ -2,12 +2,17 @@
 // Written by Yining Karl Li
 //
 // File: floatgrid.cpp
-// Implements floatgrid.cpp
+// Implements floatgrid.hpp
 
 #include "floatgrid.hpp"
 
 using namespace fluidCore;
 using namespace utilityCore;
+
+floatgrid::floatgrid(){
+	openvdb::initialize();
+	grid = openvdb::FloatGrid::create(0.0f);
+}
 
 floatgrid::floatgrid(const float& background){
 	openvdb::initialize();
@@ -19,7 +24,8 @@ floatgrid::floatgrid(openvdb::FloatGrid::Ptr newgrid){
 }
 
 floatgrid::~floatgrid(){
-
+	grid->clear();
+	grid.reset();
 }
 
 float floatgrid::getCell(const vec3& index){
@@ -58,4 +64,16 @@ float floatgrid::getInterpolatedCell(const float& x, const float& y, const float
 	openvdb::tools::GridSampler<openvdb::FloatTree, openvdb::tools::BoxSampler> interpolator(
 														 grid->constTree(), grid->transform());
 	return interpolator.wsSample(p);
+}
+
+openvdb::FloatGrid::Ptr& floatgrid::getVDBGrid(){
+	return grid;
+}
+
+void floatgrid::writeVDBGridToFile(string filename){
+	openvdb::io::File file(filename);
+	openvdb::GridPtrVec grids;
+    grids.push_back(grid);
+    file.write(grids);
+    file.close();
 }

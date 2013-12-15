@@ -98,8 +98,4 @@ void particlegrid::sort(vector<particle*>& particles){
 			cellscount++;
 		}
 	}
-
-	// for(int i=0; i<cells.size(); i++){
-	// 	cout << cells[i].size() << endl;
-	// }
 }

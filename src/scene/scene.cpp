@@ -14,35 +14,37 @@
 using namespace sceneCore;
 
 scene::scene(){
-
+	solidLevelSet = new fluidCore::levelset();
+	liquidLevelSet = new fluidCore::levelset();
 }
 
 scene::~scene(){
-
+	delete solidLevelSet;
+	delete liquidLevelSet;
 }
 
 void scene::addSolidObject(objCore::objContainer* object){
 	solidObjects.push_back(object);
-	openvdb::FloatGrid::Ptr objectSDF;
-	meshToSDF(objectSDF, object);
 	if(solidObjects.size()==1){
-		solidSDF = objectSDF->deepCopy();
+		delete solidLevelSet;
+		solidLevelSet = new fluidCore::levelset(object);
 	}else{
-		openvdb::tools::csgUnion(*solidSDF, *objectSDF);
+		fluidCore::levelset* objectSDF = new fluidCore::levelset(object);
+		solidLevelSet->merge(*objectSDF);
+		delete objectSDF;
 	}
-	objectSDF->clear();
 }
 
 void scene::addLiquidObject(objCore::objContainer* object){
 	liquidObjects.push_back(object);
-	openvdb::FloatGrid::Ptr objectSDF;
-	meshToSDF(objectSDF, object);
 	if(liquidObjects.size()==1){
-		liquidSDF = objectSDF->deepCopy();
+		delete liquidLevelSet;
+		liquidLevelSet = new fluidCore::levelset(object);
 	}else{
-		openvdb::tools::csgUnion(*liquidSDF, *objectSDF);
+		fluidCore::levelset* objectSDF = new fluidCore::levelset(object);
+		liquidLevelSet->merge(*objectSDF);
+		delete objectSDF;
 	}
-	objectSDF->clear();
 }
 
 vector<objCore::objContainer*>& scene::getSolidObjects(){
@@ -51,34 +53,6 @@ vector<objCore::objContainer*>& scene::getSolidObjects(){
 
 vector<objCore::objContainer*>& scene::getLiquidObjects(){
 	return liquidObjects;
-}
-
-void scene::meshToSDF(openvdb::FloatGrid::Ptr& grid, objCore::objContainer* mesh){
-	openvdb::math::Transform::Ptr transform = openvdb::math::Transform::createLinearTransform(.25f);
-	//copy vertices into vdb format
-	vector<openvdb::Vec3s> vdbpoints;
-	for(int i=0; i<mesh->getObj()->numberOfVertices; i++){
-		vec3 vertex = mesh->getObj()->vertices[i];
-		openvdb::Vec3s vdbvertex(vertex.x, vertex.y, vertex.z);
-		vdbpoints.push_back(transform->worldToIndex(vdbvertex));
-	}
-	//copy faces into vdb format
-	vector<openvdb::Vec4I> vdbpolys;
-	for(int i=0; i<mesh->getObj()->numberOfPolys; i++){
-		vec4 poly = mesh->getObj()->polyVertexIndices[i];
-		openvdb::Vec4I vdbpoly((int)poly[0]-1, (int)poly[1]-1, (int)poly[2]-1, (int)poly[3]-1);
-		if((int)poly[0]==(int)poly[3] || (int)poly[3]<0){
-			vdbpoly[3] = openvdb::util::INVALID_IDX;
-		}
-		vdbpolys.push_back(vdbpoly);
-	}	
-	 //call vdb tools for creating level set
-	openvdb::tools::MeshToVolume<openvdb::FloatGrid> sdfmaker(transform);
-	sdfmaker.convertToLevelSet(vdbpoints, vdbpolys);
-	grid = sdfmaker.distGridPtr();
-	//cleanup
-	vdbpoints.clear();
-	vdbpolys.clear();
 }
 
 void scene::generateParticles(vector<fluidCore::particle*>& particles, const vec3& dimensions, 
@@ -115,22 +89,19 @@ void scene::addParticle(const vec3& pos, const geomtype& type, const float& thic
 						vector<fluidCore::particle*>& particles){
 	bool inside = false;
 
-	fluidCore::floatgrid* solidGrid = new fluidCore::floatgrid(solidSDF);
-	fluidCore::floatgrid* liquidGrid = new fluidCore::floatgrid(liquidSDF);
-
 	if(type==FLUID){
 		vec3 worldpos = pos*scale;
-		if(liquidGrid->getInterpolatedCell(worldpos)<thickness){
+		if(liquidLevelSet->getInterpolatedCell(worldpos)<thickness){
 			inside = true;
 		}
 		//if particles are in a wall, don't generate them
-		if(solidGrid->getInterpolatedCell(worldpos)<thickness){ 
+		if(solidLevelSet->getInterpolatedCell(worldpos)<thickness){ 
 			inside = false; 
 		}	
 
 	}else if(type==SOLID){
 		vec3 worldpos = pos*scale;
-		if(solidGrid->getInterpolatedCell(worldpos)<thickness){
+		if(solidLevelSet->getInterpolatedCell(worldpos)<thickness){
 			inside = true;
 		}	
 	}

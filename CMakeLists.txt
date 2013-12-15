@@ -93,6 +93,7 @@ set(SOURCE_FILES "src/main.cpp"
 				 "src/geom/obj/objcontainer.cpp"
 				 "src/scene/scene.cpp"
 				 "src/viewer/viewer.cpp"
+				 "src/grid/levelset.cpp"
 				 )
 
 

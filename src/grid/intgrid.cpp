@@ -2,7 +2,7 @@
 // Written by Yining Karl Li
 //
 // File: intgrid.cpp
-// Implements intgrid.cpp
+// Implements intgrid.hpp
 
 #include "intgrid.hpp"
 
@@ -43,4 +43,16 @@ void intgrid::setCell(const int& x, const int& y, const int& z, const int& value
 	}else{
 		accessor.setValue(coord, value);
 	}
+}
+
+openvdb::Int32Grid::Ptr& intgrid::getVDBGrid(){
+	return grid;
+}
+
+void intgrid::writeVDBGridToFile(string filename){
+	openvdb::io::File file(filename);
+	openvdb::GridPtrVec grids;
+    grids.push_back(grid);
+    file.write(grids);
+    file.close();
 }

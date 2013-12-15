@@ -38,7 +38,11 @@ class floatgrid{
 		float getInterpolatedCell(const vec3& index);
 		float getInterpolatedCell(const float& x, const float& y, const float& z);
 
-	private:
+		openvdb::FloatGrid::Ptr& getVDBGrid();
+
+		void writeVDBGridToFile(string filename);
+
+	protected:
 		openvdb::FloatGrid::Ptr grid;
 
 };
