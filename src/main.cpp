@@ -44,7 +44,7 @@ int main(int argc, char** argv){
 
 	p0 = vec3(0.0f, dimensions.y-1.0f, 0.0f); // ceiling wall
 	p1 = vec3(dimensions.x, dimensions.y, dimensions.z);
-	scene->addSolidObject(cubebuilder.tesselate(p0, p1));
+	// scene->addSolidObject(cubebuilder.tesselate(p0, p1));
 
 	p0 = vec3(0.0f, 0.0f, 0.0f); // front wall
 	p1 = vec3(dimensions.x, dimensions.y, 1.0f);

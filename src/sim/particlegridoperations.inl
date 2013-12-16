@@ -2,10 +2,10 @@
 // Written by Yining Karl Li
 //
 // File: particlegridsplat.inl
-// Breakout file for some particle-grid splatting/mapping stuff
+// Breakout file for some particle-grid operations stuff
 
-#ifndef PARTICLEGRIDSPLAT_INL
-#define PARTICLEGRIDSPLAT_INL
+#ifndef PARTICLEGRIDOPERATIONS_INL
+#define PARTICLEGRIDOPERATIONS_INL
 
 #include "../grid/macgrid.inl"
 #include "../grid/particlegrid.hpp"
@@ -47,6 +47,7 @@ void enforceBoundaryVelocity(macgrid& mgrid, levelset* sls, const vec3& dimensio
 	int z = (int)dimensions.z;
 
 	//for every x face
+	#pragma omp parallel for
 	for(int i = 0; i < x+1; i++){  
 	  	for(int j = 0; j < y; j++){ 
 	    	for(int k = 0; k < z; k++){
@@ -60,6 +61,7 @@ void enforceBoundaryVelocity(macgrid& mgrid, levelset* sls, const vec3& dimensio
 	   	}
 	} 
 	//for every y face
+	#pragma omp parallel for
 	for(int i = 0; i < x; i++){  
 	  	for(int j = 0; j < y+1; j++){ 
 	    	for(int k = 0; k < z; k++){
@@ -73,6 +75,7 @@ void enforceBoundaryVelocity(macgrid& mgrid, levelset* sls, const vec3& dimensio
 	   	}
 	} 
 	//for every z face
+	#pragma omp parallel for
 	for(int i = 0; i < x; i++){  
 	  	for(int j = 0; j < y; j++){ 
 	    	for(int k = 0; k < z+1; k++){

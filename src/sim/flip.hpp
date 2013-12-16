@@ -36,12 +36,16 @@ class flipsim{
 	private:
 		void computeDensity();
 		void applyExternalForces();
+		void project();
+
+		bool isCellFluid(const int& x, const int& y, const int& z);
 
 		vec3 dimensions;
 		vector<particle*> particles;
 		macgrid mgrid;
 		particlegrid* pgrid;
 
+		int subcell;
 		float density;
 		float max_density;
 

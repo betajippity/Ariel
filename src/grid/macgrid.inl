@@ -30,8 +30,7 @@ struct macgrid{
 	floatgrid* u_y;
 	floatgrid* u_z; //technically this is the part that is an actual MAC grid, the rest is other useful stuff
 
-	intgrid* A; //stores cell type: air, fluid, or solid
-	floatgrid* L; //level set for project step
+	floatgrid* D; //divergence 
 	floatgrid* P; //pressure
 };
 
@@ -70,8 +69,7 @@ macgrid createMacgrid(const vec3& dimensions){
 	m.u_x = new floatgrid(0.0f);
 	m.u_y = new floatgrid(0.0f);
 	m.u_z = new floatgrid(0.0f);
-	m.A = new intgrid(0);
-	m.L = new floatgrid(0.0f);
+	m.D = new floatgrid(0.0f);
 	m.P = new floatgrid(0.0f);
 	return m;
 }
@@ -80,8 +78,7 @@ void clearMacgrid(macgrid& m){
 	delete m.u_x;
 	delete m.u_y;
 	delete m.u_z;
-	delete m.A;
-	delete m.L;
+	delete m.D;
 	delete m.P;
 }
 }

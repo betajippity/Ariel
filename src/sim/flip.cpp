@@ -6,7 +6,8 @@
 
 #include "flip.hpp"
 #include "../math/kernels.inl"
-#include "particlegridsplat.inl"
+#include "particlegridoperations.inl"
+#include "solver.inl"
 #include <omp.h>
 
 using namespace fluidCore;
@@ -20,6 +21,7 @@ flipsim::flipsim(const vec3& maxres, sceneCore::scene* s, const float& density){
 	scene = s;
 	timestep = 0;
 	stepsize = 0.005f;
+	subcell = 1;
 }
 
 flipsim::~flipsim(){
@@ -67,20 +69,58 @@ void flipsim::init(){
 
 void flipsim::step(){
 	timestep++;
+	cout << "=========================" << endl;
+	cout << "Step: " << timestep << endl;
 	//Compute density
+	cout << "Sorting/computing density..." << endl;
 	pgrid->sort(particles);
 	computeDensity();
 	//Add forces
+	cout << "Applying internal forces..." << endl;
 	applyExternalForces(); 
 	//figure out what cell each particle goes in
+	cout << "Splatting particles to MAC Grid..." << endl;
 	splatParticlesToMACGrid(pgrid, particles, mgrid, dimensions);
 	//build liquid level set
+	cout << "Building liquid level set..." << endl;
 	scene->rebuildLiquidLevelSet(particles);
 	//set solid-liquid interface velocities to zero
+	cout << "Enforcing boundary velocities..." << endl;
 	enforceBoundaryVelocity(mgrid, scene->getSolidLevelSet(), dimensions);
+	//projection step
+	cout << "Running project step..." << endl;
+	project();
+}
 
+void flipsim::project(){
+	int x = (int)dimensions.x;
+	int y = (int)dimensions.y;
+	int z = (int)dimensions.z;
 
+	float maxd = glm::max(glm::max(dimensions.x, dimensions.z), dimensions.y);
+	float h = 1.0f/maxd; //cell width
 
+	cout << "Computing divergence..." << endl;
+	//compute divergence per cell
+	//for now run single threaded, multithreaded seems to cause VDB write issues here
+	// #pragma omp parallel for
+	for(int i = 0; i < x; i++){
+		for(int j = 0; j < y; j++){
+			for(int k = 0; k < z; k++){
+				if(isCellFluid(i,j,k)==true){ //actually probably don't need a fluid check
+					float divergence = (mgrid.u_x->getCell(i+1, j, k) - mgrid.u_x->getCell(i, j, k) + 
+									    mgrid.u_y->getCell(i, j+1, k) - mgrid.u_y->getCell(i, j, k) +
+									    mgrid.u_z->getCell(i, j, k+1) - mgrid.u_z->getCell(i, j, k)) / h;
+					mgrid.D->setCell(i,j,k,divergence);
+				}
+			}
+		}
+	}
+
+	cout << "Running solver..." << endl;
+	solve(scene->getLiquidLevelSet(), scene->getSolidLevelSet(), mgrid, dimensions, subcell);
+
+	//TODO: rest of project
 }
 
 void flipsim::applyExternalForces(){
@@ -121,6 +161,15 @@ void flipsim::computeDensity(){
 			}
 			particles[i]->density = weightsum/max_density;
 		}
+	}
+}
+
+bool flipsim::isCellFluid(const int& x, const int& y, const int& z){
+	if(scene->getLiquidLevelSet()->getCell(x,y,z)<0.0f &&
+	   scene->getSolidLevelSet()->getCell(x,y,z)>=0.0f){
+		return true;
+	}else{
+		return false;
 	}
 }
 

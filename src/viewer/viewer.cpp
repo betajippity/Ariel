@@ -65,6 +65,7 @@ bool viewer::launch(){
                     // while(1){
                     //     // flip3D::simulateStep();
                         particles = sim->getParticles();
+                        
                     //     frame++;
                     // }
                 }
