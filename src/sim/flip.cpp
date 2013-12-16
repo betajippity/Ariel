@@ -64,7 +64,13 @@ void flipsim::init(){
 	particles.clear();
 	cout << "Maxdensity: " << max_density << endl;
 
+	//Generate particles
 	scene->generateParticles(particles, dimensions, density, pgrid);
+
+	//Sort particles to grid cells and remove fluid particles that are inside walls
+	pgrid->sort(particles);
+	pgrid->markCellTypes(particles, mgrid.A, density);
+
 }
 
 void flipsim::step(){
@@ -84,12 +90,16 @@ void flipsim::step(){
 	//build liquid level set
 	cout << "Building liquid level set..." << endl;
 	scene->rebuildLiquidLevelSet(particles);
+
+	scene->getLiquidLevelSet()->writeVDBGridToFile("test.vdb");
+
+
 	//set solid-liquid interface velocities to zero
 	cout << "Enforcing boundary velocities..." << endl;
 	enforceBoundaryVelocity(mgrid, scene->getSolidLevelSet(), dimensions);
 	//projection step
-	cout << "Running project step..." << endl;
-	project();
+	// cout << "Running project step..." << endl;
+	// project();
 }
 
 void flipsim::project(){
