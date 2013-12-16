@@ -70,13 +70,17 @@ void flipsim::step(){
 	//Compute density
 	pgrid->sort(particles);
 	computeDensity();
-	// //Add forces
+	//Add forces
 	applyExternalForces(); 
-
+	//figure out what cell each particle goes in
 	splatParticlesToMACGrid(pgrid, particles, mgrid, dimensions);
+	//build liquid level set
+	scene->rebuildLiquidLevelSet(particles);
+	//set solid-liquid interface velocities to zero
+	enforceBoundaryVelocity(mgrid, scene->getSolidLevelSet(), dimensions);
 
-	fluidCore::levelset ls(particles);
-	ls.writeVDBGridToFile("frame.vdb");
+
+
 }
 
 void flipsim::applyExternalForces(){

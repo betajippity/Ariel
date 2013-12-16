@@ -55,6 +55,11 @@ vector<objCore::objContainer*>& scene::getLiquidObjects(){
 	return liquidObjects;
 }
 
+void scene::rebuildLiquidLevelSet(vector<fluidCore::particle*>& particles){
+	delete liquidLevelSet;
+	liquidLevelSet = new fluidCore::levelset(particles);
+}
+
 void scene::generateParticles(vector<fluidCore::particle*>& particles, const vec3& dimensions, 
 					   		  const float& density, fluidCore::particlegrid* pgrid){
 
@@ -117,3 +122,12 @@ void scene::addParticle(const vec3& pos, const geomtype& type, const float& thic
 		particles.push_back(p);
 	}
 }
+
+fluidCore::levelset* scene::getSolidLevelSet(){
+	return solidLevelSet;	
+}
+
+fluidCore::levelset* scene::getLiquidLevelSet(){
+	return liquidLevelSet;
+}
+

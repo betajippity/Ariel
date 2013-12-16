@@ -9,6 +9,7 @@
 
 #include "../grid/macgrid.inl"
 #include "../grid/particlegrid.hpp"
+#include "../grid/levelset.hpp"
 #include "../utilities/utilities.h"
 #include "../grid/gridutils.inl"
 #include <omp.h>
@@ -24,10 +25,67 @@ namespace fluidCore {
 //Forward declarations for externed inlineable methods
 extern inline void splatParticlesToMACGrid(particlegrid* sgrid, vector<particle*>& particles,
 										   macgrid& mgrid, const vec3& dimensions);
+extern inline void enforceBoundaryVelocity(macgrid& mgrid, levelset* solidLevelSet, const vec3& dimensions);
+extern inline float checkWall(levelset* solidLevelSet, const int& x, const int& y, const int& z);
 	
 //====================================
 // Function Implementations
 //====================================
+
+float checkWall(levelset* solidLevelSet, const int& x, const int& y, const int& z){
+	float lsvalue = solidLevelSet->getCell(x,y,z);
+	if(lsvalue<0){ //inside wall
+		return 1.0f;
+	}else{
+		return -1.0f;
+	}
+}
+
+void enforceBoundaryVelocity(macgrid& mgrid, levelset* sls, const vec3& dimensions){
+	int x = (int)dimensions.x;
+	int y = (int)dimensions.y;
+	int z = (int)dimensions.z;
+
+	//for every x face
+	for(int i = 0; i < x+1; i++){  
+	  	for(int j = 0; j < y; j++){ 
+	    	for(int k = 0; k < z; k++){
+	    		if(i==0 || i==x){
+	    			mgrid.u_x->setCell(i,j,k, 0.0f);
+	    		}
+				if( i<x && i>0 && checkWall(sls, i, j, k)*checkWall(sls, i-1, j, k) < 0 ) {
+					mgrid.u_x->setCell(i,j,k, 0.0f);
+				}
+	    	}
+	   	}
+	} 
+	//for every y face
+	for(int i = 0; i < x; i++){  
+	  	for(int j = 0; j < y+1; j++){ 
+	    	for(int k = 0; k < z; k++){
+	    		if(j==0 || j==y){
+	    			mgrid.u_y->setCell(i,j,k, 0.0f);
+	    		}
+				if( j<y && j>0 && checkWall(sls, i, j, k)*checkWall(sls, i, j-1, k) < 0 ) {
+					mgrid.u_y->setCell(i,j,k, 0.0f);
+				}
+	    	}
+	   	}
+	} 
+	//for every z face
+	for(int i = 0; i < x; i++){  
+	  	for(int j = 0; j < y; j++){ 
+	    	for(int k = 0; k < z+1; k++){
+	    		if(k==0 || k==z){
+	    			mgrid.u_z->setCell(i,j,k, 0.0f);
+	    		}
+				if( k<z && k>0 && checkWall(sls, i, j, k)*checkWall(sls, i, j, k-1) < 0 ) {
+					mgrid.u_z->setCell(i,j,k, 0.0f);
+				}
+	    	}
+	   	}
+	} 
+}
 
 void splatParticlesToMACGrid(particlegrid* sgrid, vector<particle*>& particles, macgrid& mgrid, 
 							 const vec3& dimensions){

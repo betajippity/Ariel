@@ -35,6 +35,11 @@ class scene {
 		vector<objCore::objContainer*>& getSolidObjects();
 		vector<objCore::objContainer*>& getLiquidObjects();
 
+		fluidCore::levelset* getSolidLevelSet();
+		fluidCore::levelset* getLiquidLevelSet();
+
+		void rebuildLiquidLevelSet(vector<fluidCore::particle*>& particles);
+
 	private:
 
 		void addParticle(const vec3& pos, const geomtype& type, const float& thickness, const float& scale,
