@@ -37,6 +37,8 @@ class flipsim{
 		void computeDensity();
 		void applyExternalForces();
 		void project();
+		void subtractPressureGradient();
+		void extrapolateVelocity();
 
 		bool isCellFluid(const int& x, const int& y, const int& z);
 

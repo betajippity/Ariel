@@ -96,7 +96,7 @@ void flipsim::step(){
 	pgrid->sort(particles);
 	computeDensity();
 	//Add forces
-	cout << "Applying internal forces..." << endl;
+	cout << "Applying external forces..." << endl;
 	applyExternalForces(); 
 	//figure out what cell each particle goes in
 	cout << "Splatting particles to MAC Grid..." << endl;
@@ -107,6 +107,10 @@ void flipsim::step(){
 	//projection step
 	cout << "Running project step..." << endl;
 	project();
+	cout << "Enforcing boundary velocities..." << endl;
+	enforceBoundaryVelocity(mgrid);
+	cout << "Extrapolating velocities..." << endl;
+	extrapolateVelocity();
 }
 
 void flipsim::project(){
@@ -136,7 +140,189 @@ void flipsim::project(){
 	cout << "Running solver..." << endl;
 	solve(mgrid, subcell);
 
-	//TODO: rest of project
+	//subtract pressure gradient
+	cout << "Subtracting pressure gradient..." << endl;
+	subtractPressureGradient();
+}
+
+void flipsim::extrapolateVelocity(){
+	int x = (int)dimensions.x; int y = (int)dimensions.y; int z = (int)dimensions.z;
+
+	floatgrid mark[3] = {floatgrid(), floatgrid(), floatgrid()};
+	floatgrid wallmark[3] = {floatgrid(), floatgrid(), floatgrid()};
+
+	//initalize temp grids with values
+	//for every x face
+	for(int i = 0; i < x+1; i++){ 	
+	  	for(int j = 0; j < y; j++){ 
+	    	for(int k = 0; k < z; k++){
+				mark[0].setCell(i,j,k, (i>0 && mgrid.A->getCell(i-1,j,k)==FLUID) || 
+									   (i<x && mgrid.A->getCell(i,j,k)==FLUID));
+				wallmark[0].setCell(i,j,k, (i<=0 || mgrid.A->getCell(i-1,j,k)==SOLID) && 
+										   (i>=x || mgrid.A->getCell(i,j,k)==SOLID));
+	    	}
+	    }
+	}
+	//for every y face
+	for(int i = 0; i < x; i++){ 	
+	  	for(int j = 0; j < y+1; j++){ 
+	    	for(int k = 0; k < z; k++){
+				mark[1].setCell(i,j,k, (j>0 && mgrid.A->getCell(i,j-1,k)==FLUID) || 
+									   (j<y && mgrid.A->getCell(i,j,k)==FLUID));
+				wallmark[1].setCell(i,j,k, (j<=0 || mgrid.A->getCell(i,j-1,k)==SOLID) && 
+										   (j>=y || mgrid.A->getCell(i,j,k)==SOLID));
+	    	}
+	    }
+	}
+	//for every z face
+	for(int i = 0; i < x; i++){ 	
+	  	for(int j = 0; j < y; j++){ 
+	    	for(int k = 0; k < z+1; k++){
+				mark[2].setCell(i,j,k, (k>0 && mgrid.A->getCell(i,j,k-1)==FLUID) || 
+									   (k<z && mgrid.A->getCell(i,j,k)==FLUID));
+				wallmark[2].setCell(i,j,k, (k<=0 || mgrid.A->getCell(i,j,k-1)==SOLID) && 
+										   (k>=z || mgrid.A->getCell(i,j,k)==SOLID));
+	    	}
+	    }
+	}
+
+	//extrapolate
+	for(int i = 0; i < x+1; i++){ 	
+	  	for(int j = 0; j < y+1; j++){ 
+	    	for(int k = 0; k < z+1; k++){
+				for(int n=0; n<3; n++){
+					if(n!=0 && i>x-1){ continue; };
+					if(n!=1 && j>y-1){ continue; };
+					if(n!=2 && k>z-1){ continue; };
+					if(!mark[n].getCell(i,j,k) && wallmark[n].getCell(i,j,k)){
+						int wsum = 0;
+						float sum = 0.0f;
+						vec3 q[6] = { vec3(i-1,j,k), vec3(i+1,j,k), vec3(i,j-1,k), 
+									  vec3(i,j+1,k), vec3(i,j,k-1), vec3(i,j,k+1) };
+						for(int qk=0; qk<6; qk++){
+							if(q[qk][0]>=0 && q[qk][0]<x+(n==0) && q[qk][1]>=0 && 
+							   q[qk][1]<y+(n==1) && q[qk][2]>=0 && q[qk][2]<z+(n==2) ) {
+								if(mark[n].getCell(q[qk][0],q[qk][1],q[qk][2])){
+									wsum ++;
+									if(n==0){
+										sum += mgrid.u_x->getCell(q[qk][0],q[qk][1],q[qk][2]);
+									}else if(n==1){
+										sum += mgrid.u_y->getCell(q[qk][0],q[qk][1],q[qk][2]);
+									}else if(n==2){
+										sum += mgrid.u_z->getCell(q[qk][0],q[qk][1],q[qk][2]);
+									}
+								}
+							}
+						}
+						if(wsum){
+							if(n==0){
+								mgrid.u_x->setCell(i,j,k,sum/wsum);
+							}else if(n==1){
+								mgrid.u_y->setCell(i,j,k,sum/wsum);
+							}else if(n==2){
+								mgrid.u_z->setCell(i,j,k,sum/wsum);
+							}
+						}
+					}
+				}
+	    	}
+	    }
+	}
+}
+
+void flipsim::subtractPressureGradient(){
+	int x = (int)dimensions.x; int y = (int)dimensions.y; int z = (int)dimensions.z;
+
+	float maxd = glm::max(glm::max(dimensions.x, dimensions.z), dimensions.y);
+	float h = 1.0f/maxd; //cell width
+
+	//for every x face
+	#pragma omp parallel for
+	for(int i = 0; i < x+1; i++){  
+	  	for(int j = 0; j < y; j++){ 
+	    	for(int k = 0; k < z; k++){
+	    		if(i>0 && i<x){
+					float pf = mgrid.P->getCell(i,j,k);
+					float pb = mgrid.P->getCell(i-1,j,k);
+					if(subcell && mgrid.L->getCell(i,j,k) * mgrid.L->getCell(i-1,j,k) < 0.0f){
+						if(mgrid.L->getCell(i,j,k)<0.0f){
+							pf = mgrid.P->getCell(i,j,k);
+						}else{
+							pf = mgrid.L->getCell(i,j,k)/
+								 glm::min(1.0e-3f,mgrid.L->getCell(i-1,j,k))*mgrid.P->getCell(i-1,j,k);
+						}
+						if(mgrid.L->getCell(i-1,j,k)<0.0f){
+							pb = mgrid.P->getCell(i-1,j,k);
+						}else{
+							pb = mgrid.L->getCell(i-1,j,k)/
+								 glm::min(1.0e-6f,mgrid.L->getCell(i,j,k))*mgrid.P->getCell(i,j,k);
+						}				
+					}
+					float xval = mgrid.u_x->getCell(i,j,k);
+					xval -= (pf-pb)/h;
+					mgrid.u_x->setCell(i,j,k,xval);
+				}
+	    	}
+	    }
+	} 
+	//for every y face
+	#pragma omp parallel for
+ 	for(int i = 0; i < x; i++){
+	  	for(int j = 0; j < y+1; j++){
+	    	for(int k = 0; k < z; k++){
+	    		if(j>0 && j<y){
+					float pf = mgrid.P->getCell(i,j,k);
+					float pb = mgrid.P->getCell(i,j-1,k);   
+					if(subcell && mgrid.L->getCell(i,j,k) * mgrid.L->getCell(i,j-1,k) < 0.0f){
+						if(mgrid.L->getCell(i,j,k)<0.0f){
+							pf = mgrid.P->getCell(i,j,k);
+						}else{
+							pf = mgrid.L->getCell(i,j,k)/
+								 glm::min(1.0e-3f,mgrid.L->getCell(i,j-1,k))*mgrid.P->getCell(i,j-1,k);
+						}
+						if(mgrid.L->getCell(i,j-1,k)<0.0f){
+							pb = mgrid.P->getCell(i,j-1,k);
+						}else{
+							pb = mgrid.L->getCell(i,j-1,k)/
+								 glm::min(1.0e-6f,mgrid.L->getCell(i,j,k))*mgrid.P->getCell(i,j,k);
+						}	
+					}
+					float yval = mgrid.u_y->getCell(i,j,k);
+					yval -= (pf-pb)/h;
+					mgrid.u_y->setCell(i,j,k,yval);
+	    		} 		
+	    	} 
+	    }
+	}
+	//for every z face
+	#pragma omp parallel for
+ 	for(int i = 0; i < x; i++){
+	  	for(int j = 0; j < y; j++){
+	    	for(int k = 0; k < z+1; k++){
+	    		if(k>0 && k<z){
+					float pf = mgrid.P->getCell(i,j,k);
+					float pb = mgrid.P->getCell(i,j,k-1);
+					if(subcell && mgrid.L->getCell(i,j,k) * mgrid.L->getCell(i,j,k-1) < 0.0f){
+						if(mgrid.L->getCell(i,j,k)<0.0f){
+							pf = mgrid.P->getCell(i,j,k);
+						}else{
+							pf = mgrid.L->getCell(i,j,k)/
+								 glm::min(1.0e-3f,mgrid.L->getCell(i,j,k-1))*mgrid.P->getCell(i,j,k-1);
+						}
+						if(mgrid.L->getCell(i,j,k-1)<0.0f){
+							pb = mgrid.P->getCell(i,j,k-1);
+						}else{
+							pb = mgrid.L->getCell(i,j,k-1)/
+								 glm::min(1.0e-6f,mgrid.L->getCell(i,j,k))*mgrid.P->getCell(i,j,k);
+						}	
+					}
+					float zval = mgrid.u_z->getCell(i,j,k);
+					zval -= (pf-pb)/h;
+					mgrid.u_z->setCell(i,j,k,zval);
+	    		} 		
+	    	} 
+	    }
+	}
 }
 
 void flipsim::applyExternalForces(){
