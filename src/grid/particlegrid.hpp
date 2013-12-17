@@ -31,6 +31,11 @@ class particlegrid{
 		vector<particle*> getCellNeighbors(vec3 index, vec3 numberOfNeighbors);
 		vector<particle*> getWallNeighbors(vec3 index, vec3 numberOfNeighbors);
 
+		void markCellTypes(vector<particle*>& particles, intgrid* A, float density);
+		float cellSDF(int i, int j, int k, float density, geomtype type);
+
+		void buildSDF(macgrid& mgrid, float density);
+
 	private:
 		void init(const int& x, const int& y, const int& z);
 

@@ -63,8 +63,7 @@ bool viewer::launch(){
                     }
                     sim->step();
                     // while(1){
-                    //     // flip3D::simulateStep();
-                        particles = sim->getParticles();
+                        // particles = sim->getParticles();
                         
                     //     frame++;
                     // }
@@ -98,11 +97,11 @@ void viewer::mainLoop(){
             float maxd = glm::max(glm::max(gridSize.x, gridSize.z), gridSize.y);
 
             for(int j=0; j<psize; j++){
-                if(particles->operator[](j)->type==FLUID){
+                // if(particles->operator[](j)->type==FLUID){
                     vertexData.push_back(particles->operator[](j)->p[0]*maxd);
                     vertexData.push_back(particles->operator[](j)->p[1]*maxd);
                     vertexData.push_back(particles->operator[](j)->p[2]*maxd);
-                }
+                // }
             }
             glDeleteBuffers(1, &data.vboID);
             data.color = vbos[vbokeys["fluid"]].color;

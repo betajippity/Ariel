@@ -14,7 +14,7 @@
 using namespace std;
 using namespace glm;
 
-enum geomtype {SOLID, FLUID};
+enum geomtype {SOLID=2, FLUID=1, AIR=0};
 
 namespace fluidCore {
 //====================================
@@ -32,6 +32,8 @@ struct macgrid{
 
 	floatgrid* D; //divergence 
 	floatgrid* P; //pressure
+	intgrid* A; //cell type
+	floatgrid* L; //internal lightweight SDF for project step
 };
 
 struct particle{
@@ -71,6 +73,8 @@ macgrid createMacgrid(const vec3& dimensions){
 	m.u_z = new floatgrid(0.0f);
 	m.D = new floatgrid(0.0f);
 	m.P = new floatgrid(0.0f);
+	m.A = new intgrid(0);
+	m.L = new floatgrid(1.6f);
 	return m;
 }
 
