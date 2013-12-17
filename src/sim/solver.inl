@@ -37,6 +37,9 @@ extern inline float xRef(intgrid* A, floatgrid* L, floatgrid* X, vec3 f, vec3 p,
 						 int subcell);
 extern inline void op(intgrid* A, floatgrid* X, floatgrid* Y, floatgrid* target, float alpha, 
 					  vec3 dimensions);
+extern inline float product(intgrid* A, floatgrid* X, floatgrid* Y, vec3 dimensions);
+extern inline void applyPreconditioner(floatgrid* Z, floatgrid* R, floatgrid* P, floatgrid* L, intgrid* A, 
+									   vec3 dimensions);
 
 //====================================
 // Function Implementations
@@ -152,6 +155,20 @@ void op(intgrid* A, floatgrid* X, floatgrid* Y, floatgrid* target, float alpha, 
 	}
 }
 
+// ans = x^T * x
+float product(intgrid* A, floatgrid* X, floatgrid* Y, vec3 dimensions){
+	int x = (int)dimensions.x; int y = (int)dimensions.y; int z = (int)dimensions.z;
+	float result = 0.0f;
+
+	for( int gn=0; gn<x*y*z; gn++ ) { 
+		int i=(gn%((x)*(y)))%(z); int j=(gn%((x)*(y)))/(z); int k = gn/((x)*(y)); 
+		if(A->getCell(i,j,k)==FLUID){
+			result += X->getCell(i,j,k) * Y->getCell(i,j,k);
+		}
+	}
+	return result;
+}
+
 //Helper for PCG solver: target = AX
 void computeAx(intgrid* A, floatgrid* L, floatgrid* X, floatgrid* target, vec3 dimensions, int subcell){
 	int x = (int)dimensions.x; int y = (int)dimensions.y; int z = (int)dimensions.z;
@@ -176,14 +193,106 @@ void computeAx(intgrid* A, floatgrid* L, floatgrid* X, floatgrid* target, vec3 d
 	}
 }
 
-//Does what it says
-void solveConjugateGradient(macgrid& mgrid, floatgrid* pc, const int& subcell){
-	floatgrid* r = new floatgrid(0.0f);
-	floatgrid* z = new floatgrid(0.0f);
-	floatgrid* s = new floatgrid(0.0f);
+void applyPreconditioner(floatgrid* Z, floatgrid* R, floatgrid* P, floatgrid* L, intgrid* A, 
+						 vec3 dimensions){
+	int x = (int)dimensions.x; int y = (int)dimensions.y; int z = (int)dimensions.z;
+	floatgrid* Q = new floatgrid(0.0f);
 
-	computeAx(mgrid.A, mgrid.L, mgrid.P, z, mgrid.dimensions, subcell);	// z = apply A(x)
-	op(mgrid.A, mgrid.D, z, r, -1.0f, mgrid.dimensions);                // r = b-Ax
+	// LQ = R
+	for(int i=0; i<x; i++){
+		for(int j=0; j<y; j++){
+			for(int k=0; k<z; k++){
+				if(A->getCell(i,j,k) == FLUID) {
+					float left = ARef(A,i-1,j,k,i,j,k,dimensions)*
+								 PRef(P,i-1,j,k,dimensions)*PRef(Q,i-1,j,k,dimensions);
+					float bottom = ARef(A,i,j-1,k,i,j,k,dimensions)*
+								   PRef(P,i,j-1,k,dimensions)*PRef(Q,i,j-1,k,dimensions);
+					float back = ARef(A,i,j,k-1,i,j,k,dimensions)*
+								 PRef(P,i,j,k-1,dimensions)*PRef(Q,i,j,k-1,dimensions);
+					
+					float t = R->getCell(i,j,k) - left - bottom - back;
+					float qVal = t * P->getCell(i,j,k);
+					Q->setCell(i,j,k,qVal);
+				}
+			}
+		}
+	}
+
+	// L^T Z = Q
+	for(int i=x-1; i>=0; i--){
+		for(int j=y-1; j>=0; j--){
+			for(int k=z-1; k>=0; k--){
+				if(A->getCell(i,j,k) == FLUID){
+					float right = ARef(A,i,j,k,i+1,j,k,dimensions)*
+								  PRef(P,i,j,k,dimensions)*PRef(Z,i+1,j,k,dimensions);
+					float top = ARef(A,i,j,k,i,j+1,k,dimensions)*
+								PRef(P,i,j,k,dimensions)*PRef(Z,i,j+1,k,dimensions);
+					float front = ARef(A,i,j,k,i,j,k+1,dimensions)*
+								  PRef(P,i,j,k,dimensions)*PRef(Z,i,j,k+1,dimensions);
+				
+					float t = Q->getCell(i,j,k) - right - top - front;
+					float zVal = t * P->getCell(i,j,k);
+					Z->setCell(i,j,k,zVal);
+				}
+			}
+		}
+	}
+	delete Q;
+}
+
+//Does what it says
+void solveConjugateGradient(macgrid& mgrid, floatgrid* PC, const int& subcell){
+	int x = (int)mgrid.dimensions.x; int y = (int)mgrid.dimensions.y; int z = (int)mgrid.dimensions.z;
+
+	floatgrid* R = new floatgrid(0.0f);
+	floatgrid* Z = new floatgrid(0.0f);
+	floatgrid* S = new floatgrid(0.0f);
+
+	//note: we're calling pressure "mgrid.P" instead of x
+
+	computeAx(mgrid.A, mgrid.L, mgrid.P, Z, mgrid.dimensions, subcell);	// z = apply A(x)
+	op(mgrid.A, mgrid.D, Z, R, -1.0f, mgrid.dimensions);                // r = b-Ax
+	float error0 = product(mgrid.A, R, R, mgrid.dimensions);			// error0 = product(r,r)
+
+	applyPreconditioner(Z, R, PC, mgrid.L, mgrid.A, mgrid.dimensions);	// z = f(r), aka preconditioner step
+
+	//s = z. TODO: replace with VDB deep copy?
+	for( int i=0; i<x; i++ ){
+		for( int j=0; j<y; j++ ){
+			for( int k=0; k<z; k++ ){
+				S->setCell(i,j,k,Z->getCell(i,j,k));
+			}
+		}
+	}
+
+	float eps = 1.0e-2f * (x*y*z);
+	float a = product(mgrid.A, Z, R, mgrid.dimensions);					// a = product(z,r)
+
+	for( int k=0; k<x*y*z; k++){
+		//Solve current iteration
+		computeAx(mgrid.A, mgrid.L, S, Z, mgrid.dimensions, subcell);	// z = applyA(s)
+		float alpha = a/product(mgrid.A, Z, S, mgrid.dimensions);		// alpha = a/(z . s)
+		op(mgrid.A, mgrid.P, S, mgrid.P, alpha, mgrid.dimensions);		// x = x + alpha*s
+		op(mgrid.A, R, Z, R, -alpha, mgrid.dimensions);					// r = r - alpha*z;
+		float error1 = product(mgrid.A, R, R, mgrid.dimensions);		// error1 = product(r,r)
+        error0 = glm::max(error0, error1);
+        //Output progress
+        float rate = 1.0f - glm::max(0.0f,glm::min(1.0f,(error1-eps)/(error0-eps)));
+        cout << "PCG Iteration " << k+1 << ": " << 100.0f*pow(rate,6) << "%% solved" << endl;
+        if(error1<=eps){
+        	break;
+        }
+        //Prep next iteration
+        applyPreconditioner(Z, R, PC, mgrid.L, mgrid.A, mgrid.dimensions);	// z = f(r)
+        float a2 = product(mgrid.A, Z, R, mgrid.dimensions);				// a2 = product(z,r)
+        float beta = a2/a;													// beta = a2/a
+        op(mgrid.A, Z, S, S, beta, mgrid.dimensions);						// s = z + beta*s
+        a = a2;
+	}
+
+	delete R;
+	delete Z;
+	delete S;
 }
 
 void solve(macgrid& mgrid, const int& subcell){
@@ -199,6 +308,8 @@ void solve(macgrid& mgrid, const int& subcell){
 	//solve conjugate gradient
 	cout << "Solving Conjugate Gradient..." << endl;
 	solveConjugateGradient(mgrid, preconditioner, subcell);
+
+	cout << "Cleaning Up..." << endl;
 
 	delete preconditioner;
 }
