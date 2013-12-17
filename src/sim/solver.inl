@@ -22,24 +22,21 @@ namespace fluidCore {
 // Struct and Function Declarations
 //====================================
 
-//TODO: const some things man!
 //Forward declarations for externed inlineable methods
 extern inline void solve(macgrid& mgrid, const int& subcell);
-extern inline void flipDivergence(macgrid& mgrid);
-extern inline void buildPreconditioner(floatgrid* pc, macgrid& mgrid, const int& subcell);
-extern inline float fluidRef(intgrid* A, int i, int j, int k, int qi, int qj, int qk, vec3 dimensions);
-extern inline float preconditionerRef(floatgrid* p, int i, int j, int k, vec3 dimensions);
-extern inline float fluidDiag(intgrid* A, floatgrid* L, int i, int j, int k, vec3 dimensions, int subcell);
-extern inline void solveConjugateGradient(macgrid& mgrid, floatgrid* pc, const int& subcell);
-extern inline void computeAx(intgrid* A, floatgrid* L, floatgrid* X, floatgrid* target, 
-							 vec3 dimensions, int subcell);
-extern inline float xRef(intgrid* A, floatgrid* L, floatgrid* X, vec3 f, vec3 p, vec3 dimensions, 
-						 int subcell);
-extern inline void op(intgrid* A, floatgrid* X, floatgrid* Y, floatgrid* target, float alpha, 
-					  vec3 dimensions);
-extern inline float product(intgrid* A, floatgrid* X, floatgrid* Y, vec3 dimensions);
-extern inline void applyPreconditioner(floatgrid* Z, floatgrid* R, floatgrid* P, floatgrid* L, intgrid* A, 
-									   vec3 dimensions);
+inline void flipDivergence(macgrid& mgrid);
+inline void buildPreconditioner(floatgrid* pc, macgrid& mgrid, int subcell);
+inline float fluidRef(intgrid* A, int i, int j, int k, int qi, int qj, int qk, vec3 dimensions);
+inline float preconditionerRef(floatgrid* p, int i, int j, int k, vec3 dimensions);
+inline float fluidDiag(intgrid* A, floatgrid* L, int i, int j, int k, vec3 dimensions, int subcell);
+inline void solveConjugateGradient(macgrid& mgrid, floatgrid* pc, int subcell);
+inline void computeAx(intgrid* A, floatgrid* L, floatgrid* X, floatgrid* target, vec3 dimensions, 
+					  int subcell);
+inline float xRef(intgrid* A, floatgrid* L, floatgrid* X, vec3 f, vec3 p, vec3 dimensions, int subcell);
+inline void op(intgrid* A, floatgrid* X, floatgrid* Y, floatgrid* target, float alpha, vec3 dimensions);
+inline float product(intgrid* A, floatgrid* X, floatgrid* Y, vec3 dimensions);
+inline void applyPreconditioner(floatgrid* Z, floatgrid* R, floatgrid* P, floatgrid* L, intgrid* A, 
+								vec3 dimensions);
 
 //====================================
 // Function Implementations
@@ -99,7 +96,7 @@ float ADiag(intgrid* A, floatgrid* L, int i, int j, int k, vec3 dimensions, int 
 }
 
 //Does what it says
-void buildPreconditioner(floatgrid* pc, macgrid& mgrid, const int& subcell){
+void buildPreconditioner(floatgrid* pc, macgrid& mgrid, int subcell){
 	int x = (int)mgrid.dimensions.x; int y = (int)mgrid.dimensions.y; int z = (int)mgrid.dimensions.z;
 	float a = 0.25f;
 	//for now run single threaded, multithreaded seems to cause VDB write issues here
@@ -241,7 +238,7 @@ void applyPreconditioner(floatgrid* Z, floatgrid* R, floatgrid* P, floatgrid* L,
 }
 
 //Does what it says
-void solveConjugateGradient(macgrid& mgrid, floatgrid* PC, const int& subcell){
+void solveConjugateGradient(macgrid& mgrid, floatgrid* PC, int subcell){
 	int x = (int)mgrid.dimensions.x; int y = (int)mgrid.dimensions.y; int z = (int)mgrid.dimensions.z;
 
 	floatgrid* R = new floatgrid(0.0f);
@@ -310,10 +307,8 @@ void solve(macgrid& mgrid, const int& subcell){
 	solveConjugateGradient(mgrid, preconditioner, subcell);
 
 	cout << "Cleaning Up..." << endl;
-
 	delete preconditioner;
 }
-
 }
 
 #endif
