@@ -70,7 +70,7 @@ vector<particle*> particlegrid::getWallNeighbors(vec3 index, vec3 numberOfNeighb
 	return neighbors;
 }
 
-float particlegrid::levelset(int i, int j, int k, float density, geomtype type){
+float particlegrid::cellSDF(int i, int j, int k, float density, geomtype type){
 	float accm = 0.0f;
 	int cellindex = grid->getCell(i,j,k);
 	for( int a=0; a<cells[cellindex].size(); a++ ) { 
@@ -82,6 +82,20 @@ float particlegrid::levelset(int i, int j, int k, float density, geomtype type){
 	}
 	float n0 = 1.0f/(density*density*density);
 	return 0.2f*n0-accm;
+}
+
+void particlegrid::buildSDF(macgrid& mgrid, float density){
+	int x = dimensions.x; int y = dimensions.y; int z = dimensions.z;
+	mgrid.L->clear();
+	// #pragma omp parallel for
+	for(int i = 0; i < x; i++){
+		for(int j = 0; j < y; j++){
+			for(int k = 0; k < z; k++){
+				mgrid.L->setCell(i, j, k, cellSDF(i, j, k, density, FLUID));
+			}
+		}
+	}
+	mgrid.L->getVDBGrid()->prune(0);
 }
 
 void particlegrid::markCellTypes(vector<particle*>& particles, intgrid* A, float density){
@@ -99,7 +113,7 @@ void particlegrid::markCellTypes(vector<particle*>& particles, intgrid* A, float
 				}
 
 				if( A->getCell(i,j,k) != SOLID ){
-					bool isfluid = levelset(i, j, k, density, FLUID) < 0.0 ;
+					bool isfluid = cellSDF(i, j, k, density, FLUID) < 0.0 ;
 					if(isfluid){
 						A->setCell(i,j,k, FLUID);
 					}else{

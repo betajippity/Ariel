@@ -62,15 +62,29 @@ void flipsim::init(){
 		delete p;
 	}
 	particles.clear();
-	cout << "Maxdensity: " << max_density << endl;
 
-	//Generate particles
+	//Generate particles and sort
 	scene->generateParticles(particles, dimensions, density, pgrid);
-
-	//Sort particles to grid cells and remove fluid particles that are inside walls
 	pgrid->sort(particles);
 	pgrid->markCellTypes(particles, mgrid.A, density);
 
+	//Remove fluid particles that are stuck in walls
+	for(vector<particle *>::iterator iter=particles.begin(); iter!=particles.end();) {
+		particle &p = **iter;
+		if(p.type == SOLID){
+			iter++;
+			continue;
+		}
+		int i = glm::min(dimensions.x-1,glm::max(0.0f,p.p.x*dimensions.x));
+		int j = glm::min(dimensions.y-1,glm::max(0.0f,p.p.y*dimensions.y));
+		int k = glm::min(dimensions.z-1,glm::max(0.0f,p.p.z*dimensions.z));
+		if( mgrid.A->getCell(i,j,k) == SOLID ) {
+			delete *iter;
+			iter = particles.erase(iter);
+		} else {
+			iter ++;
+		}
+	}
 }
 
 void flipsim::step(){
@@ -86,49 +100,41 @@ void flipsim::step(){
 	applyExternalForces(); 
 	//figure out what cell each particle goes in
 	cout << "Splatting particles to MAC Grid..." << endl;
-	splatParticlesToMACGrid(pgrid, particles, mgrid, dimensions);
-	//build liquid level set
-	cout << "Building liquid level set..." << endl;
-	scene->rebuildLiquidLevelSet(particles);
-
-	scene->getLiquidLevelSet()->writeVDBGridToFile("test.vdb");
-
-
+	splatParticlesToMACGrid(pgrid, particles, mgrid);
 	//set solid-liquid interface velocities to zero
 	cout << "Enforcing boundary velocities..." << endl;
-	enforceBoundaryVelocity(mgrid, scene->getSolidLevelSet(), dimensions);
+	enforceBoundaryVelocity(mgrid);
 	//projection step
-	// cout << "Running project step..." << endl;
-	// project();
+	cout << "Running project step..." << endl;
+	project();
 }
 
 void flipsim::project(){
-	int x = (int)dimensions.x;
-	int y = (int)dimensions.y;
-	int z = (int)dimensions.z;
+	int x = (int)dimensions.x; int y = (int)dimensions.y; int z = (int)dimensions.z;
 
 	float maxd = glm::max(glm::max(dimensions.x, dimensions.z), dimensions.y);
 	float h = 1.0f/maxd; //cell width
 
 	cout << "Computing divergence..." << endl;
 	//compute divergence per cell
-	//for now run single threaded, multithreaded seems to cause VDB write issues here
 	// #pragma omp parallel for
 	for(int i = 0; i < x; i++){
 		for(int j = 0; j < y; j++){
 			for(int k = 0; k < z; k++){
-				if(isCellFluid(i,j,k)==true){ //actually probably don't need a fluid check
-					float divergence = (mgrid.u_x->getCell(i+1, j, k) - mgrid.u_x->getCell(i, j, k) + 
-									    mgrid.u_y->getCell(i, j+1, k) - mgrid.u_y->getCell(i, j, k) +
-									    mgrid.u_z->getCell(i, j, k+1) - mgrid.u_z->getCell(i, j, k)) / h;
-					mgrid.D->setCell(i,j,k,divergence);
-				}
+				float divergence = (mgrid.u_x->getCell(i+1, j, k) - mgrid.u_x->getCell(i, j, k) + 
+								    mgrid.u_y->getCell(i, j+1, k) - mgrid.u_y->getCell(i, j, k) +
+								    mgrid.u_z->getCell(i, j, k+1) - mgrid.u_z->getCell(i, j, k)) / h;
+				mgrid.D->setCell(i,j,k,divergence);
 			}
 		}
 	}
 
+	cout << "Building liquid SDF..." << endl;
+	//compute internal level set for liquid surface
+	pgrid->buildSDF(mgrid, density);
+
 	cout << "Running solver..." << endl;
-	solve(scene->getLiquidLevelSet(), scene->getSolidLevelSet(), mgrid, dimensions, subcell);
+	solve(mgrid, subcell);
 
 	//TODO: rest of project
 }

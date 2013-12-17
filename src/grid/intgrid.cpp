@@ -38,11 +38,13 @@ void intgrid::setCell(const int& x, const int& y, const int& z, const int& value
 
 	openvdb::Int32Grid::Accessor accessor = grid->getAccessor();
 
-	if(epsilonCheck(length(value), 0.0f)==true){
-		accessor.setValueOff(coord, value);
-	}else{
-		accessor.setValue(coord, value);
-	}
+	accessor.setValue(coord, value);
+	
+	// if(epsilonCheck(length(value), 0.0f)==true){
+	// 	accessor.setValueOff(coord, value);
+	// }else{
+	// 	accessor.setValue(coord, value);
+	// }
 }
 
 openvdb::Int32Grid::Ptr& intgrid::getVDBGrid(){

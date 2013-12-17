@@ -83,7 +83,7 @@ void scene::generateParticles(vector<fluidCore::particle*>& particles, const vec
 			}
 		}
 	}
-	cout << "Fluid particles: " << particles.size() << endl;
+	// cout << "Fluid particles: " << particles.size() << endl;
 
     w = 1.0f/maxdimension;
     for( int i=0; i < dimensions.x; i++ ) {
@@ -96,7 +96,7 @@ void scene::generateParticles(vector<fluidCore::particle*>& particles, const vec
             }
         }
     }
-    cout << "Solid+Fluid particles: " << particles.size() << endl;
+    // cout << "Solid+Fluid particles: " << particles.size() << endl;
 }
 
 void scene::addParticle(const vec3& pos, const geomtype& type, const float& thickness, const float& scale,

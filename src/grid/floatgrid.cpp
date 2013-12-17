@@ -48,11 +48,13 @@ void floatgrid::setCell(const int& x, const int& y, const int& z, const float& v
 
 	openvdb::FloatGrid::Accessor accessor = grid->getAccessor();
 
-	if(epsilonCheck(length(value), 0.0f)==true){
-		accessor.setValueOff(coord, value);
-	}else{
-		accessor.setValue(coord, value);
-	}
+	accessor.setValueOn(coord, value);
+	
+	// if(epsilonCheck(length(value), 0.0f)==true){
+	// 	accessor.setValueOff(coord, value);
+	// }else{
+	// 	accessor.setValueOn(coord, value);
+	// }
 }
 
 float floatgrid::getInterpolatedCell(const vec3& index){
@@ -76,4 +78,8 @@ void floatgrid::writeVDBGridToFile(string filename){
     grids.push_back(grid);
     file.write(grids);
     file.close();
+}
+
+void floatgrid::clear(){
+	grid->clear();
 }

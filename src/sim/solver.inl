@@ -23,25 +23,23 @@ namespace fluidCore {
 //====================================
 
 //Forward declarations for externed inlineable methods
-extern inline void solve(levelset* fls, levelset* sls, macgrid& mgrid, const vec3& dimensions, 
-						 const int& subcell);
-extern inline void flipDivergence(macgrid& mgrid, const vec3& dimensions);
-extern inline void buildPreconditioner(floatgrid* pc, levelset* L, levelset* S, const vec3& dimensions, 
-									   const int& subcell);
-extern inline float fluidRef(levelset* L, int i, int j, int k, int qi, int qj, int qk, vec3 dimensions);
+extern inline void solve(macgrid& mgrid, const int& subcell);
+extern inline void flipDivergence(macgrid& mgrid);
+extern inline void buildPreconditioner(floatgrid* pc, macgrid& mgrid, const int& subcell);
+extern inline float fluidRef(intgrid* A, int i, int j, int k, int qi, int qj, int qk, vec3 dimensions);
 extern inline float preconditionerRef(floatgrid* p, int i, int j, int k, vec3 dimensions);
-extern inline float fluidDiag(levelset* L, levelset* S, int i, int j, int k, vec3 dimensions, int subcell);
+extern inline float fluidDiag(intgrid* A, floatgrid* L, int i, int j, int k, vec3 dimensions, int subcell);
 //====================================
 // Function Implementations
 //====================================
 
 //Helper for preconditioner builder
-float fluidRef(levelset* L, int i, int j, int k, int qi, int qj, int qk, vec3 dimensions){
+float fluidRef(intgrid* A, int i, int j, int k, int qi, int qj, int qk, vec3 dimensions){
 	int x = (int)dimensions.x; int y = (int)dimensions.y; int z = (int)dimensions.z;
-	if( i<0 || i>x-1 || j<0 || j>y-1 || k<0 || k>z-1 || L->getCell(i,j,k)>=0.0f ){ //if not liquid
+	if( i<0 || i>x-1 || j<0 || j>y-1 || k<0 || k>z-1 || A->getCell(i,j,k)!=FLUID ){ //if not liquid
 		return 0.0;
 	} 
-	if( qi<0 || qi>x-1 || qj<0 || qj>y-1 || qk<0 || qk>z-1 || L->getCell(i,j,k)>=0.0f ){ //if not liquid
+	if( qi<0 || qi>x-1 || qj<0 || qj>y-1 || qk<0 || qk>z-1 || A->getCell(qi,qj,qk)!=FLUID ){ //if not liquid
 		return 0.0;
 	} 
 	return -1.0;	
@@ -50,63 +48,63 @@ float fluidRef(levelset* L, int i, int j, int k, int qi, int qj, int qk, vec3 di
 //Helper for preconditioner builder
 float preconditionerRef(floatgrid* p, int i, int j, int k, vec3 dimensions){
 	int x = (int)dimensions.x; int y = (int)dimensions.y; int z = (int)dimensions.z;
-	if( i<0 || i>x-1 || j<0 || j>y-1 || k<0 || k>z-1 || p->getCell(i,j,k)>=0.0f ){ //if not liquid
+	if( i<0 || i>x-1 || j<0 || j>y-1 || k<0 || k>z-1 || p->getCell(i,j,k)!=FLUID ){ //if not liquid
 		return 0.0f;
 	} 
 	return p->getCell(i,j,k);
 }
 
 //Helper for preconditioner builder
-float fluidDiag(levelset* L, levelset* S, int i, int j, int k, vec3 dimensions, int subcell){
+float fluidDiag(intgrid* A, floatgrid* L, int i, int j, int k, vec3 dimensions, int subcell){
 	int x = (int)dimensions.x; int y = (int)dimensions.y; int z = (int)dimensions.z;
-	float diag = 6.0f;
-	if( L->getCell(i,j,k) >= 0.0f ){ //if not liquid
-		return diag;
-	}
-	vec3 q[] = { vec3(i-1,j,k), vec3(i+1,j,k), vec3(i,j-1,k), 
-				 vec3(i,j+1,k), vec3(i,j,k-1), vec3(i,j,k+1) };
-	for(int m=0; m<6; m++){
+	float diag = 6.0;
+	if( A->getCell(i,j,k) != FLUID ) return diag;
+	int q[][3] = { {i-1,j,k}, {i+1,j,k}, {i,j-1,k}, {i,j+1,k}, {i,j,k-1}, {i,j,k+1} };
+	for( int m=0; m<6; m++ ) {
 		int qi = q[m][0];
 		int qj = q[m][1];
 		int qk = q[m][2];
-		if( qi<0 || qi>x-1 || qj<0 || qj>y-1 || qk<0 || qk>z-1 || S->getCell(i,j,k)<0.0f ){ //if in wall
-			diag -= 1.0f;
-			cout << "a " << diag << endl;
-		}else if(L->getCell(i,j,k) >= 0.0f && subcell){ //if not liquid aka if air
+		if( qi<0 || qi>x-1 || qj<0 || qj>y-1 || qk<0 || qk>z-1 || A->getCell(qi,qj,qk)==SOLID ){
+			diag -= 1.0;
+		}
+		else if( A->getCell(qi,qj,qk)==AIR && subcell ) {
 			diag -= L->getCell(qi,qj,qk)/glm::min(1.0e-6f,L->getCell(i,j,k));
-			cout << "b " << diag << endl;
 		}
 	}
-	cout << diag << endl;
+	
 	return diag;
 }
 
-void buildPreconditioner(floatgrid* pc, levelset* L, levelset* S, const vec3& dimensions, 
-						 const int& subcell){
-	int x = (int)dimensions.x; int y = (int)dimensions.y; int z = (int)dimensions.z;
+void buildPreconditioner(floatgrid* pc, macgrid& mgrid, const int& subcell){
+	int x = (int)mgrid.dimensions.x; int y = (int)mgrid.dimensions.y; int z = (int)mgrid.dimensions.z;
 	float a = 0.25f;
 	//for now run single threaded, multithreaded seems to cause VDB write issues here
 	// #pragma omp parallel for
 	for( int gn=0; gn<x*y*z; gn++ ) { 
 		int i=(gn%((x)*(y)))%(z); int j=(gn%((x)*(y)))/(z); int k = gn/((x)*(y)); 
+		if(mgrid.A->getCell(i,j,k)==FLUID){			//If fluid
 
-		if(L->getCell(i,j,k)<0.0f){			//If fluid
-			float left = fluidRef(L,i-1,j,k,i,j,k,dimensions)*preconditionerRef(pc,i-1,j,k,dimensions);
-			float bottom = fluidRef(L,i,j-1,k,i,j,k,dimensions)*preconditionerRef(pc,i,j-1,k,dimensions);
-			float back = fluidRef(L,i,j,k-1,i,j,k,dimensions)*preconditionerRef(pc,i,j,k-1,dimensions);
-			float diag = fluidDiag(L,S,i,j,k,dimensions, subcell);
-			double e = diag - (left*left) - (bottom*bottom) - (back*back);
-			if( e < a*diag ){
-				e = diag;
+			float left = fluidRef(mgrid.A,i-1,j,k,i,j,k,mgrid.dimensions)*
+						 preconditionerRef(pc,i-1,j,k,mgrid.dimensions);
+			float bottom = fluidRef(mgrid.A,i,j-1,k,i,j,k,mgrid.dimensions)*
+						   preconditionerRef(pc,i,j-1,k,mgrid.dimensions);
+			float back = fluidRef(mgrid.A,i,j,k-1,i,j,k,mgrid.dimensions)*
+						 preconditionerRef(pc,i,j,k-1,mgrid.dimensions);
+			float diag = fluidDiag(mgrid.A, mgrid.L,i,j,k,mgrid.dimensions,subcell);
+			float e = diag - (left*left) - (bottom*bottom) - (back*back);
+			if(diag>0){
+				if( e < a*diag ){
+					e = diag;
+				}
+				pc->setCell(i,j,k, 1.0f/sqrt(e));
 			}
-			pc->setCell(i,j,k, 1.0f/sqrt(e));
 		}
 	}
 }
 
-void flipDivergence(macgrid& mgrid, const vec3& dimensions){
-	int x = (int)dimensions.x; int y = (int)dimensions.y; int z = (int)dimensions.z;
-	#pragma omp parallel for
+void flipDivergence(macgrid& mgrid){
+	int x = (int)mgrid.dimensions.x; int y = (int)mgrid.dimensions.y; int z = (int)mgrid.dimensions.z;
+	// #pragma omp parallel for
 	for( int gn=0; gn<x*y*z; gn++ ) { 
 		int i=(gn%((x)*(y)))%(z); int j=(gn%((x)*(y)))/(z); int k = gn/((x)*(y)); 
 		float flippedD = -mgrid.D->getCell(i,j,k);
@@ -114,15 +112,15 @@ void flipDivergence(macgrid& mgrid, const vec3& dimensions){
 	}
 }
 
-void solve(levelset* fls, levelset* sls, macgrid& mgrid, const vec3& dimensions, const int& subcell){
+void solve(macgrid& mgrid, const int& subcell){
 	//flip divergence
 	cout << "Flipping divergence..." << endl;
-	flipDivergence(mgrid, dimensions);
+	flipDivergence(mgrid);
 
 	//build preconditioner
 	cout << "Building preconditioner matrix..." << endl;
 	floatgrid* preconditioner = new floatgrid(0.0f);
-	buildPreconditioner(preconditioner, fls, sls, dimensions, subcell);
+	buildPreconditioner(preconditioner, mgrid, subcell);
 
 	delete preconditioner;
 }

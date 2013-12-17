@@ -42,6 +42,8 @@ class floatgrid{
 
 		void writeVDBGridToFile(string filename);
 
+		void clear();
+
 	protected:
 		openvdb::FloatGrid::Ptr grid;
 

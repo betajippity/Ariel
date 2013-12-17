@@ -61,9 +61,8 @@ bool viewer::launch(){
                         particles = sim->getParticles();
                         siminitialized = true;
                     }
-                    // sim->step();
+                    sim->step();
                     // while(1){
-                    //     // flip3D::simulateStep();
                         // particles = sim->getParticles();
                         
                     //     frame++;
