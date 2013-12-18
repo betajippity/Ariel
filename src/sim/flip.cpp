@@ -16,12 +16,14 @@ flipsim::flipsim(const vec3& maxres, sceneCore::scene* s, const float& density){
 	dimensions = maxres;	
 	pgrid = new particlegrid(maxres);
 	mgrid = createMacgrid(maxres);
+	mgrid_previous = createMacgrid(maxres);
 	max_density = 0.0f;
 	this->density = density;
 	scene = s;
 	timestep = 0;
 	stepsize = 0.005f;
 	subcell = 1;
+	picflipratio = .95f;
 }
 
 flipsim::~flipsim(){
@@ -101,6 +103,12 @@ void flipsim::step(){
 	//figure out what cell each particle goes in
 	cout << "Splatting particles to MAC Grid..." << endl;
 	splatParticlesToMACGrid(pgrid, particles, mgrid);
+	//Mark cell types
+	cout << "Marking cells..." << endl;
+	pgrid->markCellTypes(particles, mgrid.A, density);
+	//Save current grid as previous grid for later use
+	cout << "Saving grid..." << endl;
+	storePreviousGrid();
 	//set solid-liquid interface velocities to zero
 	cout << "Enforcing boundary velocities..." << endl;
 	enforceBoundaryVelocity(mgrid);
@@ -111,6 +119,96 @@ void flipsim::step(){
 	enforceBoundaryVelocity(mgrid);
 	cout << "Extrapolating velocities..." << endl;
 	extrapolateVelocity();
+	cout << "Subtracting grids..." << endl;
+	subtractPreviousGrid();
+	cout << "Solving PIC/FLIP..." << endl;
+	solvePicFlip();
+}
+
+void flipsim::solvePicFlip(){
+	int particleCount = particles.size();
+
+	//store copy of current velocities for later
+	#pragma omp parallel for
+	for(int i=0; i<particleCount; i++){
+		particles[i]->t = particles[i]->u;
+	}
+
+	splatMACGridToParticles(particles, mgrid_previous);
+
+	//set FLIP velocity
+	#pragma omp parallel for
+	for(int i=0; i<particleCount; i++){
+		particles[i]->t = particles[i]->u + particles[i]->t;
+	}
+
+	//set PIC velocity
+	splatMACGridToParticles(particles, mgrid);
+
+	//combine PIC and FLIP
+	#pragma omp parallel for
+	for(int i=0; i<particleCount; i++){
+		particles[i]->u = (1.0f-picflipratio)*particles[i]->u + picflipratio*particles[i]->t;
+	}
+}
+
+void flipsim::storePreviousGrid(){
+	int x = (int)dimensions.x; int y = (int)dimensions.y; int z = (int)dimensions.z;
+	//for every x face
+	for(int i = 0; i < x+1; i++){ 	
+	  	for(int j = 0; j < y; j++){ 
+	    	for(int k = 0; k < z; k++){
+	    		mgrid_previous.u_x->setCell(i,j,k,mgrid.u_x->getCell(i,j,k));
+	    	}
+	    }
+	}
+	//for every y face
+	for(int i = 0; i < x; i++){ 	
+	  	for(int j = 0; j < y+1; j++){ 
+	    	for(int k = 0; k < z; k++){
+	    		mgrid_previous.u_y->setCell(i,j,k,mgrid.u_y->getCell(i,j,k));
+	    	}
+	    }
+	}
+	//for every z face
+	for(int i = 0; i < x; i++){ 	
+	  	for(int j = 0; j < y; j++){ 
+	    	for(int k = 0; k < z+1; k++){
+	    		mgrid_previous.u_z->setCell(i,j,k,mgrid.u_z->getCell(i,j,k));
+	    	}
+	    }
+	}
+}
+
+void flipsim::subtractPreviousGrid(){
+	int x = (int)dimensions.x; int y = (int)dimensions.y; int z = (int)dimensions.z;
+	//for every x face
+	for(int i = 0; i < x+1; i++){ 	
+	  	for(int j = 0; j < y; j++){ 
+	    	for(int k = 0; k < z; k++){
+	    		float subx = mgrid.u_x->getCell(i,j,k) - mgrid_previous.u_x->getCell(i,j,k);
+	    		mgrid_previous.u_x->setCell(i,j,k,subx);
+	    	}
+	    }
+	}
+	//for every y face
+	for(int i = 0; i < x; i++){ 	
+	  	for(int j = 0; j < y+1; j++){ 
+	    	for(int k = 0; k < z; k++){
+	    		float suby = mgrid.u_y->getCell(i,j,k) - mgrid_previous.u_y->getCell(i,j,k);
+	    		mgrid_previous.u_y->setCell(i,j,k,suby);
+	    	}
+	    }
+	}
+	//for every z face
+	for(int i = 0; i < x; i++){ 	
+	  	for(int j = 0; j < y; j++){ 
+	    	for(int k = 0; k < z+1; k++){
+	    		float subz = mgrid.u_z->getCell(i,j,k) - mgrid_previous.u_z->getCell(i,j,k);
+	    		mgrid_previous.u_z->setCell(i,j,k,subz);
+	    	}
+	    }
+	}
 }
 
 void flipsim::project(){

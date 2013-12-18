@@ -43,6 +43,7 @@ struct particle{
 	float density;
 	float mass;
 	int type;
+	vec3 t;
 };
 
 //Forward declarations for externed inlineable methods

@@ -25,8 +25,10 @@ namespace fluidCore {
 //Forward declarations for externed inlineable methods
 extern inline void splatParticlesToMACGrid(particlegrid* sgrid, vector<particle*>& particles,
 										   macgrid& mgrid);
+extern inline void splatMACGridToParticles(vector<particle*>& particles, macgrid& mgrid);
 extern inline void enforceBoundaryVelocity(macgrid& mgrid);
-extern inline float checkWall(intgrid* A, const int& x, const int& y, const int& z);
+inline float checkWall(intgrid* A, const int& x, const int& y, const int& z);
+inline float interpolate(floatgrid* q, vec3 p, vec3 n);
 	
 //====================================
 // Function Implementations
@@ -87,6 +89,37 @@ void enforceBoundaryVelocity(macgrid& mgrid){
 	    	}
 	   	}
 	} 
+}
+
+float interpolate(floatgrid* q, vec3 p, vec3 n){
+	float x = glm::max(0.0f,glm::min(n.x,p.x));
+	float y = glm::max(0.0f,glm::min(n.y,p.y));
+	float z = glm::max(0.0f,glm::min(n.z,p.z));
+	int i = glm::min(x,n.x-2);
+	int j = glm::min(y,n.y-2);
+	int k = glm::min(z,n.z-2);
+	float term1 = ((i+1-x)*q->getCell(i,j,k)+(x-i)*q->getCell(i+1,j,k))*(j+1-y);
+	float term2 = ((i+1-x)*q->getCell(i,j+1,k)+(x-i)*q->getCell(i+1,j+1,k))*(y-j);
+	float term3 = ((i+1-x)*q->getCell(i,j,k+1)+(x-i)*q->getCell(i+1,j,k+1))*(j+1-y);
+	float term4 = ((i+1-x)*q->getCell(i,j+1,k+1)+(x-i)*q->getCell(i+1,j+1,k+1))*(y-j);
+	return (k+1-z)*(term1 + term2) + (z-k)*(term3 + term4);
+}
+
+vec3 interpolateVelocity(vec3 p, macgrid& mgrid){
+	int x = (int)mgrid.dimensions.x; int y = (int)mgrid.dimensions.y; int z = (int)mgrid.dimensions.z;
+	vec3 u;
+	u.x = interpolate(mgrid.u_x, vec3(x*p.x, y*p.y-0.5f, z*p.z-0.5f), vec3(x+1, y, z));
+	u.y = interpolate(mgrid.u_y, vec3(x*p.x-0.5f, y*p.y, z*p.z-0.5f), vec3(x, y+1, z));
+	u.z = interpolate(mgrid.u_z, vec3(x*p.x-0.5f, y*p.y-0.5f, z*p.z), vec3(x, y, z+1));
+	return u;
+}
+
+void splatMACGridToParticles(vector<particle*>& particles, macgrid& mgrid){
+	int particleCount = particles.size();
+	#pragma omp parallel for
+	for(int i=0; i<particleCount; i++){
+		particles[i]->u = interpolateVelocity(particles[i]->p, mgrid);
+	}
 }
 
 void splatParticlesToMACGrid(particlegrid* sgrid, vector<particle*>& particles, macgrid& mgrid){

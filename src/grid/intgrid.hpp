@@ -38,7 +38,7 @@ class intgrid{
 
 	private:
 		openvdb::Int32Grid::Ptr grid;
-
+		
 };
 }
 

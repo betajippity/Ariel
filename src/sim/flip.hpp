@@ -36,20 +36,24 @@ class flipsim{
 	private:
 		void computeDensity();
 		void applyExternalForces();
-		void project();
+		void subtractPreviousGrid();
+		void storePreviousGrid();
 		void subtractPressureGradient();
 		void extrapolateVelocity();
-
+		void project();
+		void solvePicFlip();
 		bool isCellFluid(const int& x, const int& y, const int& z);
 
 		vec3 dimensions;
 		vector<particle*> particles;
 		macgrid mgrid;
+		macgrid mgrid_previous;
 		particlegrid* pgrid;
 
 		int subcell;
 		float density;
 		float max_density;
+		float picflipratio;
 
 		sceneCore::scene* scene;
 
