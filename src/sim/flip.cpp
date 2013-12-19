@@ -7,6 +7,7 @@
 #include "flip.hpp"
 #include "../math/kernels.inl"
 #include "particlegridoperations.inl"
+#include "particleresampler.inl"
 #include "solver.inl"
 #include <omp.h>
 
@@ -94,38 +95,23 @@ void flipsim::step(){
 	timestep++;	
 	cout << "=========================" << endl;
 	cout << "Step: " << timestep << endl;
-	//Compute density
-	// cout << "Sorting/computing density..." << endl;
 	pgrid->sort(particles);
 	computeDensity();
-	//Add forces
-	// cout << "Applying external forces..." << endl;
 	applyExternalForces(); 
-	//figure out what cell each particle goes in
-	// cout << "Splatting particles to MAC Grid..." << endl;
 	splatParticlesToMACGrid(pgrid, particles, mgrid);
-	//Mark cell types
-	// cout << "Marking cells..." << endl;
 	pgrid->markCellTypes(particles, mgrid.A, density);
-	//Save current grid as previous grid for later use
-	// cout << "Saving grid..." << endl;
 	storePreviousGrid();
-	//set solid-liquid interface velocities to zero
-	// cout << "Enforcing boundary velocities..." << endl;
 	enforceBoundaryVelocity(mgrid);
-	//projection step
-	// cout << "Running project step..." << endl;
 	project();
-	// cout << "Enforcing boundary velocities..." << endl;
 	enforceBoundaryVelocity(mgrid);
-	// cout << "Extrapolating velocities..." << endl;
 	extrapolateVelocity();
-	// cout << "Subtracting grids..." << endl;
 	subtractPreviousGrid();
-	// cout << "Solving PIC/FLIP..." << endl;
 	solvePicFlip();
-	// cout << "Advecting particles..." << endl;
 	advectParticles();
+
+	float maxd = glm::max(glm::max(dimensions.x, dimensions.z), dimensions.y);
+	float h = density/maxd;
+	resampleParticles(pgrid, particles, stepsize, h, dimensions);
 }
 
 void flipsim::advectParticles(){
@@ -134,20 +120,17 @@ void flipsim::advectParticles(){
 	int particleCount = particles.size();
 
 	//update positions
-	// #pragma omp parallel for
+	#pragma omp parallel for
 	for(int i=0; i<particles.size(); i++){
 		if(particles[i]->type == FLUID){
 			vec3 velocity = interpolateVelocity(particles[i]->p, mgrid);
 			particles[i]->p += stepsize*velocity;
-			// printf("%f %f %f %f\n",stepsize ,velocity[0], velocity[1], velocity[2]);
 		}
 	}
-	// exit(1);
 	pgrid->sort(particles); //sort
 
-	return;
-
 	//apply constraints for outer walls of sim
+	#pragma omp parallel for
 	for(int p0=0; p0<particles.size(); p0++){
 		float r = 1.0f/maxd;
 		if( particles[p0]->type == FLUID ) {
@@ -228,7 +211,7 @@ void flipsim::solvePicFlip(){
 	splatMACGridToParticles(particles, mgrid);
 
 	//combine PIC and FLIP
-	// #pragma omp parallel for
+	#pragma omp parallel for
 	for(int i=0; i<particleCount; i++){
 		particles[i]->u = (1.0f-picflipratio)*particles[i]->u + picflipratio*particles[i]->t;
 	}
@@ -237,6 +220,7 @@ void flipsim::solvePicFlip(){
 void flipsim::storePreviousGrid(){
 	int x = (int)dimensions.x; int y = (int)dimensions.y; int z = (int)dimensions.z;
 	//for every x face
+	#pragma omp parallel for
 	for(int i = 0; i < x+1; i++){ 	
 	  	for(int j = 0; j < y; j++){ 
 	    	for(int k = 0; k < z; k++){
@@ -245,6 +229,7 @@ void flipsim::storePreviousGrid(){
 	    }
 	}
 	//for every y face
+	#pragma omp parallel for
 	for(int i = 0; i < x; i++){ 	
 	  	for(int j = 0; j < y+1; j++){ 
 	    	for(int k = 0; k < z; k++){
@@ -253,6 +238,7 @@ void flipsim::storePreviousGrid(){
 	    }
 	}
 	//for every z face
+	#pragma omp parallel for
 	for(int i = 0; i < x; i++){ 	
 	  	for(int j = 0; j < y; j++){ 
 	    	for(int k = 0; k < z+1; k++){
@@ -265,6 +251,7 @@ void flipsim::storePreviousGrid(){
 void flipsim::subtractPreviousGrid(){
 	int x = (int)dimensions.x; int y = (int)dimensions.y; int z = (int)dimensions.z;
 	//for every x face
+	#pragma omp parallel for
 	for(int i = 0; i < x+1; i++){ 	
 	  	for(int j = 0; j < y; j++){ 
 	    	for(int k = 0; k < z; k++){
@@ -274,6 +261,7 @@ void flipsim::subtractPreviousGrid(){
 	    }
 	}
 	//for every y face
+	#pragma omp parallel for
 	for(int i = 0; i < x; i++){ 	
 	  	for(int j = 0; j < y+1; j++){ 
 	    	for(int k = 0; k < z; k++){
@@ -283,6 +271,7 @@ void flipsim::subtractPreviousGrid(){
 	    }
 	}
 	//for every z face
+	#pragma omp parallel for
 	for(int i = 0; i < x; i++){ 	
 	  	for(int j = 0; j < y; j++){ 
 	    	for(int k = 0; k < z+1; k++){
@@ -301,7 +290,7 @@ void flipsim::project(){
 
 	// cout << "Computing divergence..." << endl;
 	//compute divergence per cell
-	// #pragma omp parallel for
+	#pragma omp parallel for
 	for(int i = 0; i < x; i++){
 		for(int j = 0; j < y; j++){
 			for(int k = 0; k < z; k++){
@@ -333,6 +322,7 @@ void flipsim::extrapolateVelocity(){
 
 	//initalize temp grids with values
 	//for every x face
+	#pragma omp parallel for
 	for(int i = 0; i < x+1; i++){ 	
 	  	for(int j = 0; j < y; j++){ 
 	    	for(int k = 0; k < z; k++){
@@ -344,6 +334,7 @@ void flipsim::extrapolateVelocity(){
 	    }
 	}
 	//for every y face
+	#pragma omp parallel for
 	for(int i = 0; i < x; i++){ 	
 	  	for(int j = 0; j < y+1; j++){ 
 	    	for(int k = 0; k < z; k++){
@@ -355,6 +346,7 @@ void flipsim::extrapolateVelocity(){
 	    }
 	}
 	//for every z face
+	#pragma omp parallel for
 	for(int i = 0; i < x; i++){ 	
 	  	for(int j = 0; j < y; j++){ 
 	    	for(int k = 0; k < z+1; k++){
@@ -421,7 +413,7 @@ void flipsim::subtractPressureGradient(){
 	float h = 1.0f/maxd; //cell width
 
 	//for every x face
-	// #pragma omp parallel for
+	#pragma omp parallel for
 	for(int i = 0; i < x+1; i++){  
 	  	for(int j = 0; j < y; j++){ 
 	    	for(int k = 0; k < z; k++){
@@ -450,7 +442,7 @@ void flipsim::subtractPressureGradient(){
 	    }
 	} 
 	//for every y face
-	// #pragma omp parallel for
+	#pragma omp parallel for
  	for(int i = 0; i < x; i++){
 	  	for(int j = 0; j < y+1; j++){
 	    	for(int k = 0; k < z; k++){
@@ -479,7 +471,7 @@ void flipsim::subtractPressureGradient(){
 	    }
 	}
 	//for every z face
-	// #pragma omp parallel for
+	#pragma omp parallel for
  	for(int i = 0; i < x; i++){
 	  	for(int j = 0; j < y; j++){
 	    	for(int k = 0; k < z+1; k++){
@@ -512,6 +504,7 @@ void flipsim::subtractPressureGradient(){
 void flipsim::applyExternalForces(){
 	vec3 gravity = vec3(0,-9.8f, 0); //for now, just gravity
 	int particlecount = particles.size();
+	#pragma omp parallel for
 	for(int i=0; i<particlecount; i++){
 		particles[i]->u += gravity*stepsize;
 	}

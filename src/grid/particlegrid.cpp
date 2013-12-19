@@ -87,7 +87,8 @@ float particlegrid::cellSDF(int i, int j, int k, float density, geomtype type){
 void particlegrid::buildSDF(macgrid& mgrid, float density){
 	int x = dimensions.x; int y = dimensions.y; int z = dimensions.z;
 	mgrid.L->clear();
-	// #pragma omp parallel for
+	
+	#pragma omp parallel for
 	for(int i = 0; i < x; i++){
 		for(int j = 0; j < y; j++){
 			for(int k = 0; k < z; k++){
@@ -100,6 +101,8 @@ void particlegrid::buildSDF(macgrid& mgrid, float density){
 
 void particlegrid::markCellTypes(vector<particle*>& particles, intgrid* A, float density){
 	int x = dimensions.x; int y = dimensions.y; int z = dimensions.z;
+
+	#pragma omp parallel for
 	for(int i = 0; i < x; i++){
 		for(int j = 0; j < y; j++){
 			for(int k = 0; k < z; k++){

@@ -129,8 +129,7 @@ void splatParticlesToMACGrid(particlegrid* sgrid, vector<particle*>& particles, 
 
 	int x = (int)mgrid.dimensions.x; int y = (int)mgrid.dimensions.y; int z = (int)mgrid.dimensions.z;
 	
-	// openmp disabled here since VDB likes to throw an assert fail here when multithreaded for some reason
-	// #pragma omp parallel for
+	#pragma omp parallel for
 	for(int i = 0; i < x+1; i++){
 		for(int j = 0; j < y+1; j++){
 			for(int k = 0; k < z+1; k++){

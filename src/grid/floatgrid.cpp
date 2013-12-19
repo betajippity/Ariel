@@ -44,17 +44,14 @@ void floatgrid::setCell(const vec3& index, const float& value){
 }
 
 void floatgrid::setCell(const int& x, const int& y, const int& z, const float& value){
-	openvdb::Coord coord = openvdb::Coord(x,y,z);
+	#pragma omp critical
+	{
+		openvdb::Coord coord = openvdb::Coord(x,y,z);
 
-	openvdb::FloatGrid::Accessor accessor = grid->getAccessor();
+		openvdb::FloatGrid::Accessor accessor = grid->getAccessor();
 
-	accessor.setValueOn(coord, value);
-	
-	// if(epsilonCheck(length(value), 0.0f)==true){
-	// 	accessor.setValueOff(coord, value);
-	// }else{
-	// 	accessor.setValueOn(coord, value);
-	// }
+		accessor.setValue(coord, value);
+	}
 }
 
 float floatgrid::getInterpolatedCell(const vec3& index){

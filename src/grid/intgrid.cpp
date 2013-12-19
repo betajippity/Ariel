@@ -34,17 +34,14 @@ void intgrid::setCell(const vec3& index, const int& value){
 }
 
 void intgrid::setCell(const int& x, const int& y, const int& z, const int& value){
-	openvdb::Coord coord = openvdb::Coord(x,y,z);
+	#pragma omp critical
+	{
+		openvdb::Coord coord = openvdb::Coord(x,y,z);
 
-	openvdb::Int32Grid::Accessor accessor = grid->getAccessor();
+		openvdb::Int32Grid::Accessor accessor = grid->getAccessor();
 
-	accessor.setValue(coord, value);
-	
-	// if(epsilonCheck(length(value), 0.0f)==true){
-	// 	accessor.setValueOff(coord, value);
-	// }else{
-	// 	accessor.setValue(coord, value);
-	// }
+		accessor.setValue(coord, value);
+	}
 }
 
 openvdb::Int32Grid::Ptr& intgrid::getVDBGrid(){
