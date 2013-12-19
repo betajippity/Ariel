@@ -27,6 +27,7 @@ extern inline void splatParticlesToMACGrid(particlegrid* sgrid, vector<particle*
 										   macgrid& mgrid);
 extern inline void splatMACGridToParticles(vector<particle*>& particles, macgrid& mgrid);
 extern inline void enforceBoundaryVelocity(macgrid& mgrid);
+extern inline vec3 interpolateVelocity(vec3 p, macgrid& mgrid);
 inline float checkWall(intgrid* A, const int& x, const int& y, const int& z);
 inline float interpolate(floatgrid* q, vec3 p, vec3 n);
 	

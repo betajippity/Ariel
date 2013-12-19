@@ -42,6 +42,7 @@ class flipsim{
 		void extrapolateVelocity();
 		void project();
 		void solvePicFlip();
+		void advectParticles();
 		bool isCellFluid(const int& x, const int& y, const int& z);
 
 		vec3 dimensions;
@@ -53,6 +54,7 @@ class flipsim{
 		int subcell;
 		float density;
 		float max_density;
+		float densitythreshold;
 		float picflipratio;
 
 		sceneCore::scene* scene;

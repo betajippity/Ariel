@@ -276,7 +276,9 @@ void solveConjugateGradient(macgrid& mgrid, floatgrid* PC, int subcell){
         //Output progress
         float rate = 1.0f - glm::max(0.0f,glm::min(1.0f,(error1-eps)/(error0-eps)));
         cout << "PCG Iteration " << k+1 << ": " << 100.0f*pow(rate,6) << "%% solved" << endl;
+        // cout << error1 << " " << error0 << " " << eps << endl;
         if(error1<=eps){
+        	// cout << "break" << endl;
         	break;
         }
         //Prep next iteration
@@ -294,19 +296,19 @@ void solveConjugateGradient(macgrid& mgrid, floatgrid* PC, int subcell){
 
 void solve(macgrid& mgrid, const int& subcell){
 	//flip divergence
-	cout << "Flipping divergence..." << endl;
+	// cout << "Flipping divergence..." << endl;
 	flipGrid(mgrid.D, mgrid.dimensions);
 
 	//build preconditioner
-	cout << "Building preconditioner matrix..." << endl;
+	// cout << "Building preconditioner matrix..." << endl;
 	floatgrid* preconditioner = new floatgrid(0.0f);
 	buildPreconditioner(preconditioner, mgrid, subcell);
 
 	//solve conjugate gradient
-	cout << "Solving Conjugate Gradient..." << endl;
+	// cout << "Solving Conjugate Gradient..." << endl;
 	solveConjugateGradient(mgrid, preconditioner, subcell);
 
-	cout << "Cleaning Up..." << endl;
+	// cout << "Cleaning Up..." << endl;
 	delete preconditioner;
 }
 }

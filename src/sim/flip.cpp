@@ -24,6 +24,7 @@ flipsim::flipsim(const vec3& maxres, sceneCore::scene* s, const float& density){
 	stepsize = 0.005f;
 	subcell = 1;
 	picflipratio = .95f;
+	densitythreshold = 0.04f;
 }
 
 flipsim::~flipsim(){
@@ -71,7 +72,7 @@ void flipsim::init(){
 	pgrid->markCellTypes(particles, mgrid.A, density);
 
 	//Remove fluid particles that are stuck in walls
-	for(vector<particle *>::iterator iter=particles.begin(); iter!=particles.end();) {
+	for(vector<particle *>::iterator iter=particles.begin(); iter!=particles.end();) { //NONCHECKED
 		particle &p = **iter;
 		if(p.type == SOLID){
 			iter++;
@@ -90,39 +91,120 @@ void flipsim::init(){
 }
 
 void flipsim::step(){
-	timestep++;
+	timestep++;	
 	cout << "=========================" << endl;
 	cout << "Step: " << timestep << endl;
 	//Compute density
-	cout << "Sorting/computing density..." << endl;
+	// cout << "Sorting/computing density..." << endl;
 	pgrid->sort(particles);
 	computeDensity();
 	//Add forces
-	cout << "Applying external forces..." << endl;
+	// cout << "Applying external forces..." << endl;
 	applyExternalForces(); 
 	//figure out what cell each particle goes in
-	cout << "Splatting particles to MAC Grid..." << endl;
+	// cout << "Splatting particles to MAC Grid..." << endl;
 	splatParticlesToMACGrid(pgrid, particles, mgrid);
 	//Mark cell types
-	cout << "Marking cells..." << endl;
+	// cout << "Marking cells..." << endl;
 	pgrid->markCellTypes(particles, mgrid.A, density);
 	//Save current grid as previous grid for later use
-	cout << "Saving grid..." << endl;
+	// cout << "Saving grid..." << endl;
 	storePreviousGrid();
 	//set solid-liquid interface velocities to zero
-	cout << "Enforcing boundary velocities..." << endl;
+	// cout << "Enforcing boundary velocities..." << endl;
 	enforceBoundaryVelocity(mgrid);
 	//projection step
-	cout << "Running project step..." << endl;
+	// cout << "Running project step..." << endl;
 	project();
-	cout << "Enforcing boundary velocities..." << endl;
+	// cout << "Enforcing boundary velocities..." << endl;
 	enforceBoundaryVelocity(mgrid);
-	cout << "Extrapolating velocities..." << endl;
+	// cout << "Extrapolating velocities..." << endl;
 	extrapolateVelocity();
-	cout << "Subtracting grids..." << endl;
+	// cout << "Subtracting grids..." << endl;
 	subtractPreviousGrid();
-	cout << "Solving PIC/FLIP..." << endl;
+	// cout << "Solving PIC/FLIP..." << endl;
 	solvePicFlip();
+	// cout << "Advecting particles..." << endl;
+	advectParticles();
+}
+
+void flipsim::advectParticles(){
+	int x = (int)dimensions.x; int y = (int)dimensions.y; int z = (int)dimensions.z;
+	float maxd = glm::max(glm::max(dimensions.x, dimensions.z), dimensions.y);
+	int particleCount = particles.size();
+
+	//update positions
+	// #pragma omp parallel for
+	for(int i=0; i<particles.size(); i++){
+		if(particles[i]->type == FLUID){
+			vec3 velocity = interpolateVelocity(particles[i]->p, mgrid);
+			particles[i]->p += stepsize*velocity;
+			// printf("%f %f %f %f\n",stepsize ,velocity[0], velocity[1], velocity[2]);
+		}
+	}
+	// exit(1);
+	pgrid->sort(particles); //sort
+
+	return;
+
+	//apply constraints for outer walls of sim
+	for(int p0=0; p0<particles.size(); p0++){
+		float r = 1.0f/maxd;
+		if( particles[p0]->type == FLUID ) {
+			particles[p0]->p = glm::max(vec3(r),glm::min(vec3(1.0f-r),particles[p0]->p));
+		}
+
+		particle *p = particles[p0];
+		if(p->type == FLUID){
+			int i = glm::min(x-1.0f,glm::max(0.0f,p->p.x*x));
+			int j = glm::min(y-1.0f,glm::max(0.0f,p->p.y*y));
+			int k = glm::min(z-1.0f,glm::max(0.0f,p->p.z*z));			
+			vector<particle*> neighbors = pgrid->getCellNeighbors(vec3(i,j,k), vec3(1));
+			for(int p1=0; p1<neighbors.size(); p1++){
+				particle* np = neighbors[p1];
+				float re = 1.5f*density/maxd;
+				if(np->type == SOLID){
+					float dist = length(p->p-np->p); //check this later
+					if(dist<re){
+						vec3 normal = np->n;
+						if(length(normal)<0.0000001f && dist){
+							normal = normalize(p->p - np->p);
+						}
+						p->p += (re-dist)*normal;
+						p->u -= dot(p->u, normal) * normal;
+					}
+				}
+			}
+		}
+	}
+
+	//remove stuck particles
+	vector<int> repositionList;
+	for(int n=0; n<particles.size(); n++){
+		particle& p = *particles[n];
+		bool reposition = false;
+		if(p.type==FLUID){
+			int i = (int)glm::min(x-1.0f,glm::max(0.0f,p.p.x*x));
+			int j = (int)glm::min(y-1.0f,glm::max(0.0f,p.p.y*y));
+			int k = (int)glm::min(z-1.0f,glm::max(0.0f,p.p.z*z));
+
+			//reposition particles stuck on walls
+			if(mgrid.A->getCell(i,j,k)){
+				reposition = true;
+			}
+
+			i = glm::min(x-3.0f, glm::max(2.0f, p.p.x*x));
+        	j = glm::min(y-3.0f, glm::max(2.0f, p.p.y*y));
+       		k = glm::min(z-3.0f, glm::max(2.0f, p.p.z*z));
+       		if(p.density < densitythreshold && mgrid.A->getCell(i,glm::max(0,j-1),k) == SOLID ||
+       										   mgrid.A->getCell(i,glm::min(y-1,j+1),k) == SOLID){
+       			reposition = true;
+       		}
+		}
+		if(reposition==true){
+			repositionList.push_back(n);
+		}
+	}
 }
 
 void flipsim::solvePicFlip(){
@@ -146,7 +228,7 @@ void flipsim::solvePicFlip(){
 	splatMACGridToParticles(particles, mgrid);
 
 	//combine PIC and FLIP
-	#pragma omp parallel for
+	// #pragma omp parallel for
 	for(int i=0; i<particleCount; i++){
 		particles[i]->u = (1.0f-picflipratio)*particles[i]->u + picflipratio*particles[i]->t;
 	}
@@ -217,7 +299,7 @@ void flipsim::project(){
 	float maxd = glm::max(glm::max(dimensions.x, dimensions.z), dimensions.y);
 	float h = 1.0f/maxd; //cell width
 
-	cout << "Computing divergence..." << endl;
+	// cout << "Computing divergence..." << endl;
 	//compute divergence per cell
 	// #pragma omp parallel for
 	for(int i = 0; i < x; i++){
@@ -231,23 +313,23 @@ void flipsim::project(){
 		}
 	}
 
-	cout << "Building liquid SDF..." << endl;
+	// cout << "Building liquid SDF..." << endl;
 	//compute internal level set for liquid surface
 	pgrid->buildSDF(mgrid, density);
-
-	cout << "Running solver..." << endl;
+	
+	// cout << "Running solver..." << endl;
 	solve(mgrid, subcell);
 
 	//subtract pressure gradient
-	cout << "Subtracting pressure gradient..." << endl;
+	// cout << "Subtracting pressure gradient..." << endl;
 	subtractPressureGradient();
 }
 
 void flipsim::extrapolateVelocity(){
 	int x = (int)dimensions.x; int y = (int)dimensions.y; int z = (int)dimensions.z;
 
-	floatgrid mark[3] = {floatgrid(), floatgrid(), floatgrid()};
-	floatgrid wallmark[3] = {floatgrid(), floatgrid(), floatgrid()};
+	intgrid mark[3] = {intgrid(0), intgrid(0), intgrid(0)};
+	intgrid wallmark[3] = {intgrid(0), intgrid(0), intgrid(0)};
 
 	//initalize temp grids with values
 	//for every x face
@@ -302,12 +384,16 @@ void flipsim::extrapolateVelocity(){
 							   q[qk][1]<y+(n==1) && q[qk][2]>=0 && q[qk][2]<z+(n==2) ) {
 								if(mark[n].getCell(q[qk][0],q[qk][1],q[qk][2])){
 									wsum ++;
+									float t;
 									if(n==0){
 										sum += mgrid.u_x->getCell(q[qk][0],q[qk][1],q[qk][2]);
+										t = mgrid.u_x->getCell(q[qk][0],q[qk][1],q[qk][2]);
 									}else if(n==1){
 										sum += mgrid.u_y->getCell(q[qk][0],q[qk][1],q[qk][2]);
+										t = mgrid.u_y->getCell(q[qk][0],q[qk][1],q[qk][2]);
 									}else if(n==2){
 										sum += mgrid.u_z->getCell(q[qk][0],q[qk][1],q[qk][2]);
+										t = mgrid.u_z->getCell(q[qk][0],q[qk][1],q[qk][2]);
 									}
 								}
 							}
@@ -335,7 +421,7 @@ void flipsim::subtractPressureGradient(){
 	float h = 1.0f/maxd; //cell width
 
 	//for every x face
-	#pragma omp parallel for
+	// #pragma omp parallel for
 	for(int i = 0; i < x+1; i++){  
 	  	for(int j = 0; j < y; j++){ 
 	    	for(int k = 0; k < z; k++){
@@ -364,7 +450,7 @@ void flipsim::subtractPressureGradient(){
 	    }
 	} 
 	//for every y face
-	#pragma omp parallel for
+	// #pragma omp parallel for
  	for(int i = 0; i < x; i++){
 	  	for(int j = 0; j < y+1; j++){
 	    	for(int k = 0; k < z; k++){
@@ -393,7 +479,7 @@ void flipsim::subtractPressureGradient(){
 	    }
 	}
 	//for every z face
-	#pragma omp parallel for
+	// #pragma omp parallel for
  	for(int i = 0; i < x; i++){
 	  	for(int j = 0; j < y; j++){
 	    	for(int k = 0; k < z+1; k++){
@@ -427,7 +513,7 @@ void flipsim::applyExternalForces(){
 	vec3 gravity = vec3(0,-9.8f, 0); //for now, just gravity
 	int particlecount = particles.size();
 	for(int i=0; i<particlecount; i++){
-		particles[i]->u = gravity*stepsize;
+		particles[i]->u += gravity*stepsize;
 	}
 }
 

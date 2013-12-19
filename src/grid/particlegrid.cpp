@@ -104,14 +104,12 @@ void particlegrid::markCellTypes(vector<particle*>& particles, intgrid* A, float
 		for(int j = 0; j < y; j++){
 			for(int k = 0; k < z; k++){
 				A->setCell(i,j,k, AIR);
-
 				int cellindex = grid->getCell(i,j,k);
 				for( int a=0; a<cells[cellindex].size(); a++ ) { 
 					if( cells[cellindex][a]->type == SOLID ) {
 						A->setCell(i,j,k, SOLID);
 					}
 				}
-
 				if( A->getCell(i,j,k) != SOLID ){
 					bool isfluid = cellSDF(i, j, k, density, FLUID) < 0.0 ;
 					if(isfluid){
@@ -137,10 +135,12 @@ void particlegrid::sort(vector<particle*>& particles){
 	// cout << particlecount << endl;
 	for(int i=0; i<particlecount; i++){
 		particle* p = particles[i];
+
 		vec3 pos = p->p;
 		pos.x = (int)fmax(0, fmin((int)dimensions.x-1, int(dimensions.x*pos.x)));
 		pos.y = (int)fmax(0, fmin((int)dimensions.y-1, int(dimensions.y*pos.y)));
 		pos.z = (int)fmax(0, fmin((int)dimensions.z-1, int(dimensions.z*pos.z)));
+
 		int cellindex = grid->getCell(pos);
 	
 		if(cellindex>=0){ //if grid has value here, a cell already exists for it
