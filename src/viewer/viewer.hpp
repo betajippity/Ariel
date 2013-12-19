@@ -29,9 +29,9 @@ namespace viewerCore {
 
 struct vboData{
 	GLuint vboID;
+	GLuint cboID;
 	int size;
 	vbotype type;
-	vec3 color;
 	string key;
 };
 
@@ -77,8 +77,9 @@ class viewer{
 		void updateInputs();
 
 		//VBO stuff
-		vboData createVBO(vboData data, float* vertices, int numberOfVertices, vbotype type, string key);
-		vboData createVBOFromObj(objCore::objContainer* o, vec3 color, string key);
+		vboData createVBO(vboData data, float* vertices, int vertexcount, float* colors,
+                          int colorcount, vbotype type, string key);
+		vboData createVBOFromObj(objCore::objContainer* o, vec4 color, string key);
 
 		//Interface callbacks
 		static void errorCallback(int error, const char* description);		

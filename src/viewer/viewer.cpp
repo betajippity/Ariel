@@ -91,7 +91,8 @@ void viewer::mainLoop(){
 
         if(siminitialized){
             vboData data;
-            vector<float> vertexData;
+            vector<vec3> vertexData;
+            vector<vec4> colorData;
             int psize = particles->size();
 
             vec3 gridSize = sim->getDimensions();
@@ -99,16 +100,18 @@ void viewer::mainLoop(){
 
             for(int j=0; j<psize; j++){
                 if(particles->operator[](j)->type==FLUID){
-                    vertexData.push_back(particles->operator[](j)->p[0]*maxd);
-                    vertexData.push_back(particles->operator[](j)->p[1]*maxd);
-                    vertexData.push_back(particles->operator[](j)->p[2]*maxd);
+                    vertexData.push_back(particles->operator[](j)->p*maxd);
+                    float c = length(particles->operator[](j)->u)/3.0f;
+                    colorData.push_back(vec4(c,c,1,0));
                 }
             }
             glDeleteBuffers(1, &data.vboID);
-            data.color = vbos[vbokeys["fluid"]].color;
+            glDeleteBuffers(1, &data.cboID);
             string key = "fluid";
-            data = createVBO(data, (float*)&vertexData[0], vertexData.size(), POINTS, key);
+            data = createVBO(data, (float*)&vertexData[0], vertexData.size()*3, (float*)&colorData[0], 
+                             colorData.size()*4, POINTS, key);
             vertexData.clear();
+            colorData.clear();
             vbos[vbokeys["fluid"]] = data;
         }
 
@@ -131,9 +134,11 @@ void viewer::mainLoop(){
                 glPushMatrix();
                 glBindBuffer(GL_ARRAY_BUFFER, vbos[i].vboID);
                 glVertexPointer(3, GL_FLOAT, 0, NULL);
+                glBindBuffer(GL_ARRAY_BUFFER, vbos[i].cboID);
+                glColorPointer(4, GL_FLOAT, 0, NULL);
                 glEnableClientState(GL_VERTEX_ARRAY);
+                glEnableClientState(GL_COLOR_ARRAY);
                 glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-                glColor4f(vbos[i].color.x, vbos[i].color.y, vbos[i].color.z, 0.5f);
 
                 vec3 res = sim->getDimensions();
                 glTranslatef(-res.x/2, 0, -res.y/2);
@@ -157,6 +162,7 @@ void viewer::mainLoop(){
                     glDrawArrays(GL_POINTS, 0, vbos[i].size/3);
                 }
                 glDisableClientState(GL_VERTEX_ARRAY);
+                glDisableClientState(GL_COLOR_ARRAY);
                 glPopMatrix();
             }
 
@@ -279,19 +285,19 @@ bool viewer::init(){
     //dummy buffer for particles
     vboData data;
     vector<float> vertexData;
-    data.color = vec3(0,0,1);
+    vector<float> colorData;
     string key = "fluid";
-    data = createVBO(data, (float*)&vertexData[0], vertexData.size(), POINTS, key);
+    data = createVBO(data, (float*)&vertexData[0], vertexData.size(), (float*)&colorData[0], 
+                     colorData.size(), POINTS, key);
     vertexData.clear();
     vbos.push_back(data);
     vbokeys["fluid"] = vbos.size()-1;
 
     //buffer for sim bounding box
-    data.color = vec3(.2,.2,.2);
     key = "boundingbox";
     vec3 res = sim->getDimensions();
     geomCore::cube cubebuilder;
-    data = createVBOFromObj(cubebuilder.tesselate(vec3(0), res), data.color, key);
+    data = createVBOFromObj(cubebuilder.tesselate(vec3(0), res), vec4(.2,.2,.2,0), key);
     vbos.push_back(data);
     vbokeys["boundingbox"] = vbos.size()-1;
 
@@ -299,9 +305,8 @@ bool viewer::init(){
     vector<objCore::objContainer*> solids = sim->getScene()->getSolidObjects();
     for(int i=0; i<numberOfSolidObjects; i++){
         vboData objectdata;
-        objectdata.color = vec3(1, 0, 0);
         key = "solid"+utilityCore::convertIntToString(i);
-        objectdata = createVBOFromObj(solids[i], objectdata.color, key);
+        objectdata = createVBOFromObj(solids[i], vec4(1,0,0,.75), key);
         vbos.push_back(objectdata);
         vbokeys[key] = vbos.size()-1;
     }
@@ -310,9 +315,8 @@ bool viewer::init(){
     vector<objCore::objContainer*> liquids = sim->getScene()->getLiquidObjects();
     for(int i=0; i<numberOfLiquidObjects; i++){
         vboData objectdata;
-        objectdata.color = vec3(0, 0, 1);
         key = "liquid"+utilityCore::convertIntToString(i);
-        objectdata = createVBOFromObj(liquids[i], objectdata.color, key);
+        objectdata = createVBOFromObj(liquids[i], vec4(0,0,1,.75), key);
         vbos.push_back(objectdata);
         vbokeys[key] = vbos.size()-1;
     }
@@ -320,20 +324,28 @@ bool viewer::init(){
     return true;
 }
 
-vboData viewer::createVBO(vboData data, float* vertices, int numberOfVertices, vbotype type, string key){
-    data.size = numberOfVertices;
+vboData viewer::createVBO(vboData data, float* vertices, int vertexcount, float* colors,
+                          int colorcount, vbotype type, string key){
+    data.size = vertexcount;
     glGenBuffers(1, &data.vboID);
+    glGenBuffers(1, &data.cboID);
+    //bind vbo
     glBindBuffer(GL_ARRAY_BUFFER, data.vboID);
     glBufferData(GL_ARRAY_BUFFER, data.size*sizeof(float), vertices, GL_STATIC_DRAW);
+    //bind cbo
+    glBindBuffer(GL_ARRAY_BUFFER, data.cboID);
+    glBufferData(GL_ARRAY_BUFFER, colorcount*sizeof(float), colors, GL_STATIC_DRAW);
+
     data.type = type;
     data.key = key;
     return data;
 }
 
-vboData viewer::createVBOFromObj(objCore::objContainer* o, vec3 color, string key){
+vboData viewer::createVBOFromObj(objCore::objContainer* o, vec4 color, string key){
     objCore::obj* oData = o->getObj();
     vboData data;
     vector<vec3> vertexData;
+    vector<vec4> colorData;
 
     vec4 fcheck = oData->polyVertexIndices[0];
     if(int(fcheck[3])-1>0){
@@ -351,10 +363,13 @@ vboData viewer::createVBOFromObj(objCore::objContainer* o, vec3 color, string ke
             vertexData.push_back(p2);
             vertexData.push_back(p3);      
         }
-        data.color = color;
-        data = createVBO(data, (float*)&vertexData[0], vertexData.size()*3, QUADS, key);
-        vertexData.clear();
-        return data;
+        int vcount = vertexData.size();
+        for(int i=0; i<vcount; i++){
+            colorData.push_back(color);
+        }
+        data = createVBO(data, (float*)&vertexData[0], vertexData.size()*3, (float*)&colorData[0],
+                         colorData.size()*4, QUADS, key);
+        colorData.clear();
     }else{
         for(int i=0; i<oData->numberOfPolys; i++){
             vec4 f = oData->polyVertexIndices[i];
@@ -371,11 +386,16 @@ vboData viewer::createVBOFromObj(objCore::objContainer* o, vec3 color, string ke
                 vertexData.push_back(p2); 
             }    
         }
-        data.color = color;
-        data = createVBO(data, (float*)&vertexData[0], vertexData.size()*3, TRIANGLES, key);
-        vertexData.clear();
-        return data;
+        int vcount = vertexData.size();
+        for(int i=0; i<vcount; i++){
+            colorData.push_back(color);
+        }
+        data = createVBO(data, (float*)&vertexData[0], vertexData.size()*3, (float*)&colorData[0],
+                         colorData.size()*4, TRIANGLES, key); 
+        colorData.clear();
     }
+    vertexData.clear();
+    return data;
 }
 
 //====================================
