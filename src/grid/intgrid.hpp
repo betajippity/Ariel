@@ -22,7 +22,7 @@ namespace fluidCore {
 class intgrid{
 	public:
 		//Initializers
-		intgrid(const int& background);
+		intgrid(const gridtype& type, const vec3& dimensions, const int& background);
 		~intgrid();
 
 		//Cell accessors and setters and whatever
@@ -32,13 +32,19 @@ class intgrid{
 		void setCell(const vec3& index, const int& value);
 		void setCell(const int& x, const int& y, const int& z, const int& value);
 
-		openvdb::Int32Grid::Ptr& getVDBGrid();
+		gridtype getGridType();
 
+		openvdb::Int32Grid::Ptr& getVDBGrid();
 		void writeVDBGridToFile(string filename);
 
 	private:
-		openvdb::Int32Grid::Ptr grid;
-		
+		openvdb::Int32Grid::Ptr vdbgrid;
+		int*** rawgrid;
+
+		gridtype type;
+		vec3 dimensions;
+
+		int background;
 };
 }
 

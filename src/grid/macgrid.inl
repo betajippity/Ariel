@@ -34,6 +34,8 @@ struct macgrid{
 	floatgrid* P; //pressure
 	intgrid* A; //cell type
 	floatgrid* L; //internal lightweight SDF for project step
+
+	gridtype type;
 };
 
 struct particle{
@@ -50,7 +52,7 @@ struct particle{
 //Forward declarations for externed inlineable methods
 extern inline particle createParticle(const vec3& position, const vec3& velocity, const vec3& normal, 
 									  const float& density);
-extern inline macgrid createMacgrid(const vec3& dimensions);
+extern inline macgrid createMacgrid(const vec3& dimensions, const gridtype& type);
 extern inline void clearMacgrid(macgrid& m);
 
 //====================================
@@ -67,7 +69,7 @@ particle createParticle(const vec3& position, const vec3& velocity, const vec3& 
 	return p;
 }
 
-macgrid createMacgrid(const vec3& dimensions){
+macgrid createMacgrid(const vec3& dimensions, const gridtype& type){
 	macgrid m;
 	m.dimensions = dimensions;
 	m.u_x = new floatgrid(0.0f);
@@ -75,8 +77,9 @@ macgrid createMacgrid(const vec3& dimensions){
 	m.u_z = new floatgrid(0.0f);
 	m.D = new floatgrid(0.0f);
 	m.P = new floatgrid(0.0f);
-	m.A = new intgrid(0);
+	m.A = new intgrid(type, dimensions, 0);
 	m.L = new floatgrid(1.6f);
+	m.type = type;
 	return m;
 }
 

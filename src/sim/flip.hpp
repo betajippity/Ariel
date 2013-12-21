@@ -23,7 +23,7 @@ namespace fluidCore {
 
 class flipsim{
 	public:
-		flipsim(const vec3& maxres, sceneCore::scene* scene, const float& density);
+		flipsim(const vec3& maxres, sceneCore::scene* scene, const float& density, const gridtype& type);
 		~flipsim();
 
 		void init();
@@ -62,6 +62,7 @@ class flipsim{
 		int timestep;
 		float stepsize;
 
+		gridtype type;
 };
 }
 
