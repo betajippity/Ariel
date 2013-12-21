@@ -96,7 +96,9 @@ void particlegrid::buildSDF(macgrid& mgrid, float density){
 			}
 		}
 	}
-	mgrid.L->getVDBGrid()->prune(0);
+	if(mgrid.type==VDB){
+		mgrid.L->getVDBGrid()->prune(0);
+	}
 }
 
 void particlegrid::markCellTypes(vector<particle*>& particles, intgrid* A, float density){

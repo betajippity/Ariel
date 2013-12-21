@@ -70,15 +70,16 @@ particle createParticle(const vec3& position, const vec3& velocity, const vec3& 
 }
 
 macgrid createMacgrid(const vec3& dimensions, const gridtype& type){
+	int x = (int)dimensions.x; int y = (int)dimensions.y; int z = (int)dimensions.z;
 	macgrid m;
 	m.dimensions = dimensions;
-	m.u_x = new floatgrid(0.0f);
-	m.u_y = new floatgrid(0.0f);
-	m.u_z = new floatgrid(0.0f);
-	m.D = new floatgrid(0.0f);
-	m.P = new floatgrid(0.0f);
-	m.A = new intgrid(type, dimensions, 0);
-	m.L = new floatgrid(1.6f);
+	m.u_x = new floatgrid(type, vec3(x+1,y,z), 0.0f);
+	m.u_y = new floatgrid(type, vec3(x,y+1,z), 0.0f);
+	m.u_z = new floatgrid(type, vec3(x,y,z+1), 0.0f);
+	m.D = new floatgrid(type, vec3(x,y,z), 0.0f);
+	m.P = new floatgrid(type, vec3(x,y,z), 0.0f);
+	m.A = new intgrid(type, vec3(x,y,z), 0);
+	m.L = new floatgrid(type, vec3(x,y,z), 1.6f);
 	m.type = type;
 	return m;
 }

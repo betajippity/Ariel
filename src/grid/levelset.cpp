@@ -11,7 +11,7 @@ using namespace fluidCore;
 using namespace utilityCore;
 
 levelset::levelset(){
-
+	type = VDB;
 }
 
 levelset::~levelset(){
@@ -19,6 +19,7 @@ levelset::~levelset(){
 }
 
 levelset::levelset(objCore::objContainer* mesh){
+	type = VDB;
 	openvdb::math::Transform::Ptr transform = openvdb::math::Transform::createLinearTransform(.25f);
 	//copy vertices into vdb format
 	vector<openvdb::Vec3s> vdbpoints;
@@ -40,15 +41,16 @@ levelset::levelset(objCore::objContainer* mesh){
 	 //call vdb tools for creating level set
 	openvdb::tools::MeshToVolume<openvdb::FloatGrid> sdfmaker(transform);
 	sdfmaker.convertToLevelSet(vdbpoints, vdbpolys);
-	grid = sdfmaker.distGridPtr();
+	vdbgrid = sdfmaker.distGridPtr();
 	//cleanup
 	vdbpoints.clear();
 	vdbpolys.clear();
 }
 
 levelset::levelset(vector<particle*>& particles){
-	grid = openvdb::createLevelSet<openvdb::FloatGrid>();
-	openvdb::tools::ParticlesToLevelSet<openvdb::FloatGrid> raster(*grid);
+	type = VDB;
+	vdbgrid = openvdb::createLevelSet<openvdb::FloatGrid>();
+	openvdb::tools::ParticlesToLevelSet<openvdb::FloatGrid> raster(*vdbgrid);
 	raster.setGrainSize(1);
 	raster.setRmin(.01f);
 
@@ -59,6 +61,6 @@ levelset::levelset(vector<particle*>& particles){
 
 void levelset::merge(levelset& ls){
 	openvdb::FloatGrid::Ptr objectSDF = ls.getVDBGrid()->deepCopy();
-	openvdb::tools::csgUnion(*grid, *objectSDF);
+	openvdb::tools::csgUnion(*vdbgrid, *objectSDF);
 	objectSDF->clear();
 }

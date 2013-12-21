@@ -17,10 +17,10 @@ intgrid::intgrid(const gridtype& type, const vec3& dimensions, const int& backgr
 		openvdb::initialize();
 		vdbgrid = openvdb::Int32Grid::create(background);
 	}else if(type==RAW){
-		rawgrid = createGrid<int>(dimensions.x, dimensions.y, dimensions.z);
-		for(int i=0; i<(int)dimensions.x; i++){
-			for(int j=0; j<(int)dimensions.y; j++){
-				for(int k=0; k<(int)dimensions.z; k++){
+		rawgrid = createGrid<int>(dimensions.x+1, dimensions.y+1, dimensions.z+1);
+		for(int i=0; i<(int)dimensions.x+1; i++){
+			for(int j=0; j<(int)dimensions.y+1; j++){
+				for(int k=0; k<(int)dimensions.z+1; k++){
 					rawgrid[i][j][k] = background;
 				}
 			}
@@ -30,7 +30,10 @@ intgrid::intgrid(const gridtype& type, const vec3& dimensions, const int& backgr
 
 intgrid::~intgrid(){
 	if(type==RAW){
-		deleteGrid<int>(rawgrid, dimensions.x, dimensions.y, dimensions.z);
+		deleteGrid<int>(rawgrid, dimensions.x+1, dimensions.y+1, dimensions.z+1);
+	}else if(type==VDB){
+		vdbgrid->clear();
+		vdbgrid.reset();
 	}
 }
 

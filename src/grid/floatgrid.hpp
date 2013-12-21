@@ -23,7 +23,7 @@ namespace fluidCore {
 class floatgrid{
 	public:
 		//Initializers
-		floatgrid(const float& background);
+		floatgrid(const gridtype& type, const vec3& dimensions, const int& background);
 		floatgrid();
 		floatgrid(openvdb::FloatGrid::Ptr grid);
 		~floatgrid();
@@ -45,8 +45,13 @@ class floatgrid{
 		void clear();
 
 	protected:
-		openvdb::FloatGrid::Ptr grid;
+		openvdb::FloatGrid::Ptr vdbgrid;
+		float*** rawgrid;
 
+		gridtype type;
+		vec3 dimensions;
+
+		int background;
 };
 }
 

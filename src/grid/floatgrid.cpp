@@ -11,21 +11,41 @@ using namespace utilityCore;
 
 floatgrid::floatgrid(){
 	openvdb::initialize();
-	grid = openvdb::FloatGrid::create(0.0f);
+	vdbgrid = openvdb::FloatGrid::create(0.0f);
+	type = VDB;
 }
 
-floatgrid::floatgrid(const float& background){
-	openvdb::initialize();
-	grid = openvdb::FloatGrid::create(background);
+floatgrid::floatgrid(const gridtype& type, const vec3& dimensions, const int& background){
+	this->type = type;
+	this->dimensions = dimensions;
+	this->background = background;
+	if(type==VDB){
+		openvdb::initialize();
+		vdbgrid = openvdb::FloatGrid::create(background);
+	}else if(type==RAW){
+		rawgrid = createGrid<float>(dimensions.x+1, dimensions.y+1, dimensions.z+1);
+		for(int i=0; i<(int)dimensions.x+1; i++){
+			for(int j=0; j<(int)dimensions.y+1; j++){
+				for(int k=0; k<(int)dimensions.z+1; k++){
+					rawgrid[i][j][k] = background;
+				}
+			}
+		}
+	}
 }
 
 floatgrid::floatgrid(openvdb::FloatGrid::Ptr newgrid){
-	grid = newgrid;
+	vdbgrid = newgrid;
+	type = VDB;
 }
 
 floatgrid::~floatgrid(){
-	grid->clear();
-	grid.reset();
+	if(type==RAW){
+		deleteGrid<float>(rawgrid, dimensions.x+1, dimensions.y+1, dimensions.z+1);
+	}else if(type==VDB){
+		vdbgrid->clear();
+		vdbgrid.reset();
+	}
 }
 
 float floatgrid::getCell(const vec3& index){
@@ -33,10 +53,15 @@ float floatgrid::getCell(const vec3& index){
 }
 
 float floatgrid::getCell(const int& x, const int& y, const int& z){
-	openvdb::Coord coord = openvdb::Coord(x,y,z);
-
-	openvdb::FloatGrid::Accessor accessor = grid->getAccessor();
-	return accessor.getValue(coord);
+	float cell = background;
+	if(type==VDB){
+		openvdb::Coord coord = openvdb::Coord(x,y,z);
+		openvdb::FloatGrid::Accessor accessor = vdbgrid->getAccessor();
+		cell = accessor.getValue(coord);
+	}else if(type==RAW){
+		cell = rawgrid[x][y][z];
+	}
+	return cell;
 }
 
 void floatgrid::setCell(const vec3& index, const float& value){
@@ -44,13 +69,15 @@ void floatgrid::setCell(const vec3& index, const float& value){
 }
 
 void floatgrid::setCell(const int& x, const int& y, const int& z, const float& value){
-	#pragma omp critical
-	{
-		openvdb::Coord coord = openvdb::Coord(x,y,z);
-
-		openvdb::FloatGrid::Accessor accessor = grid->getAccessor();
-
-		accessor.setValue(coord, value);
+	if(type==VDB){
+		#pragma omp critical
+		{
+			openvdb::Coord coord = openvdb::Coord(x,y,z);
+			openvdb::FloatGrid::Accessor accessor = vdbgrid->getAccessor();
+			accessor.setValue(coord, value);
+		}
+	}else if(type==RAW){
+		rawgrid[x][y][z] = value;
 	}
 }
 
@@ -61,22 +88,32 @@ float floatgrid::getInterpolatedCell(const vec3& index){
 float floatgrid::getInterpolatedCell(const float& x, const float& y, const float& z){
 	openvdb::Vec3f p(x,y,z);
 	openvdb::tools::GridSampler<openvdb::FloatTree, openvdb::tools::BoxSampler> interpolator(
-														 grid->constTree(), grid->transform());
+														 vdbgrid->constTree(), vdbgrid->transform());
 	return interpolator.wsSample(p);
 }
 
 openvdb::FloatGrid::Ptr& floatgrid::getVDBGrid(){
-	return grid;
+	return vdbgrid;
 }
 
 void floatgrid::writeVDBGridToFile(string filename){
 	openvdb::io::File file(filename);
 	openvdb::GridPtrVec grids;
-    grids.push_back(grid);
+    grids.push_back(vdbgrid);
     file.write(grids);
     file.close();
 }
 
 void floatgrid::clear(){
-	grid->clear();
+	if(type==VDB){
+		vdbgrid->clear();
+	}else if(type==RAW){
+		for(int i=0; i<(int)dimensions.x+1; i++){
+			for(int j=0; j<(int)dimensions.y+1; j++){
+				for(int k=0; k<(int)dimensions.z+1; k++){
+					rawgrid[i][j][k] = background;
+				}
+			}
+		}
+	}
 }
