@@ -24,6 +24,7 @@ floatgrid::floatgrid(const gridtype& type, const vec3& dimensions, const int& ba
 		vdbgrid = openvdb::FloatGrid::create(background);
 	}else if(type==RAW){
 		rawgrid = createGrid<float>(dimensions.x+1, dimensions.y+1, dimensions.z+1);
+		#pragma omp parallel for
 		for(int i=0; i<(int)dimensions.x+1; i++){
 			for(int j=0; j<(int)dimensions.y+1; j++){
 				for(int k=0; k<(int)dimensions.z+1; k++){
@@ -86,10 +87,15 @@ float floatgrid::getInterpolatedCell(const vec3& index){
 }
 
 float floatgrid::getInterpolatedCell(const float& x, const float& y, const float& z){
-	openvdb::Vec3f p(x,y,z);
-	openvdb::tools::GridSampler<openvdb::FloatTree, openvdb::tools::BoxSampler> interpolator(
+	float value;
+	#pragma omp critical
+	{
+		openvdb::Vec3f p(x,y,z);
+		openvdb::tools::GridSampler<openvdb::FloatTree, openvdb::tools::BoxSampler> interpolator(
 														 vdbgrid->constTree(), vdbgrid->transform());
-	return interpolator.wsSample(p);
+		value = interpolator.wsSample(p);
+	}
+	return value;
 }
 
 openvdb::FloatGrid::Ptr& floatgrid::getVDBGrid(){
@@ -108,6 +114,7 @@ void floatgrid::clear(){
 	if(type==VDB){
 		vdbgrid->clear();
 	}else if(type==RAW){
+		#pragma omp parallel for
 		for(int i=0; i<(int)dimensions.x+1; i++){
 			for(int j=0; j<(int)dimensions.y+1; j++){
 				for(int k=0; k<(int)dimensions.z+1; k++){

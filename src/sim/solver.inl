@@ -45,7 +45,7 @@ inline void applyPreconditioner(floatgrid* Z, floatgrid* R, floatgrid* P, floatg
 //Takes a grid, multiplies everything by -1
 void flipGrid(floatgrid* grid, vec3 dimensions){
 	int x = (int)dimensions.x; int y = (int)dimensions.y; int z = (int)dimensions.z;
-	// #pragma omp parallel for
+	#pragma omp parallel for
 	for( int gn=0; gn<x*y*z; gn++ ) { 
 		int i=(gn%((x)*(y)))%(z); int j=(gn%((x)*(y)))/(z); int k = gn/((x)*(y)); 
 		float flipped = -grid->getCell(i,j,k);
@@ -99,8 +99,7 @@ float ADiag(intgrid* A, floatgrid* L, int i, int j, int k, vec3 dimensions, int 
 void buildPreconditioner(floatgrid* pc, macgrid& mgrid, int subcell){
 	int x = (int)mgrid.dimensions.x; int y = (int)mgrid.dimensions.y; int z = (int)mgrid.dimensions.z;
 	float a = 0.25f;
-	//for now run single threaded, multithreaded seems to cause VDB write issues here
-	// #pragma omp parallel for
+	#pragma omp parallel for
 	for( int gn=0; gn<x*y*z; gn++ ) { 
 		int i=(gn%((x)*(y)))%(z); int j=(gn%((x)*(y)))/(z); int k = gn/((x)*(y)); 
 		if(mgrid.A->getCell(i,j,k)==FLUID){	
@@ -141,6 +140,7 @@ float xRef(intgrid* A, floatgrid* L, floatgrid* X, vec3 f, vec3 p, vec3 dimensio
 // target = X + alpha*Y
 void op(intgrid* A, floatgrid* X, floatgrid* Y, floatgrid* target, float alpha, vec3 dimensions){
 	int x = (int)dimensions.x; int y = (int)dimensions.y; int z = (int)dimensions.z;
+	#pragma omp parallel for
 	for( int gn=0; gn<x*y*z; gn++ ) { 
 		int i=(gn%((x)*(y)))%(z); int j=(gn%((x)*(y)))/(z); int k = gn/((x)*(y)); 
 		if(A->getCell(i,j,k)==FLUID){
@@ -171,7 +171,8 @@ void computeAx(intgrid* A, floatgrid* L, floatgrid* X, floatgrid* target, vec3 d
 	int x = (int)dimensions.x; int y = (int)dimensions.y; int z = (int)dimensions.z;
 	float n = (float)glm::max(glm::max(x,y),z);
 	float h = 1.0f/(n*n);
-	for( int gn=0; gn<x*y*z; gn++ ) { 
+	#pragma omp parallel for
+	for(int gn=0; gn<x*y*z; gn++){ 
 		int i=(gn%((x)*(y)))%(z); int j=(gn%((x)*(y)))/(z); int k = gn/((x)*(y)); 
 
 		if(A->getCell(i,j,k) == FLUID){
@@ -196,6 +197,7 @@ void applyPreconditioner(floatgrid* Z, floatgrid* R, floatgrid* P, floatgrid* L,
 	floatgrid* Q = new floatgrid(type, dimensions, 0.0f);
 
 	// LQ = R
+	#pragma omp parallel for
 	for(int i=0; i<x; i++){
 		for(int j=0; j<y; j++){
 			for(int k=0; k<z; k++){
@@ -216,6 +218,7 @@ void applyPreconditioner(floatgrid* Z, floatgrid* R, floatgrid* P, floatgrid* L,
 	}
 
 	// L^T Z = Q
+	#pragma omp parallel for
 	for(int i=x-1; i>=0; i--){
 		for(int j=y-1; j>=0; j--){
 			for(int k=z-1; k>=0; k--){
@@ -255,6 +258,7 @@ void solveConjugateGradient(macgrid& mgrid, floatgrid* PC, int subcell){
 	applyPreconditioner(Z, R, PC, mgrid.L, mgrid.A, mgrid.dimensions, mgrid.type);	
 
 	//s = z. TODO: replace with VDB deep copy?
+	#pragma omp parallel for
 	for( int i=0; i<x; i++ ){
 		for( int j=0; j<y; j++ ){
 			for( int k=0; k<z; k++ ){

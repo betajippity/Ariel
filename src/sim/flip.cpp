@@ -362,6 +362,7 @@ void flipsim::extrapolateVelocity(){
 	}
 
 	//extrapolate
+	#pragma omp parallel for
 	for(int i = 0; i < x+1; i++){ 	
 	  	for(int j = 0; j < y+1; j++){ 
 	    	for(int k = 0; k < z+1; k++){
