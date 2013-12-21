@@ -36,7 +36,7 @@ inline float xRef(intgrid* A, floatgrid* L, floatgrid* X, vec3 f, vec3 p, vec3 d
 inline void op(intgrid* A, floatgrid* X, floatgrid* Y, floatgrid* target, float alpha, vec3 dimensions);
 inline float product(intgrid* A, floatgrid* X, floatgrid* Y, vec3 dimensions);
 inline void applyPreconditioner(floatgrid* Z, floatgrid* R, floatgrid* P, floatgrid* L, intgrid* A, 
-								vec3 dimensions);
+								vec3 dimensions, gridtype type);
 
 //====================================
 // Function Implementations
@@ -191,9 +191,9 @@ void computeAx(intgrid* A, floatgrid* L, floatgrid* X, floatgrid* target, vec3 d
 }
 
 void applyPreconditioner(floatgrid* Z, floatgrid* R, floatgrid* P, floatgrid* L, intgrid* A, 
-						 vec3 dimensions){
+						 vec3 dimensions, gridtype type){
 	int x = (int)dimensions.x; int y = (int)dimensions.y; int z = (int)dimensions.z;
-	floatgrid* Q = new floatgrid(0.0f);
+	floatgrid* Q = new floatgrid(type, dimensions, 0.0f);
 
 	// LQ = R
 	for(int i=0; i<x; i++){
@@ -241,9 +241,9 @@ void applyPreconditioner(floatgrid* Z, floatgrid* R, floatgrid* P, floatgrid* L,
 void solveConjugateGradient(macgrid& mgrid, floatgrid* PC, int subcell){
 	int x = (int)mgrid.dimensions.x; int y = (int)mgrid.dimensions.y; int z = (int)mgrid.dimensions.z;
 
-	floatgrid* R = new floatgrid(0.0f);
-	floatgrid* Z = new floatgrid(0.0f);
-	floatgrid* S = new floatgrid(0.0f);
+	floatgrid* R = new floatgrid(mgrid.type, mgrid.dimensions, 0.0f);
+	floatgrid* Z = new floatgrid(mgrid.type, mgrid.dimensions, 0.0f);
+	floatgrid* S = new floatgrid(mgrid.type, mgrid.dimensions, 0.0f);
 
 	//note: we're calling pressure "mgrid.P" instead of x
 
@@ -251,7 +251,8 @@ void solveConjugateGradient(macgrid& mgrid, floatgrid* PC, int subcell){
 	op(mgrid.A, mgrid.D, Z, R, -1.0f, mgrid.dimensions);                // r = b-Ax
 	float error0 = product(mgrid.A, R, R, mgrid.dimensions);			// error0 = product(r,r)
 
-	applyPreconditioner(Z, R, PC, mgrid.L, mgrid.A, mgrid.dimensions);	// z = f(r), aka preconditioner step
+	// z = f(r), aka preconditioner step
+	applyPreconditioner(Z, R, PC, mgrid.L, mgrid.A, mgrid.dimensions, mgrid.type);	
 
 	//s = z. TODO: replace with VDB deep copy?
 	for( int i=0; i<x; i++ ){
@@ -282,7 +283,8 @@ void solveConjugateGradient(macgrid& mgrid, floatgrid* PC, int subcell){
         	break;
         }
         //Prep next iteration
-        applyPreconditioner(Z, R, PC, mgrid.L, mgrid.A, mgrid.dimensions);	// z = f(r)
+        // z = f(r)
+        applyPreconditioner(Z, R, PC, mgrid.L, mgrid.A, mgrid.dimensions, mgrid.type);	
         float a2 = product(mgrid.A, Z, R, mgrid.dimensions);				// a2 = product(z,r)
         float beta = a2/a;													// beta = a2/a
         op(mgrid.A, Z, S, S, beta, mgrid.dimensions);						// s = z + beta*s
@@ -301,7 +303,7 @@ void solve(macgrid& mgrid, const int& subcell){
 
 	//build preconditioner
 	// cout << "Building preconditioner matrix..." << endl;
-	floatgrid* preconditioner = new floatgrid(0.0f);
+	floatgrid* preconditioner = new floatgrid(mgrid.type, mgrid.dimensions, 0.0f);
 	buildPreconditioner(preconditioner, mgrid, subcell);
 
 	//solve conjugate gradient

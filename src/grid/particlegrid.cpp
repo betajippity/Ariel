@@ -22,7 +22,7 @@ particlegrid::~particlegrid(){
 
 void particlegrid::init(const int& x, const int& y, const int& z){
 	dimensions = vec3(x,y,z);
-	grid = new intgrid(-1);
+	grid = new intgrid(VDB, vec3(x,y,z), -1);
 }
 
 vector<particle*> particlegrid::getCellNeighbors(vec3 index, vec3 numberOfNeighbors){
@@ -96,7 +96,9 @@ void particlegrid::buildSDF(macgrid& mgrid, float density){
 			}
 		}
 	}
-	mgrid.L->getVDBGrid()->prune(0);
+	if(mgrid.type==VDB){
+		mgrid.L->getVDBGrid()->prune(0);
+	}
 }
 
 void particlegrid::markCellTypes(vector<particle*>& particles, intgrid* A, float density){
