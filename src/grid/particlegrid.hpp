@@ -22,8 +22,8 @@ namespace fluidCore {
 class particlegrid{
 	public:
 		//Initializers
-		particlegrid(const vec3& dimensions);
-		particlegrid(const int& x, const int& y, const int& z);
+		particlegrid(const vec3& dimensions, const gridtype& type);
+		particlegrid(const int& x, const int& y, const int& z, const gridtype& type);
 		~particlegrid();
 
 		//Sorting tools
@@ -37,7 +37,7 @@ class particlegrid{
 		void buildSDF(macgrid& mgrid, float density);
 
 	private:
-		void init(const int& x, const int& y, const int& z);
+		void init(const int& x, const int& y, const int& z, const gridtype& type);
 
 		vec3 dimensions;
 		intgrid* grid;

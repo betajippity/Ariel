@@ -15,7 +15,7 @@ using namespace fluidCore;
 
 flipsim::flipsim(const vec3& maxres, sceneCore::scene* s, const float& density, const gridtype& type){
 	dimensions = maxres;	
-	pgrid = new particlegrid(maxres);
+	pgrid = new particlegrid(maxres, type);
 	mgrid = createMacgrid(maxres, type);
 	mgrid_previous = createMacgrid(maxres, type);
 	max_density = 0.0f;
@@ -96,6 +96,7 @@ void flipsim::step(){
 	timestep++;	
 	cout << "=========================" << endl;
 	cout << "Step: " << timestep << endl;
+
 	pgrid->sort(particles);
 	computeDensity();
 	applyExternalForces(); 

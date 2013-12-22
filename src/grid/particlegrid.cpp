@@ -8,21 +8,21 @@
 
 using namespace fluidCore;
 
-particlegrid::particlegrid(const vec3& dim){
-	init((int)dim.x, (int)dim.y, (int)dim.z);
+particlegrid::particlegrid(const vec3& dim, const gridtype& type){
+	init((int)dim.x, (int)dim.y, (int)dim.z, type);
 }
 
-particlegrid::particlegrid(const int& x, const int& y, const int& z){
-	init(x, y, z);
+particlegrid::particlegrid(const int& x, const int& y, const int& z, const gridtype& type){
+	init(x, y, z, type);
 }
 
 particlegrid::~particlegrid(){
 	delete grid;
 }
 
-void particlegrid::init(const int& x, const int& y, const int& z){
+void particlegrid::init(const int& x, const int& y, const int& z, const gridtype& type){
 	dimensions = vec3(x,y,z);
-	grid = new intgrid(VDB, vec3(x,y,z), -1);
+	grid = new intgrid(type, vec3(x,y,z), -1);
 }
 
 vector<particle*> particlegrid::getCellNeighbors(vec3 index, vec3 numberOfNeighbors){
