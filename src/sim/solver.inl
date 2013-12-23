@@ -301,6 +301,12 @@ void solveConjugateGradient(macgrid& mgrid, floatgrid* PC, int subcell){
 }
 
 void solve(macgrid& mgrid, const int& subcell){
+
+	//if in VDB mode, force to single threaded to prevent VDB write issues. this is a kludgey fix for now.
+	if(mgrid.type==VDB){
+		omp_set_num_threads(1);
+	}
+
 	//flip divergence
 	// cout << "Flipping divergence..." << endl;
 	flipGrid(mgrid.D, mgrid.dimensions);
@@ -316,6 +322,10 @@ void solve(macgrid& mgrid, const int& subcell){
 
 	// cout << "Cleaning Up..." << endl;
 	delete preconditioner;
+
+	if(mgrid.type==VDB){
+		omp_set_num_threads(omp_get_num_procs());
+	}
 }
 }
 

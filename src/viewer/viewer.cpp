@@ -65,8 +65,6 @@ bool viewer::launch(){
                     while(1){
                         sim->step();
                         particles = sim->getParticles();
-                        
-                    //     frame++;
                     }
                 }
             }
