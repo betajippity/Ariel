@@ -73,11 +73,13 @@ vector<particle*> particlegrid::getWallNeighbors(vec3 index, vec3 numberOfNeighb
 float particlegrid::cellSDF(int i, int j, int k, float density, geomtype type){
 	float accm = 0.0f;
 	int cellindex = grid->getCell(i,j,k);
-	for( int a=0; a<cells[cellindex].size(); a++ ) { 
-		if( cells[cellindex][a]->type == type) {
-			accm += cells[cellindex][a]->density;
-		} else {
-			return 1.0f;
+	if(cellindex>=0){
+		for( int a=0; a<cells[cellindex].size(); a++ ) { 
+			if( cells[cellindex][a]->type == type) {
+				accm += cells[cellindex][a]->density;
+			} else {
+				return 1.0f;
+			}
 		}
 	}
 	float n0 = 1.0f/(density*density*density);
@@ -110,9 +112,11 @@ void particlegrid::markCellTypes(vector<particle*>& particles, intgrid* A, float
 			for(int k = 0; k < z; k++){
 				A->setCell(i,j,k, AIR);
 				int cellindex = grid->getCell(i,j,k);
-				for( int a=0; a<cells[cellindex].size(); a++ ) { 
-					if( cells[cellindex][a]->type == SOLID ) {
-						A->setCell(i,j,k, SOLID);
+				if(cellindex>=0 && cellindex<cells.size()){
+					for( int a=0; a<cells[cellindex].size(); a++ ) { 
+						if( cells[cellindex][a]->type == SOLID ) {
+							A->setCell(i,j,k, SOLID);
+						}
 					}
 				}
 				if( A->getCell(i,j,k) != SOLID ){

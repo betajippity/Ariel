@@ -96,7 +96,7 @@ void flipsim::step(){
 	timestep++;	
 	cout << "=========================" << endl;
 	cout << "Step: " << timestep << endl;
-
+	
 	pgrid->sort(particles);
 	computeDensity();
 	applyExternalForces(); 
@@ -110,7 +110,7 @@ void flipsim::step(){
 	subtractPreviousGrid();
 	solvePicFlip();
 	advectParticles();
-
+	
 	float maxd = glm::max(glm::max(dimensions.x, dimensions.z), dimensions.y);
 	float h = density/maxd;
 	resampleParticles(pgrid, particles, stepsize, h, dimensions);

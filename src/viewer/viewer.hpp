@@ -98,7 +98,6 @@ class viewer{
 
 		vector<fluidCore::particle*>* particles;
 
-		int newframe;
 		int frame;
 
 		int recordWidth;

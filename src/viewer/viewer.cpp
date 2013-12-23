@@ -29,7 +29,6 @@ void viewer::load(fluidCore::flipsim* sim){
     frame = 0;
     // flip3D::init(frame);
     // particles = flip3D::getParticles();
-    newframe = 0;
 
     recordWidth = 1000;
     recordHeight = 1000;
@@ -64,6 +63,7 @@ bool viewer::launch(){
                     
                     while(1){
                         sim->step();
+                        frame++;
                         particles = sim->getParticles();
                     }
                 }
