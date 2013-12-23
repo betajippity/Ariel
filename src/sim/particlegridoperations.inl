@@ -1,4 +1,4 @@
-// Kai: FLIP Fluid Simulator
+// Ariel: FLIP Fluid Simulator
 // Written by Yining Karl Li
 //
 // File: particlegridsplat.inl

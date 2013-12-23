@@ -1,4 +1,4 @@
-// Kai: FLIP Fluid Simulator
+// Ariel: FLIP Fluid Simulator
 // Written by Yining Karl Li
 //
 // File: viewer.hpp
@@ -67,7 +67,7 @@ class viewer{
 		~viewer();
 
 		bool launch();
-		void load(fluidCore::flipsim* sim);
+		void load(fluidCore::flipsim* sim, bool retina);
 	private:
 		//Initialize stuff
 		bool init();
@@ -80,6 +80,8 @@ class viewer{
 		vboData createVBO(vboData data, float* vertices, int vertexcount, float* colors,
                           int colorcount, vbotype type, string key);
 		vboData createVBOFromObj(objCore::objContainer* o, vec4 color, string key);
+
+		void saveFrame();
 
 		//Interface callbacks
 		static void errorCallback(int error, const char* description);		
@@ -100,13 +102,16 @@ class viewer{
 
 		int frame;
 
-		int recordWidth;
-    	int recordHeight;
-    	unsigned char* bitmapData;
-
     	fluidCore::flipsim* sim;
     	bool siminitialized;
     	bool drawobjects;
+
+    	unsigned char* bitmapData;
+    	bool dumpFramebuffer;
+    	bool dumpReady;
+    	bool pause;
+
+    	int framebufferScale;
 };
 }
 

@@ -1,4 +1,4 @@
-// Kai: FLIP Fluid Simulator
+// Ariel: FLIP Fluid Simulator
 // Written by Yining Karl Li
 //
 // File: flip.hpp
@@ -23,7 +23,8 @@ namespace fluidCore {
 
 class flipsim{
 	public:
-		flipsim(const vec3& maxres, sceneCore::scene* scene, const float& density, const gridtype& type);
+		flipsim(const vec3& maxres, sceneCore::scene* scene, const float& density, const gridtype& type,
+				const bool& verbose);
 		~flipsim();
 
 		void init();
@@ -63,6 +64,7 @@ class flipsim{
 		float stepsize;
 
 		gridtype type;
+		bool verbose;
 };
 }
 

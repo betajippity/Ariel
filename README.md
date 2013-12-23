@@ -1,5 +1,5 @@
-Kai
-===
+Ariel
+=====
 
 Experimental implementation of a FLIP fluid solver on top of [OpenVDB](http://www.openvdb.org).
 

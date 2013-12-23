@@ -1,4 +1,4 @@
-// Kai: FLIP Fluid Simulator
+// Ariel: FLIP Fluid Simulator
 // Written by Yining Karl Li
 //
 // File: viewer.cpp
@@ -6,6 +6,7 @@
 
 #include "viewer.hpp"
 #include "../utilities/utilities.h"
+#include <stb_image/stb_image_write.h>
 #include <sstream>
 
 using namespace viewerCore;
@@ -18,7 +19,7 @@ viewer::~viewer(){
 
 }
 
-void viewer::load(fluidCore::flipsim* sim){
+void viewer::load(fluidCore::flipsim* sim, bool retina){
     resolution = vec2(1000, 1000);
 
     cam.zoomSpeed = 1.0f;
@@ -30,14 +31,24 @@ void viewer::load(fluidCore::flipsim* sim){
     // flip3D::init(frame);
     // particles = flip3D::getParticles();
 
-    recordWidth = 1000;
-    recordHeight = 1000;
-    bitmapData = new unsigned char[3 * recordWidth * recordHeight];
-
     this->sim = sim;
     siminitialized = false;
 
     drawobjects = true;
+
+    dumpFramebuffer = false;
+    dumpReady = false;
+
+    if(retina){
+        framebufferScale = 2;
+    }else{
+        framebufferScale = 1;
+    }
+
+    bitmapData = new unsigned char[3 * (int)resolution.x*framebufferScale * 
+                                       (int)resolution.y*framebufferScale];
+
+    pause = false;
 }
 
 //returns true if viewer launches and closes successfully, otherwise, returns false
@@ -62,9 +73,15 @@ bool viewer::launch(){
                     }
                     
                     while(1){
-                        sim->step();
-                        frame++;
-                        particles = sim->getParticles();
+                        if(!pause){
+                            sim->step();
+                            frame++;
+                            particles = sim->getParticles();
+                            if(dumpFramebuffer && dumpReady){
+                                saveFrame();
+                            }
+                        }
+                        siminitialized = true;
                     }
                 }
             }
@@ -78,6 +95,15 @@ bool viewer::launch(){
         cout << "Error: No sim loaded!\n" << endl;
         return false;
     } 
+}
+
+void viewer::saveFrame(){
+    string folder = "images";
+    char anim_filename[2048];
+    sprintf(anim_filename, "%s/frame_%05i.png", (char*)folder.c_str(), frame);
+    stbi_write_png(anim_filename, (int)resolution.x*framebufferScale, 
+                                  (int)resolution.y*framebufferScale, 3, bitmapData, 
+                                  (int)resolution.x*framebufferScale * 3);
 }
 
 //====================================
@@ -185,12 +211,14 @@ void viewer::mainLoop(){
         glfwPollEvents();
         updateInputs();
 
-        // for (int i=0; i<recordHeight; i++) 
-        // {
-        //     glReadPixels(0,i,recordWidth,1,GL_RGB, GL_UNSIGNED_BYTE, 
-        //         bitmapData + (recordWidth * 3 * ((recordHeight-1)-i)));
-        // }
-
+        if(dumpFramebuffer==true){
+            for (int i=0; i<resolution.y*framebufferScale; i++){
+                glReadPixels(0,i,(int)resolution.x*framebufferScale, 1, GL_RGB, GL_UNSIGNED_BYTE, 
+                             bitmapData + ((int)resolution.x*framebufferScale * 3 * 
+                             (((int)resolution.y*framebufferScale-1)-i)));
+            }
+            dumpReady = true;
+        }
     }
     glfwDestroyWindow(window);
     glfwTerminate();
@@ -237,6 +265,20 @@ void viewer::updateInputs(){
             drawobjects = !drawobjects;
             cam.currentKey = GLFW_KEY_Q;
         }
+    }else if(glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS){
+        if(cam.currentKey!=GLFW_KEY_R){
+            dumpFramebuffer = !dumpFramebuffer;
+            dumpReady = false;
+            cam.currentKey = GLFW_KEY_R;
+        }
+    }else if(glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS){
+        if(cam.currentKey!=GLFW_KEY_P){
+            pause = !pause;
+            cam.currentKey = GLFW_KEY_P;
+            if(pause){
+                cout << "\nSimulation paused.\n" << endl; 
+            }
+        }
     }else{
         cam.currentKey = 0;
     }
@@ -257,7 +299,7 @@ bool viewer::init(){
         return false;
     }
 
-    window = glfwCreateWindow(resolution.x, resolution.y, "Kai: now with 100% more VDB!", NULL, NULL);
+    window = glfwCreateWindow(resolution.x, resolution.y, "Ariel: now with 100% more FLIP!", NULL, NULL);
     if (!window){
         glfwTerminate();
         return false;

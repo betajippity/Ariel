@@ -1,4 +1,4 @@
-// Kai: FLIP Fluid Simulator
+// Ariel: FLIP Fluid Simulator
 // Written by Yining Karl Li
 //
 // File: flip.cpp
@@ -13,7 +13,8 @@
 
 using namespace fluidCore;
 
-flipsim::flipsim(const vec3& maxres, sceneCore::scene* s, const float& density, const gridtype& type){
+flipsim::flipsim(const vec3& maxres, sceneCore::scene* s, const float& density, const gridtype& type,
+				 const bool& verbose){
 	dimensions = maxres;	
 	pgrid = new particlegrid(maxres, type);
 	mgrid = createMacgrid(maxres, type);
@@ -27,6 +28,7 @@ flipsim::flipsim(const vec3& maxres, sceneCore::scene* s, const float& density, 
 	picflipratio = .95f;
 	densitythreshold = 0.04f;
 	this->type = type;
+	this->verbose = verbose;
 }
 
 flipsim::~flipsim(){
@@ -94,8 +96,7 @@ void flipsim::init(){
 
 void flipsim::step(){
 	timestep++;	
-	cout << "=========================" << endl;
-	cout << "Step: " << timestep << endl;
+	cout << "Simulating Step: " << timestep << "..." << endl;
 	
 	pgrid->sort(particles);
 	computeDensity();
@@ -309,7 +310,11 @@ void flipsim::project(){
 	pgrid->buildSDF(mgrid, density);
 	
 	// cout << "Running solver..." << endl;
-	solve(mgrid, subcell);
+	solve(mgrid, subcell, verbose);
+
+	if(verbose){
+		cout << " " << endl;
+	}
 
 	//subtract pressure gradient
 	// cout << "Subtracting pressure gradient..." << endl;

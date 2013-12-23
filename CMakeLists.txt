@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8)
-project(kai)
+project(ariel)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/build/cmake")
 
@@ -94,9 +94,11 @@ set(SOURCE_FILES "src/main.cpp"
 				 "src/scene/scene.cpp"
 				 "src/viewer/viewer.cpp"
 				 "src/grid/levelset.cpp"
+				 "${NUPARU}/src/stb_image/stb_image.c"
+				 "${NUPARU}/src/stb_image/stb_image_write.c"
 				 )
 
 
-add_executable(kai ${SOURCE_FILES})
+add_executable(ariel ${SOURCE_FILES})
 
-target_link_libraries(kai ${CORELIBS})
+target_link_libraries(ariel ${CORELIBS})

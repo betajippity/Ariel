@@ -1,4 +1,4 @@
-// Kai: FLIP Fluid Simulator
+// Ariel: FLIP Fluid Simulator
 // Written by Yining Karl Li
 //
 // File: solver.inl
@@ -23,13 +23,13 @@ namespace fluidCore {
 //====================================
 
 //Forward declarations for externed inlineable methods
-extern inline void solve(macgrid& mgrid, const int& subcell);
+extern inline void solve(macgrid& mgrid, const int& subcell, const bool& verbose);
 inline void flipDivergence(macgrid& mgrid);
 inline void buildPreconditioner(floatgrid* pc, macgrid& mgrid, int subcell);
 inline float fluidRef(intgrid* A, int i, int j, int k, int qi, int qj, int qk, vec3 dimensions);
 inline float preconditionerRef(floatgrid* p, int i, int j, int k, vec3 dimensions);
 inline float fluidDiag(intgrid* A, floatgrid* L, int i, int j, int k, vec3 dimensions, int subcell);
-inline void solveConjugateGradient(macgrid& mgrid, floatgrid* pc, int subcell);
+inline void solveConjugateGradient(macgrid& mgrid, floatgrid* pc, int subcell, const bool& verbose);
 inline void computeAx(intgrid* A, floatgrid* L, floatgrid* X, floatgrid* target, vec3 dimensions, 
 					  int subcell);
 inline float xRef(intgrid* A, floatgrid* L, floatgrid* X, vec3 f, vec3 p, vec3 dimensions, int subcell);
@@ -241,7 +241,7 @@ void applyPreconditioner(floatgrid* Z, floatgrid* R, floatgrid* P, floatgrid* L,
 }
 
 //Does what it says
-void solveConjugateGradient(macgrid& mgrid, floatgrid* PC, int subcell){
+void solveConjugateGradient(macgrid& mgrid, floatgrid* PC, int subcell, const bool& verbose){
 	int x = (int)mgrid.dimensions.x; int y = (int)mgrid.dimensions.y; int z = (int)mgrid.dimensions.z;
 
 	floatgrid* R = new floatgrid(mgrid.type, mgrid.dimensions, 0.0f);
@@ -280,10 +280,10 @@ void solveConjugateGradient(macgrid& mgrid, floatgrid* PC, int subcell){
         error0 = glm::max(error0, error1);
         //Output progress
         float rate = 1.0f - glm::max(0.0f,glm::min(1.0f,(error1-eps)/(error0-eps)));
-        cout << "PCG Iteration " << k+1 << ": " << 100.0f*pow(rate,6) << "%% solved" << endl;
-        // cout << error1 << " " << error0 << " " << eps << endl;
+        if(verbose){
+        	cout << "PCG Iteration " << k+1 << ": " << 100.0f*pow(rate,6) << "%% solved" << endl;
+        }
         if(error1<=eps){
-        	// cout << "break" << endl;
         	break;
         }
         //Prep next iteration
@@ -300,7 +300,7 @@ void solveConjugateGradient(macgrid& mgrid, floatgrid* PC, int subcell){
 	delete S;
 }
 
-void solve(macgrid& mgrid, const int& subcell){
+void solve(macgrid& mgrid, const int& subcell, const bool& verbose){
 
 	//if in VDB mode, force to single threaded to prevent VDB write issues. this is a kludgey fix for now.
 	if(mgrid.type==VDB){
@@ -318,7 +318,7 @@ void solve(macgrid& mgrid, const int& subcell){
 
 	//solve conjugate gradient
 	// cout << "Solving Conjugate Gradient..." << endl;
-	solveConjugateGradient(mgrid, preconditioner, subcell);
+	solveConjugateGradient(mgrid, preconditioner, subcell, verbose);
 
 	// cout << "Cleaning Up..." << endl;
 	delete preconditioner;
