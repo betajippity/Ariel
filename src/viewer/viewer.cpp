@@ -16,7 +16,7 @@ viewer::viewer(){
 }
 
 viewer::~viewer(){
-
+    omp_destroy_lock(&framebufferWriteLock);
 }
 
 void viewer::load(fluidCore::flipsim* sim, bool retina){
@@ -49,6 +49,8 @@ void viewer::load(fluidCore::flipsim* sim, bool retina){
                                        (int)resolution.y*framebufferScale];
 
     pause = false;
+
+    omp_init_lock(&framebufferWriteLock);
 }
 
 //returns true if viewer launches and closes successfully, otherwise, returns false
@@ -78,7 +80,9 @@ bool viewer::launch(){
                             frame++;
                             particles = sim->getParticles();
                             if(dumpFramebuffer && dumpReady){
+                                omp_set_lock(&framebufferWriteLock);
                                 saveFrame();
+                                omp_unset_lock(&framebufferWriteLock);
                             }
                         }
                         siminitialized = true;
@@ -212,12 +216,14 @@ void viewer::mainLoop(){
         updateInputs();
 
         if(dumpFramebuffer==true){
+            omp_set_lock(&framebufferWriteLock);
             for (int i=0; i<resolution.y*framebufferScale; i++){
                 glReadPixels(0,i,(int)resolution.x*framebufferScale, 1, GL_RGB, GL_UNSIGNED_BYTE, 
                              bitmapData + ((int)resolution.x*framebufferScale * 3 * 
                              (((int)resolution.y*framebufferScale-1)-i)));
             }
-            dumpReady = true;
+            omp_unset_lock(&framebufferWriteLock);
+            dumpReady = true; 
         }
     }
     glfwDestroyWindow(window);

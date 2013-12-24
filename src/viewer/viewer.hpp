@@ -110,6 +110,7 @@ class viewer{
     	bool dumpFramebuffer;
     	bool dumpReady;
     	bool pause;
+    	omp_lock_t framebufferWriteLock;
 
     	int framebufferScale;
 };
