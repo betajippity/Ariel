@@ -124,12 +124,15 @@ void viewer::mainLoop(){
             int psize = particles->size();
 
             vec3 gridSize = sim->getDimensions();
+            vertexData.reserve(psize);
+            colorData.reserve(psize);
             float maxd = glm::max(glm::max(gridSize.x, gridSize.z), gridSize.y);
 
             for(int j=0; j<psize; j++){
                 if(particles->operator[](j)->type==FLUID){
                     vertexData.push_back(particles->operator[](j)->p*maxd);
                     float c = length(particles->operator[](j)->u)/3.0f;
+                    c = 1.0f * glm::max((.7f - particles->operator[](j)->density),0.0f);
                     colorData.push_back(vec4(c,c,1,0));
                 }
             }

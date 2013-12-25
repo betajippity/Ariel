@@ -92,10 +92,12 @@ set(SOURCE_FILES "src/main.cpp"
 				 "src/geom/cube.cpp"
 				 "src/geom/obj/objcontainer.cpp"
 				 "src/scene/scene.cpp"
+				 "src/scene/sceneloader.cpp"
 				 "src/viewer/viewer.cpp"
 				 "src/grid/levelset.cpp"
 				 "${NUPARU}/src/stb_image/stb_image.c"
 				 "${NUPARU}/src/stb_image/stb_image_write.c"
+				 "${NUPARU}/src/json/jsoncpp.cpp"
 				 )
 
 

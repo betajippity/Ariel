@@ -8,6 +8,7 @@
 #include "grid/particlegrid.hpp"
 #include "sim/flip.hpp"
 #include "viewer/viewer.hpp"
+#include "scene/sceneloader.hpp"
 
 using namespace std;
 using namespace glm;
@@ -24,6 +25,8 @@ int main(int argc, char** argv){
 
 	bool retina = false;
 	bool verbose = false;
+	gridtype type = RAW;
+	string scenefile = "";
 
 	for(int i=1; i<argc; i++){
 		string header; string data;
@@ -31,57 +34,34 @@ int main(int argc, char** argv){
 		getline(liness, header, '='); getline(liness, data, '=');
 		if(strcmp(header.c_str(), "-retina")==0){
 			retina = true;
-			cout << "Framebuffer dumps set to Retina mode\n" << endl;
+			cout << "Framebuffer dumps set to Retina mode..." << endl;
 		}else if(strcmp(header.c_str(), "-verbose")==0){
 			verbose = true;
-			cout << "Verbose mode activated\n" << endl;
+			cout << "Verbose mode activated..." << endl;
+		}else if(strcmp(header.c_str(), "-scene")==0){
+			scenefile = data;
+		}else if(strcmp(header.c_str(), "-mode")==0){
+			if(strcmp(data.c_str(), "vdb")==0){
+				type = VDB;
+			}
 		}
 	}
 
-	vec3 dimensions = vec3(32,32,32);
-	float density = .5f;
+	if(type==VDB){
+		cout << "Running in VDB grid mode...\n" << endl;
+	}else if(type==RAW){
+		cout << "Running in RAW grid mode...\n" << endl;
+	}
 
-	geomCore::cube cubebuilder;
-	sceneCore::scene* scene = new sceneCore::scene();
+	if(strcmp(scenefile.c_str(), "")==0){
+		cout << "Error: no scene specified! Use -scene=[file]\n" << endl;
+		exit(EXIT_FAILURE);
+	} 
 
-	//set up dam-break test scene
-	vec3 p0 = vec3(6.4f, 1.0f, 6.4f);
-	vec3 p1 = vec3(12.8f, 12.8f, 25.6f);
-	scene->addLiquidObject(cubebuilder.tesselate(p0, p1));
+	sceneCore::sceneloader* sloader = new sceneCore::sceneloader(scenefile);
 
-	p0 = vec3(1.0f, 1.0f, 1.0f);
-	p1 = vec3(32.0f-1.0f, 1.92f, 32.0f-1.0f);
-	scene->addLiquidObject(cubebuilder.tesselate(p0, p1));
-
-	// //set up walls
-	p0 = vec3(0.0f, 0.0f, 0.0f); // left wall
-	p1 = vec3(1.0f, dimensions.y, dimensions.z);
-	scene->addSolidObject(cubebuilder.tesselate(p0, p1));
-
-	p0 = vec3(dimensions.x-1.0f, 0.0f, 0.0f); // right wall
-	p1 = vec3(dimensions.x, dimensions.y, dimensions.z);
-	scene->addSolidObject(cubebuilder.tesselate(p0, p1));
-
-	p0 = vec3(0.0f, 0.0f, 0.0f); // floor wall
-	p1 = vec3(dimensions.x, 1.0f, dimensions.z);
-	scene->addSolidObject(cubebuilder.tesselate(p0, p1));
-
-	p0 = vec3(0.0f, dimensions.y-1.0f, 0.0f); // ceiling wall
-	p1 = vec3(dimensions.x, dimensions.y, dimensions.z);
-	scene->addSolidObject(cubebuilder.tesselate(p0, p1));
-
-	p0 = vec3(0.0f, 0.0f, 0.0f); // front wall
-	p1 = vec3(dimensions.x, dimensions.y, 1.0f);
-	scene->addSolidObject(cubebuilder.tesselate(p0, p1));
-
-	p0 = vec3(0.0f, 0.0f, dimensions.z-1.0f); // front wall
-	p1 = vec3(dimensions.x, dimensions.y, dimensions.z);
-	scene->addSolidObject(cubebuilder.tesselate(p0, p1));
-
-	geomCore::sphere spherebuilder;
-	// scene->addSolidObject(spherebuilder.tesselate(dimensions/2.0f, 10.0f));
-
-    fluidCore::flipsim* f = new fluidCore::flipsim(dimensions, scene, density, RAW, verbose);
+    fluidCore::flipsim* f = new fluidCore::flipsim(sloader->getDimensions(), sloader->getScene(), 
+    											   sloader->getDensity(), type, verbose);
 
     viewerCore::viewer* glview = new viewerCore::viewer();
     glview->load(f, retina);
