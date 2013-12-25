@@ -118,7 +118,7 @@ void viewer::mainLoop(){
     while (!glfwWindowShouldClose(window)){
 
         if(siminitialized){
-            vboData data;
+            vboData data = vbos[vbokeys["fluid"]];
             vector<vec3> vertexData;
             vector<vec4> colorData;
             int psize = particles->size();
@@ -333,11 +333,13 @@ bool viewer::init(){
 
     //dummy buffer for particles
     vboData data;
-    vector<float> vertexData;
-    vector<float> colorData;
+    vector<vec3> vertexData;
+    vertexData.push_back(vec3(0,0,0));
+    vector<vec4> colorData;
+    colorData.push_back(vec4(0,0,0,0));
     string key = "fluid";
-    data = createVBO(data, (float*)&vertexData[0], vertexData.size(), (float*)&colorData[0], 
-                     colorData.size(), POINTS, key);
+    data = createVBO(data, (float*)&vertexData[0], vertexData.size()*3, (float*)&colorData[0], 
+                     colorData.size()*4, POINTS, key);
     vertexData.clear();
     vbos.push_back(data);
     vbokeys["fluid"] = vbos.size()-1;
