@@ -291,7 +291,6 @@ void flipsim::project(){
 	float maxd = glm::max(glm::max(dimensions.x, dimensions.z), dimensions.y);
 	float h = 1.0f/maxd; //cell width
 
-	// cout << "Computing divergence..." << endl;
 	//compute divergence per cell
 	#pragma omp parallel for
 	for(int i = 0; i < x; i++){
@@ -305,19 +304,16 @@ void flipsim::project(){
 		}
 	}
 
-	// cout << "Building liquid SDF..." << endl;
 	//compute internal level set for liquid surface
 	pgrid->buildSDF(mgrid, density);
 	
-	// cout << "Running solver..." << endl;
 	solve(mgrid, subcell, verbose);
 
 	if(verbose){
-		cout << " " << endl;
+		cout << " " << endl; //TODO: no more stupid formatting hacks like this to std::out
 	}
 
 	//subtract pressure gradient
-	// cout << "Subtracting pressure gradient..." << endl;
 	subtractPressureGradient();
 }
 

@@ -46,10 +46,13 @@ inline void applyPreconditioner(floatgrid* Z, floatgrid* R, floatgrid* P, floatg
 void flipGrid(floatgrid* grid, vec3 dimensions){
 	int x = (int)dimensions.x; int y = (int)dimensions.y; int z = (int)dimensions.z;
 	#pragma omp parallel for
-	for( int gn=0; gn<x*y*z; gn++ ) { 
-		int i=(gn%((x)*(y)))%(z); int j=(gn%((x)*(y)))/(z); int k = gn/((x)*(y)); 
-		float flipped = -grid->getCell(i,j,k);
-		grid->setCell(i,j,k,flipped);
+	for(int i=0; i<x; i++){
+		for(int j=0; j<y; j++){
+			for(int k=0; k<z; k++){
+				float flipped = -grid->getCell(i,j,k);
+				grid->setCell(i,j,k,flipped);
+			}
+		}
 	}
 }
 
@@ -100,20 +103,25 @@ void buildPreconditioner(floatgrid* pc, macgrid& mgrid, int subcell){
 	int x = (int)mgrid.dimensions.x; int y = (int)mgrid.dimensions.y; int z = (int)mgrid.dimensions.z;
 	float a = 0.25f;
 	#pragma omp parallel for
-	for( int gn=0; gn<x*y*z; gn++ ) { 
-		int i=(gn%((x)*(y)))%(z); int j=(gn%((x)*(y)))/(z); int k = gn/((x)*(y)); 
-		if(mgrid.A->getCell(i,j,k)==FLUID){	
-
-			float left = ARef(mgrid.A,i-1,j,k,i,j,k,mgrid.dimensions) * PRef(pc,i-1,j,k,mgrid.dimensions);
-			float bottom = ARef(mgrid.A,i,j-1,k,i,j,k,mgrid.dimensions) * PRef(pc,i,j-1,k,mgrid.dimensions);
-			float back = ARef(mgrid.A,i,j,k-1,i,j,k,mgrid.dimensions) * PRef(pc,i,j,k-1,mgrid.dimensions);
-			float diag = ADiag(mgrid.A, mgrid.L,i,j,k,mgrid.dimensions,subcell);
-			float e = diag - (left*left) - (bottom*bottom) - (back*back);
-			if(diag>0){
-				if( e < a*diag ){
-					e = diag;
+	for(int i=0; i<x; i++){
+		for(int j=0; j<y; j++){
+			for(int k=0; k<z; k++){
+				if(mgrid.A->getCell(i,j,k)==FLUID){	
+					float left = ARef(mgrid.A,i-1,j,k,i,j,k,mgrid.dimensions) * 
+								 PRef(pc,i-1,j,k,mgrid.dimensions);
+					float bottom = ARef(mgrid.A,i,j-1,k,i,j,k,mgrid.dimensions) * 
+								   PRef(pc,i,j-1,k,mgrid.dimensions);
+					float back = ARef(mgrid.A,i,j,k-1,i,j,k,mgrid.dimensions) * 
+								 PRef(pc,i,j,k-1,mgrid.dimensions);
+					float diag = ADiag(mgrid.A, mgrid.L,i,j,k,mgrid.dimensions,subcell);
+					float e = diag - (left*left) - (bottom*bottom) - (back*back);
+					if(diag>0){
+						if( e < a*diag ){
+							e = diag;
+						}
+						pc->setCell(i,j,k, 1.0f/sqrt(e));
+					}
 				}
-				pc->setCell(i,j,k, 1.0f/sqrt(e));
 			}
 		}
 	}
@@ -141,13 +149,16 @@ float xRef(intgrid* A, floatgrid* L, floatgrid* X, vec3 f, vec3 p, vec3 dimensio
 void op(intgrid* A, floatgrid* X, floatgrid* Y, floatgrid* target, float alpha, vec3 dimensions){
 	int x = (int)dimensions.x; int y = (int)dimensions.y; int z = (int)dimensions.z;
 	#pragma omp parallel for
-	for( int gn=0; gn<x*y*z; gn++ ) { 
-		int i=(gn%((x)*(y)))%(z); int j=(gn%((x)*(y)))/(z); int k = gn/((x)*(y)); 
-		if(A->getCell(i,j,k)==FLUID){
-			float targetval = X->getCell(i,j,k)+alpha*Y->getCell(i,j,k);
-			target->setCell(i,j,k,targetval);
-		}else{
-			target->setCell(i,j,k,0.0f);
+	for(int i=0; i<x; i++){
+		for(int j=0; j<y; j++){
+			for(int k=0; k<z; k++){
+				if(A->getCell(i,j,k)==FLUID){
+					float targetval = X->getCell(i,j,k)+alpha*Y->getCell(i,j,k);
+					target->setCell(i,j,k,targetval);
+				}else{
+					target->setCell(i,j,k,0.0f);
+				}				
+			}
 		}
 	}
 }
@@ -156,11 +167,13 @@ void op(intgrid* A, floatgrid* X, floatgrid* Y, floatgrid* target, float alpha, 
 float product(intgrid* A, floatgrid* X, floatgrid* Y, vec3 dimensions){
 	int x = (int)dimensions.x; int y = (int)dimensions.y; int z = (int)dimensions.z;
 	float result = 0.0f;
-
-	for( int gn=0; gn<x*y*z; gn++ ) { 
-		int i=(gn%((x)*(y)))%(z); int j=(gn%((x)*(y)))/(z); int k = gn/((x)*(y)); 
-		if(A->getCell(i,j,k)==FLUID){
-			result += X->getCell(i,j,k) * Y->getCell(i,j,k);
+	for(int i=0; i<x; i++){
+		for(int j=0; j<y; j++){
+			for(int k=0; k<z; k++){
+				if(A->getCell(i,j,k)==FLUID){
+					result += X->getCell(i,j,k) * Y->getCell(i,j,k);
+				}
+			}
 		}
 	}
 	return result;
@@ -172,21 +185,23 @@ void computeAx(intgrid* A, floatgrid* L, floatgrid* X, floatgrid* target, vec3 d
 	float n = (float)glm::max(glm::max(x,y),z);
 	float h = 1.0f/(n*n);
 	#pragma omp parallel for
-	for(int gn=0; gn<x*y*z; gn++){ 
-		int i=(gn%((x)*(y)))%(z); int j=(gn%((x)*(y)))/(z); int k = gn/((x)*(y)); 
+	for(int i=0; i<x; i++){
+		for(int j=0; j<y; j++){
+			for(int k=0; k<z; k++){
+				if(A->getCell(i,j,k) == FLUID){
+					float result = (6.0f*X->getCell(i,j,k)
+									-xRef(A, L, X, vec3(i,j,k), vec3(i+1,j,k), dimensions, subcell)
+									-xRef(A, L, X, vec3(i,j,k), vec3(i-1,j,k), dimensions, subcell)
+									-xRef(A, L, X, vec3(i,j,k), vec3(i,j+1,k), dimensions, subcell)
+									-xRef(A, L, X, vec3(i,j,k), vec3(i,j-1,k), dimensions, subcell)
+									-xRef(A, L, X, vec3(i,j,k), vec3(i,j,k+1), dimensions, subcell)
+									-xRef(A, L, X, vec3(i,j,k), vec3(i,j,k-1), dimensions, subcell))/h;
 
-		if(A->getCell(i,j,k) == FLUID){
-			float result = (6.0f*X->getCell(i,j,k)
-							-xRef(A, L, X, vec3(i,j,k), vec3(i+1,j,k), dimensions, subcell)
-							-xRef(A, L, X, vec3(i,j,k), vec3(i-1,j,k), dimensions, subcell)
-							-xRef(A, L, X, vec3(i,j,k), vec3(i,j+1,k), dimensions, subcell)
-							-xRef(A, L, X, vec3(i,j,k), vec3(i,j-1,k), dimensions, subcell)
-							-xRef(A, L, X, vec3(i,j,k), vec3(i,j,k+1), dimensions, subcell)
-							-xRef(A, L, X, vec3(i,j,k), vec3(i,j,k-1), dimensions, subcell))/h;
-
-			target->setCell(i,j,k,result);
-		} else {
-			target->setCell(i,j,k,0.0f);
+					target->setCell(i,j,k,result);
+				} else {
+					target->setCell(i,j,k,0.0f);
+				}
+			}
 		}
 	}
 }
@@ -308,19 +323,15 @@ void solve(macgrid& mgrid, const int& subcell, const bool& verbose){
 	}
 
 	//flip divergence
-	// cout << "Flipping divergence..." << endl;
 	flipGrid(mgrid.D, mgrid.dimensions);
 
 	//build preconditioner
-	// cout << "Building preconditioner matrix..." << endl;
 	floatgrid* preconditioner = new floatgrid(mgrid.type, mgrid.dimensions, 0.0f);
 	buildPreconditioner(preconditioner, mgrid, subcell);
 
 	//solve conjugate gradient
-	// cout << "Solving Conjugate Gradient..." << endl;
 	solveConjugateGradient(mgrid, preconditioner, subcell, verbose);
 
-	// cout << "Cleaning Up..." << endl;
 	delete preconditioner;
 
 	if(mgrid.type==VDB){
