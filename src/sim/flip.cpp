@@ -82,9 +82,9 @@ void flipsim::init(){
 			iter++;
 			continue;
 		}
-		int i = glm::min(dimensions.x-1,glm::max(0.0f,p.p.x*dimensions.x));
-		int j = glm::min(dimensions.y-1,glm::max(0.0f,p.p.y*dimensions.y));
-		int k = glm::min(dimensions.z-1,glm::max(0.0f,p.p.z*dimensions.z));
+		int i = glm::min(maxd-1,glm::max(0.0f,p.p.x*maxd));
+		int j = glm::min(maxd-1,glm::max(0.0f,p.p.y*maxd));
+		int k = glm::min(maxd-1,glm::max(0.0f,p.p.z*maxd));
 		if( mgrid.A->getCell(i,j,k) == SOLID ) {
 			delete *iter;
 			iter = particles.erase(iter);
@@ -118,21 +118,16 @@ void flipsim::step(){
 
 	int particlecount = particles.size();
 
-	// #pragma omp parallel for
-	// for(int p=0; p<particlecount; p++){
-	// 	float i = particles[i]->p.x*maxd;
-	// 	float j = particles[i]->p.y*maxd;
-	// 	float k = particles[i]->p.z*maxd;
-	// 	if(i>dimensions.x-1 || j>dimensions.y-1 || k>dimensions.z-1){
-	// 		particles[p]->invalid = true;
-	// 	}
-	// 	if(i<0 || j<0 || k<0){
-	// 		particles[p]->invalid = true;
-	// 	}
-	// 	// if(mgrid.A->getCell(i,j,k) == SOLID){
-	// 	// 	particles[p]->invalid = true;
-	// 	// }
-	// }
+	#pragma omp parallel for
+	for(int p=0; p<particlecount; p++){
+		vec3 t = particles[p]->p*maxd;
+		if(t.x>dimensions.x || t.y>dimensions.y || t.z>dimensions.z){
+			particles[p]->invalid = true;
+		}
+		if(t.x<0 || t.y<0 || t.z<0){
+			particles[p]->invalid = true;
+		}
+	}
 }
 
 void flipsim::advectParticles(){
@@ -160,9 +155,9 @@ void flipsim::advectParticles(){
 
 		particle *p = particles[p0];
 		if(p->type == FLUID){
-			int i = glm::min(x-1.0f,glm::max(0.0f,p->p.x*x));
-			int j = glm::min(y-1.0f,glm::max(0.0f,p->p.y*y));
-			int k = glm::min(z-1.0f,glm::max(0.0f,p->p.z*z));			
+			int i = glm::min(x-1.0f,glm::max(0.0f,p->p.x*maxd));
+			int j = glm::min(y-1.0f,glm::max(0.0f,p->p.y*maxd));
+			int k = glm::min(z-1.0f,glm::max(0.0f,p->p.z*maxd));			
 			vector<particle*> neighbors = pgrid->getCellNeighbors(vec3(i,j,k), vec3(1));
 			for(int p1=0; p1<neighbors.size(); p1++){
 				particle* np = neighbors[p1];
@@ -188,18 +183,18 @@ void flipsim::advectParticles(){
 		particle& p = *particles[n];
 		bool reposition = false;
 		if(p.type==FLUID){
-			int i = (int)glm::min(x-1.0f,glm::max(0.0f,p.p.x*x));
-			int j = (int)glm::min(y-1.0f,glm::max(0.0f,p.p.y*y));
-			int k = (int)glm::min(z-1.0f,glm::max(0.0f,p.p.z*z));
+			int i = (int)glm::min(x-1.0f,glm::max(0.0f,p.p.x*maxd));
+			int j = (int)glm::min(y-1.0f,glm::max(0.0f,p.p.y*maxd));
+			int k = (int)glm::min(z-1.0f,glm::max(0.0f,p.p.z*maxd));
 
 			//reposition particles stuck on walls
 			if(mgrid.A->getCell(i,j,k)){
 				reposition = true;
 			}
 
-			i = glm::min(x-3.0f, glm::max(2.0f, p.p.x*x));
-        	j = glm::min(y-3.0f, glm::max(2.0f, p.p.y*y));
-       		k = glm::min(z-3.0f, glm::max(2.0f, p.p.z*z));
+			i = glm::min(x-3.0f, glm::max(2.0f, p.p.x*maxd));
+        	j = glm::min(y-3.0f, glm::max(2.0f, p.p.y*maxd));
+       		k = glm::min(z-3.0f, glm::max(2.0f, p.p.z*maxd));
        		if(p.density < densitythreshold && mgrid.A->getCell(i,glm::max(0,j-1),k) == SOLID ||
        										   mgrid.A->getCell(i,glm::min(y-1,j+1),k) == SOLID){
        			reposition = true;
@@ -549,9 +544,9 @@ void flipsim::computeDensity(){
 		}else{
 			vec3 position = particles[i]->p;
 
-			position.x = (int)fmax(0,fmin((int)dimensions.x-1,(int)dimensions.x*position.x));
-			position.y = (int)fmax(0,fmin((int)dimensions.y-1,(int)dimensions.y*position.y));
-			position.z = (int)fmax(0,fmin((int)dimensions.z-1,(int)dimensions.z*position.z));
+			position.x = (int)fmax(0,fmin((int)maxd-1,(int)maxd*position.x));
+			position.y = (int)fmax(0,fmin((int)maxd-1,(int)maxd*position.y));
+			position.z = (int)fmax(0,fmin((int)maxd-1,(int)maxd*position.z));
 			vector<particle *> neighbors;
 			neighbors = pgrid->getCellNeighbors(position, vec3(1));
 			float weightsum = 0.0f;

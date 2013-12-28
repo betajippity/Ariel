@@ -108,6 +108,8 @@ float interpolate(floatgrid* q, vec3 p, vec3 n){
 
 vec3 interpolateVelocity(vec3 p, macgrid& mgrid){
 	int x = (int)mgrid.dimensions.x; int y = (int)mgrid.dimensions.y; int z = (int)mgrid.dimensions.z;
+	float maxd = glm::max(glm::max(x,y),z);
+	x = maxd; y = maxd; z = maxd;
 	vec3 u;
 	u.x = interpolate(mgrid.u_x, vec3(x*p.x, y*p.y-0.5f, z*p.z-0.5f), vec3(x+1, y, z));
 	u.y = interpolate(mgrid.u_y, vec3(x*p.x-0.5f, y*p.y, z*p.z-0.5f), vec3(x, y+1, z));
@@ -128,7 +130,8 @@ void splatParticlesToMACGrid(particlegrid* sgrid, vector<particle*>& particles, 
 	float RE = 1.4f; //sharpen kernel weight
 
 	int x = (int)mgrid.dimensions.x; int y = (int)mgrid.dimensions.y; int z = (int)mgrid.dimensions.z;
-	
+	float maxd = glm::max(glm::max(x,y),z);
+
 	#pragma omp parallel for
 	for(int i = 0; i < x+1; i++){
 		for(int j = 0; j < y+1; j++){
@@ -144,9 +147,9 @@ void splatParticlesToMACGrid(particlegrid* sgrid, vector<particle*>& particles, 
 						particle* p = neighbors[n];
 						if(p->type == FLUID){
 							vec3 pos;
-							pos.x = fmax(0,fmin(x,x*p->p.x));
-							pos.y = fmax(0,fmin(y,y*p->p.y));
-							pos.z = fmax(0,fmin(z,z*p->p.z));
+							pos.x = fmax(0,fmin(maxd,maxd*p->p.x));
+							pos.y = fmax(0,fmin(maxd,maxd*p->p.y));
+							pos.z = fmax(0,fmin(maxd,maxd*p->p.z));
 							float w = p->mass * mathCore::sharpen(mathCore::sqrlength(pos,px),RE);
 							sumx += w*p->u.x;
 							sumw += w;
@@ -170,9 +173,9 @@ void splatParticlesToMACGrid(particlegrid* sgrid, vector<particle*>& particles, 
 						particle* p = neighbors[n];
 						if(p->type == FLUID){
 							vec3 pos;
-							pos.x = fmax(0,fmin(x,x*p->p.x));
-							pos.y = fmax(0,fmin(y,y*p->p.y));
-							pos.z = fmax(0,fmin(z,z*p->p.z));
+							pos.x = fmax(0,fmin(maxd,maxd*p->p.x));
+							pos.y = fmax(0,fmin(maxd,maxd*p->p.y));
+							pos.z = fmax(0,fmin(maxd,maxd*p->p.z));
 							float w = p->mass * mathCore::sharpen(mathCore::sqrlength(pos,py),RE);
 							sumy += w*p->u.y;
 							sumw += w;
@@ -196,9 +199,9 @@ void splatParticlesToMACGrid(particlegrid* sgrid, vector<particle*>& particles, 
 						particle* p = neighbors[n];
 						if(p->type == FLUID){
 							vec3 pos;
-							pos.x = fmax(0,fmin(x,x*p->p.x));
-							pos.y = fmax(0,fmin(y,y*p->p.y));
-							pos.z = fmax(0,fmin(z,z*p->p.z));
+							pos.x = fmax(0,fmin(maxd,maxd*p->p.x));
+							pos.y = fmax(0,fmin(maxd,maxd*p->p.y));
+							pos.z = fmax(0,fmin(maxd,maxd*p->p.z));
 							float w = p->mass * mathCore::sharpen(mathCore::sqrlength(pos,pz),RE);
 							sumz += w*p->u.z;
 							sumw += w;

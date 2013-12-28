@@ -139,6 +139,8 @@ void particlegrid::sort(vector<particle*>& particles){
 		cells[i].clear();
 	}
 
+	float maxd = glm::max(glm::max(dimensions.x, dimensions.y), dimensions.z);
+
 	int particlecount = particles.size();
 	int cellscount = cells.size();
 	// cout << particlecount << endl;
@@ -146,9 +148,9 @@ void particlegrid::sort(vector<particle*>& particles){
 		particle* p = particles[i];
 
 		vec3 pos = p->p;
-		pos.x = (int)fmax(0, fmin((int)dimensions.x-1, int(dimensions.x*pos.x)));
-		pos.y = (int)fmax(0, fmin((int)dimensions.y-1, int(dimensions.y*pos.y)));
-		pos.z = (int)fmax(0, fmin((int)dimensions.z-1, int(dimensions.z*pos.z)));
+		pos.x = (int)fmax(0, fmin((int)maxd-1, int(maxd*pos.x)));
+		pos.y = (int)fmax(0, fmin((int)maxd-1, int(maxd*pos.y)));
+		pos.z = (int)fmax(0, fmin((int)maxd-1, int(maxd*pos.z)));
 
 		int cellindex = grid->getCell(pos);
 	

@@ -35,6 +35,7 @@ inline vec3 resample(particlegrid* pgrid, const vec3& p, const vec3& u, float re
 void resampleParticles(particlegrid* pgrid, vector<particle*>& particles, const float& dt, const float& re, 
 					   const vec3& dimensions){
 	int nx = (int)dimensions.x; int ny = (int)dimensions.y; int nz = (int)dimensions.z;
+	float maxd = glm::max(glm::max(nx, ny), nz);
 	pgrid->sort(particles);
 
 	float springforce = 50.0f;
@@ -45,9 +46,9 @@ void resampleParticles(particlegrid* pgrid, vector<particle*>& particles, const 
 		if(particles[n0]->type==FLUID){
 			particle* p = particles[n0];
 			vec3 spring(0.0f, 0.0f, 0.0f);
-			float x = glm::max(0.0f,glm::min((float)nx,nx*p->p.x));
-			float y = glm::max(0.0f,glm::min((float)ny,ny*p->p.y));
-			float z = glm::max(0.0f,glm::min((float)nz,nz*p->p.z));
+			float x = glm::max(0.0f,glm::min((float)maxd,maxd*p->p.x));
+			float y = glm::max(0.0f,glm::min((float)maxd,maxd*p->p.y));
+			float z = glm::max(0.0f,glm::min((float)maxd,maxd*p->p.z));
 			vector<particle*> neighbors = pgrid->getCellNeighbors(vec3(x,y,z),vec3(1));
 			for(int n1=0; n1<neighbors.size(); n1++){
 				particle* np = neighbors[n1];
@@ -100,13 +101,14 @@ void resampleParticles(particlegrid* pgrid, vector<particle*>& particles, const 
 
 vec3 resample(particlegrid* pgrid, const vec3& p, const vec3& u, float re, const vec3& dimensions){
 	int nx = (int)dimensions.x; int ny = (int)dimensions.y; int nz = (int)dimensions.z;
+	float maxd = glm::max(glm::max(nx, ny), nz);
 
 	float wsum = 0.0f;
 	vec3 ru = vec3(0);
 
-	float x = glm::max(0.0f,glm::min((float)nx-1,nx*p.x));
-	float y = glm::max(0.0f,glm::min((float)ny-1,ny*p.y));
-	float z = glm::max(0.0f,glm::min((float)nz-1,nz*p.z));
+	float x = glm::max(0.0f,glm::min((float)maxd-1,maxd*p.x));
+	float y = glm::max(0.0f,glm::min((float)maxd-1,maxd*p.y));
+	float z = glm::max(0.0f,glm::min((float)maxd-1,maxd*p.z));
 	vector<particle*> neighbors = pgrid->getCellNeighbors(vec3(x,y,z),vec3(1));
 
 	for(int n=0; n<neighbors.size(); n++){

@@ -133,14 +133,7 @@ void viewer::mainLoop(){
                     vertexData.push_back(particles->operator[](j)->p*maxd);
                     float c = length(particles->operator[](j)->u)/3.0f;
                     c = glm::max(c, 1.0f * glm::max((.7f - particles->operator[](j)->density),0.0f));
-                    vec3 t = particles->operator[](j)->p*maxd;
-                    bool invalid = false;
-                    if(t.x>gridSize.x || t.y>gridSize.y || t.z>gridSize.z){
-                        invalid = true;
-                    }
-                    if(t.x<0 || t.y<0 || t.z<0){
-                        invalid = true;
-                    }
+                    bool invalid = particles->operator[](j)->invalid;
                     if(invalid){
                         colorData.push_back(vec4(1,0,0,0));
                     }else{
