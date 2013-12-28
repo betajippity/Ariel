@@ -47,6 +47,7 @@ struct particle{
 	int type;
 	vec3 t;
 	vec3 t2;
+	bool invalid;
 };
 
 //Forward declarations for externed inlineable methods

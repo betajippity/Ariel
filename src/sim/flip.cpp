@@ -115,6 +115,24 @@ void flipsim::step(){
 	float maxd = glm::max(glm::max(dimensions.x, dimensions.z), dimensions.y);
 	float h = density/maxd;
 	resampleParticles(pgrid, particles, stepsize, h, dimensions);
+
+	int particlecount = particles.size();
+
+	// #pragma omp parallel for
+	// for(int p=0; p<particlecount; p++){
+	// 	float i = particles[i]->p.x*maxd;
+	// 	float j = particles[i]->p.y*maxd;
+	// 	float k = particles[i]->p.z*maxd;
+	// 	if(i>dimensions.x-1 || j>dimensions.y-1 || k>dimensions.z-1){
+	// 		particles[p]->invalid = true;
+	// 	}
+	// 	if(i<0 || j<0 || k<0){
+	// 		particles[p]->invalid = true;
+	// 	}
+	// 	// if(mgrid.A->getCell(i,j,k) == SOLID){
+	// 	// 	particles[p]->invalid = true;
+	// 	// }
+	// }
 }
 
 void flipsim::advectParticles(){
@@ -191,6 +209,8 @@ void flipsim::advectParticles(){
 			repositionList.push_back(n);
 		}
 	}
+	cout << "reposition list " << repositionList.size() << endl;
+
 }
 
 void flipsim::solvePicFlip(){

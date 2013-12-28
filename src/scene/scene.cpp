@@ -134,6 +134,7 @@ void scene::addParticle(const vec3& pos, const geomtype& type, const float& thic
 		p->density = 10.0f;
 		p->type = type;
 		p->mass = 1.0f;
+		p->invalid = false;
 		particles.push_back(p);
 	}
 }
