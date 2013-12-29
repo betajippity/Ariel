@@ -6,6 +6,7 @@
 
 #include <vector>
 #include "objcontainer.hpp"
+#include <omp.h>
 
 using namespace objCore;
 
@@ -161,6 +162,17 @@ bool objContainer::writeObj(string filename){
     }else{
         cout << "Error: Unable to write to " << filename << endl;
         return false;
+    }
+}
+
+void objContainer::bakeTransform(mat4 transform){
+    #pragma parallel for
+    for(int i=0; i<mesh->numberOfVertices; i++){
+        mesh->vertices[i] = vec3(transform * vec4(mesh->vertices[i], 1.0f));
+    }
+    #pragma parallel for
+    for(int i=0; i<mesh->numberOfNormals; i++){
+        mesh->normals[i] = normalize(vec3(transform * vec4(mesh->normals[i], 0.0f)));
     }
 }
 

@@ -30,6 +30,8 @@ class objContainer {
     objContainer(obj* o);
     ~objContainer();
 
+    void bakeTransform(mat4 transform);
+
    	//Getters
    	obj* getObj();
     bool writeObj(string filename); //returns true if successful, false otherwise

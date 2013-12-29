@@ -120,11 +120,15 @@ void flipsim::step(){
 
 	#pragma omp parallel for
 	for(int p=0; p<particlecount; p++){
+		particles[p]->invalid = false;
 		vec3 t = particles[p]->p*maxd;
 		if(t.x>dimensions.x || t.y>dimensions.y || t.z>dimensions.z){
 			particles[p]->invalid = true;
 		}
 		if(t.x<0 || t.y<0 || t.z<0){
+			particles[p]->invalid = true;
+		}
+		if(mgrid.A->getCell(t)==SOLID){
 			particles[p]->invalid = true;
 		}
 	}
@@ -204,8 +208,6 @@ void flipsim::advectParticles(){
 			repositionList.push_back(n);
 		}
 	}
-	cout << "reposition list " << repositionList.size() << endl;
-
 }
 
 void flipsim::solvePicFlip(){

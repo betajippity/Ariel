@@ -33,10 +33,12 @@ class sceneloader {
 		void loadSim(const Json::Value& jsonsettings);
 		void loadBox(const Json::Value& jsoncube);
 		void loadSphere(const Json::Value& jsonsphere);
+		void loadObj(const Json::Value& jsonobj);
 
 		scene* s;
 		vec3 dimensions;
 		float density;
+		string relativePath;
 
 };
 }
