@@ -23,6 +23,12 @@ scene::~scene(){
 	delete liquidLevelSet;
 }
 
+void scene::setPaths(const string& imagePath, const string& meshPath, const string& vdbPath){
+	this->imagePath = imagePath;
+	this->meshPath = meshPath;
+	this->vdbPath = vdbPath;
+}
+
 void scene::addSolidObject(objCore::objContainer* object){
 	solidObjects.push_back(object);
 	if(solidObjects.size()==1){

@@ -69,7 +69,16 @@ HOST DEVICE bool utilityCore::epsilonCheck(float a, float b){
 // String wrangling stuff
 //====================================
 
-bool utilityCore::replaceString(std::string& str, const std::string& from, const std::string& to) {
+std::string utilityCore::padString(int length, std::string str){
+    int strlength = str.length();
+    std::string pad = "";
+    for(int i=strlength; i<length; i++){
+        pad = pad + "0";
+    }
+    return pad + str;
+}
+
+bool utilityCore::replaceString(std::string& str, const std::string& from, const std::string& to){
     size_t start_pos = str.find(from);
     if(start_pos == std::string::npos)
         return false;

@@ -39,6 +39,9 @@ class sceneloader {
 		vec3 dimensions;
 		float density;
 		string relativePath;
+		string imagePath;
+		string meshPath;
+		string vdbPath;
 
 };
 }

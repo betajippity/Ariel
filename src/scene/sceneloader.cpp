@@ -38,6 +38,8 @@ sceneloader::sceneloader(string filename){
 		loadSim(root["sim"]);
 	}
 
+	s->setPaths(imagePath, meshPath, vdbPath);
+
 	cout << "Loaded scene from " << filename << ".\n" << endl;
 }
 
@@ -60,6 +62,9 @@ vec3 sceneloader::getDimensions(){
 void sceneloader::loadSettings(const Json::Value& jsonsettings){
 	density = .5f;
 	dimensions = vec3(32);
+	imagePath = relativePath;
+	meshPath = relativePath;
+	vdbPath = relativePath;
 
 	if(jsonsettings.isMember("density")){
 		density = jsonsettings["density"].asFloat();
@@ -72,6 +77,15 @@ void sceneloader::loadSettings(const Json::Value& jsonsettings){
 	}
 	if(jsonsettings.isMember("dim_z")){
 		dimensions.z = jsonsettings["dim_z"].asInt();
+	}
+	if(jsonsettings.isMember("image_output")){
+		imagePath = jsonsettings["image_output"].asString();
+	}
+	if(jsonsettings.isMember("mesh_output")){
+		meshPath = jsonsettings["mesh_output"].asString();
+	}
+	if(jsonsettings.isMember("vdb_output")){
+		vdbPath = jsonsettings["vdb_output"].asString();
 	}
 }
 

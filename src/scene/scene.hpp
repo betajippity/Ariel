@@ -39,6 +39,11 @@ class scene {
 		fluidCore::levelset* getLiquidLevelSet();
 
 		void rebuildLiquidLevelSet(vector<fluidCore::particle*>& particles);
+		void setPaths(const string& imagePath, const string& meshPath, const string& vdbPath);
+
+		string imagePath;
+		string meshPath;
+		string vdbPath;
 
 	private:
 
@@ -50,7 +55,6 @@ class scene {
 
 		fluidCore::levelset* solidLevelSet;
 		fluidCore::levelset* liquidLevelSet;
-
 };
 }
 

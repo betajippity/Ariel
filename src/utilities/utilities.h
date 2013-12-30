@@ -53,6 +53,7 @@ extern inline bool replaceString(std::string& str, const std::string& from, cons
 extern inline std::vector<std::string> tokenizeString(std::string str, std::string separator); 
 extern inline std::vector<std::string> tokenizeStringByAllWhitespace(std::string str);
 extern inline std::string convertIntToString(int number);
+extern inline std::string padString(int length, std::string str);
 extern inline std::string getLastNCharactersOfString(std::string s, int n);
 extern inline std::string getFirstNCharactersOfString(std::string s, int n);
 

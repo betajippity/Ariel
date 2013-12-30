@@ -102,9 +102,12 @@ bool viewer::launch(){
 }
 
 void viewer::saveFrame(){
-    string folder = "images";
+    string filename = sim->getScene()->imagePath;
+    string frameString = utilityCore::padString(4, utilityCore::convertIntToString(frame));
+    utilityCore::replaceString(filename, ".png", "."+frameString+".png");
+
     char anim_filename[2048];
-    sprintf(anim_filename, "%s/frame_%05i.png", (char*)folder.c_str(), frame);
+    sprintf(anim_filename, "%s", (char*)filename.c_str());
     stbi_write_png(anim_filename, (int)resolution.x*framebufferScale, 
                                   (int)resolution.y*framebufferScale, 3, bitmapData, 
                                   (int)resolution.x*framebufferScale * 3);
