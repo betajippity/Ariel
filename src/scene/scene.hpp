@@ -55,6 +55,9 @@ class scene {
 
 		fluidCore::levelset* solidLevelSet;
 		fluidCore::levelset* liquidLevelSet;
+
+		map<int, vector<objCore::objContainer*> > solidObjectsTimeMap;
+		map<int, vector<objCore::objContainer*> > liquidObjectsTimeMap;
 };
 }
 
