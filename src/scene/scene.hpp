@@ -57,6 +57,12 @@ class scene {
 		fluidCore::levelset* solidLevelSet;
 		fluidCore::levelset* liquidLevelSet;
 
+		fluidCore::levelset* permaSolidLevelSet;
+		fluidCore::levelset* permaLiquidLevelSet;
+
+		bool permaLiquidSDFActive;
+		bool permaSolidSDFActive;
+
 		vector<vec2> solidObjectFrameRanges;
 		vector<vec2> liquidObjectFrameRanges;
 };

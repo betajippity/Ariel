@@ -115,6 +115,14 @@ void sceneloader::loadBox(const Json::Value& jsoncube){
 	point1.z = jsoncube["point1_z"].asFloat();
 	int startFrame = -1;
 	int endFrame = -1;
+
+	if(jsoncube.isMember("startFrame")){
+		startFrame = jsoncube["startFrame"].asInt();
+	}
+	if(jsoncube.isMember("endFrame")){
+		endFrame = jsoncube["endFrame"].asInt();
+	}
+
 	if(strcmp(jsoncube["type"].asString().c_str(), "solid")==0){
 		s->addSolidObject(cubebuilder.tesselate(point0, point1), startFrame, endFrame);
 	}else if(strcmp(jsoncube["type"].asString().c_str(), "liquid")==0){
@@ -122,19 +130,27 @@ void sceneloader::loadBox(const Json::Value& jsoncube){
 	}
 }
 
-void sceneloader::loadSphere(const Json::Value& jsoncube){
+void sceneloader::loadSphere(const Json::Value& jsonsphere){
 	geomCore::sphere spherebuilder;
 	vec3 center;
-	center.x = jsoncube["center_x"].asFloat();
-	center.y = jsoncube["center_y"].asFloat();
-	center.z = jsoncube["center_z"].asFloat();
+	center.x = jsonsphere["center_x"].asFloat();
+	center.y = jsonsphere["center_y"].asFloat();
+	center.z = jsonsphere["center_z"].asFloat();
 	float radius;
-	radius = jsoncube["radius"].asFloat();
+	radius = jsonsphere["radius"].asFloat();
 	int startFrame = -1;
 	int endFrame = -1;
-	if(strcmp(jsoncube["type"].asString().c_str(), "solid")==0){
+
+	if(jsonsphere.isMember("startFrame")){
+		startFrame = jsonsphere["startFrame"].asInt();
+	}
+	if(jsonsphere.isMember("endFrame")){
+		endFrame = jsonsphere["endFrame"].asInt();
+	}
+
+	if(strcmp(jsonsphere["type"].asString().c_str(), "solid")==0){
 		s->addSolidObject(spherebuilder.tesselate(center, radius), startFrame, endFrame);
-	}else if(strcmp(jsoncube["type"].asString().c_str(), "liquid")==0){
+	}else if(strcmp(jsonsphere["type"].asString().c_str(), "liquid")==0){
 		s->addLiquidObject(spherebuilder.tesselate(center, radius), startFrame, endFrame);
 	}
 }
@@ -161,6 +177,14 @@ void sceneloader::loadObj(const Json::Value& jsonobj){
 
 	int startFrame = -1;
 	int endFrame = -1;
+
+	if(jsonobj.isMember("startFrame")){
+		startFrame = jsonobj["startFrame"].asInt();
+	}
+	if(jsonobj.isMember("endFrame")){
+		endFrame = jsonobj["endFrame"].asInt();
+	}
+
 	if(strcmp(jsonobj["type"].asString().c_str(), "solid")==0){
 		s->addSolidObject(objloader, startFrame, endFrame);
 	}else if(strcmp(jsonobj["type"].asString().c_str(), "liquid")==0){

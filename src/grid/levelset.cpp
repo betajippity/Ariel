@@ -64,3 +64,7 @@ void levelset::merge(levelset& ls){
 	openvdb::tools::csgUnion(*vdbgrid, *objectSDF);
 	objectSDF->clear();
 }
+	
+void levelset::copy(levelset& ls){
+	vdbgrid = ls.getVDBGrid()->deepCopy();
+}

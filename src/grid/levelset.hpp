@@ -68,7 +68,7 @@ class levelset: public floatgrid{
 		~levelset();
 
 		void merge(levelset& ls);
-
+		void copy(levelset& ls);
 };
 }
 
