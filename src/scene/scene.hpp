@@ -27,8 +27,8 @@ class scene {
 		scene();
 		~scene();
 
-		void addSolidObject(objCore::objContainer* object);
-		void addLiquidObject(objCore::objContainer* object);
+		void addSolidObject(objCore::objContainer* object, int startFrame, int endFrame);
+		void addLiquidObject(objCore::objContainer* object, int startFrame, int endFrame);
 		void generateParticles(vector<fluidCore::particle*>& particles, const vec3& dimensions, 
 							   const float& density, fluidCore::particlegrid* pgrid);
 
@@ -38,7 +38,8 @@ class scene {
 		fluidCore::levelset* getSolidLevelSet();
 		fluidCore::levelset* getLiquidLevelSet();
 
-		void rebuildLiquidLevelSet(vector<fluidCore::particle*>& particles);
+		void buildLevelSets(const int& frame);
+		// void rebuildLiquidLevelSet(vector<fluidCore::particle*>& particles);
 		void setPaths(const string& imagePath, const string& meshPath, const string& vdbPath);
 
 		string imagePath;
@@ -56,8 +57,8 @@ class scene {
 		fluidCore::levelset* solidLevelSet;
 		fluidCore::levelset* liquidLevelSet;
 
-		map<int, vector<objCore::objContainer*> > solidObjectsTimeMap;
-		map<int, vector<objCore::objContainer*> > liquidObjectsTimeMap;
+		vector<vec2> solidObjectFrameRanges;
+		vector<vec2> liquidObjectFrameRanges;
 };
 }
 

@@ -70,6 +70,8 @@ void flipsim::init(){
 	}
 	particles.clear();
 
+	scene->buildLevelSets(frame);
+
 	//Generate particles and sort
 	scene->generateParticles(particles, dimensions, density, pgrid);
 	pgrid->sort(particles);
@@ -98,6 +100,8 @@ void flipsim::step(){
 	frame++;	
 	cout << "Simulating Step: " << frame << "..." << endl;
 	
+	scene->buildLevelSets(frame);
+
 	pgrid->sort(particles);
 	computeDensity();
 	applyExternalForces(); 

@@ -29,28 +29,30 @@ void scene::setPaths(const string& imagePath, const string& meshPath, const stri
 	this->vdbPath = vdbPath;
 }
 
-void scene::addSolidObject(objCore::objContainer* object){
+void scene::addSolidObject(objCore::objContainer* object, int startFrame, int endFrame){
 	solidObjects.push_back(object);
-	if(solidObjects.size()==1){
-		delete solidLevelSet;
-		solidLevelSet = new fluidCore::levelset(object);
-	}else{
-		fluidCore::levelset* objectSDF = new fluidCore::levelset(object);
-		solidLevelSet->merge(*objectSDF);
-		delete objectSDF;
-	}
+	solidObjectFrameRanges.push_back(vec2(startFrame, endFrame));
+	// if(solidObjects.size()==1){
+	// 	delete solidLevelSet;
+	// 	solidLevelSet = new fluidCore::levelset(object);
+	// }else{
+	// 	fluidCore::levelset* objectSDF = new fluidCore::levelset(object);
+	// 	solidLevelSet->merge(*objectSDF);
+	// 	delete objectSDF;
+	// }
 }
 
-void scene::addLiquidObject(objCore::objContainer* object){
+void scene::addLiquidObject(objCore::objContainer* object, int startFrame, int endFrame){
 	liquidObjects.push_back(object);
-	if(liquidObjects.size()==1){
-		delete liquidLevelSet;
-		liquidLevelSet = new fluidCore::levelset(object);
-	}else{
-		fluidCore::levelset* objectSDF = new fluidCore::levelset(object);
-		liquidLevelSet->merge(*objectSDF);
-		delete objectSDF;
-	}
+	liquidObjectFrameRanges.push_back(vec2(startFrame, endFrame));
+	// if(liquidObjects.size()==1){
+	// 	delete liquidLevelSet;
+	// 	liquidLevelSet = new fluidCore::levelset(object);
+	// }else{
+	// 	fluidCore::levelset* objectSDF = new fluidCore::levelset(object);
+	// 	liquidLevelSet->merge(*objectSDF);
+	// 	delete objectSDF;
+	// }
 }
 
 vector<objCore::objContainer*>& scene::getSolidObjects(){
@@ -61,10 +63,47 @@ vector<objCore::objContainer*>& scene::getLiquidObjects(){
 	return liquidObjects;
 }
 
-void scene::rebuildLiquidLevelSet(vector<fluidCore::particle*>& particles){
-	delete liquidLevelSet;
-	liquidLevelSet = new fluidCore::levelset(particles);
+void scene::buildLevelSets(const int& frame){
+	//first rebuild liquid level set
+	int liquidObjectsCount = liquidObjects.size();
+	bool liquidSDFCreated = false;
+	for(int i=0; i<liquidObjectsCount; i++){
+		if( (liquidObjectFrameRanges[i][0]<0 && liquidObjectFrameRanges[i][1]<0) || 
+			(frame<=liquidObjectFrameRanges[i][1] && frame>=liquidObjectFrameRanges[i][0]) ){
+			if(liquidSDFCreated==false){
+				delete liquidLevelSet;
+				liquidLevelSet = new fluidCore::levelset(liquidObjects[i]);
+				liquidSDFCreated = true;
+			}else{
+				fluidCore::levelset* objectSDF = new fluidCore::levelset(liquidObjects[i]);
+				liquidLevelSet->merge(*objectSDF);
+				delete objectSDF;
+			}
+		}
+	}
+
+	int solidObjectsCount = solidObjects.size();
+	bool solidSDFCreated = false;
+	for(int i=0; i<solidObjectsCount; i++){
+		if( (solidObjectFrameRanges[i][0]<0 && solidObjectFrameRanges[i][1]<0) || 
+			(frame<=solidObjectFrameRanges[i][1] && frame>=solidObjectFrameRanges[i][0]) ){
+			if(solidSDFCreated==false){
+				delete solidLevelSet;
+				solidLevelSet = new fluidCore::levelset(solidObjects[i]);
+				solidSDFCreated = true;
+			}else{
+				fluidCore::levelset* objectSDF = new fluidCore::levelset(solidObjects[i]);
+				solidLevelSet->merge(*objectSDF);
+				delete objectSDF;
+			}
+		}
+	}
 }
+
+// void scene::rebuildLiquidLevelSet(vector<fluidCore::particle*>& particles){
+// 	delete liquidLevelSet;
+// 	liquidLevelSet = new fluidCore::levelset(particles);
+// }
 
 void scene::generateParticles(vector<fluidCore::particle*>& particles, const vec3& dimensions, 
 					   		  const float& density, fluidCore::particlegrid* pgrid){

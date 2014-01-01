@@ -113,10 +113,12 @@ void sceneloader::loadBox(const Json::Value& jsoncube){
 	point1.x = jsoncube["point1_x"].asFloat();
 	point1.y = jsoncube["point1_y"].asFloat();
 	point1.z = jsoncube["point1_z"].asFloat();
+	int startFrame = -1;
+	int endFrame = -1;
 	if(strcmp(jsoncube["type"].asString().c_str(), "solid")==0){
-		s->addSolidObject(cubebuilder.tesselate(point0, point1));
+		s->addSolidObject(cubebuilder.tesselate(point0, point1), startFrame, endFrame);
 	}else if(strcmp(jsoncube["type"].asString().c_str(), "liquid")==0){
-		s->addLiquidObject(cubebuilder.tesselate(point0, point1));
+		s->addLiquidObject(cubebuilder.tesselate(point0, point1), startFrame, endFrame);
 	}
 }
 
@@ -128,10 +130,12 @@ void sceneloader::loadSphere(const Json::Value& jsoncube){
 	center.z = jsoncube["center_z"].asFloat();
 	float radius;
 	radius = jsoncube["radius"].asFloat();
+	int startFrame = -1;
+	int endFrame = -1;
 	if(strcmp(jsoncube["type"].asString().c_str(), "solid")==0){
-		s->addSolidObject(spherebuilder.tesselate(center, radius));
+		s->addSolidObject(spherebuilder.tesselate(center, radius), startFrame, endFrame);
 	}else if(strcmp(jsoncube["type"].asString().c_str(), "liquid")==0){
-		s->addLiquidObject(spherebuilder.tesselate(center, radius));
+		s->addLiquidObject(spherebuilder.tesselate(center, radius), startFrame, endFrame);
 	}
 }
 
@@ -155,9 +159,11 @@ void sceneloader::loadObj(const Json::Value& jsonobj){
 	mat4 transform = utilityCore::buildTransformationMatrix(translate, rotate, scale);
 	objloader->bakeTransform(transform);
 
+	int startFrame = -1;
+	int endFrame = -1;
 	if(strcmp(jsonobj["type"].asString().c_str(), "solid")==0){
-		s->addSolidObject(objloader);
+		s->addSolidObject(objloader, startFrame, endFrame);
 	}else if(strcmp(jsonobj["type"].asString().c_str(), "liquid")==0){
-		s->addLiquidObject(objloader);
+		s->addLiquidObject(objloader, startFrame, endFrame);
 	}
 }
