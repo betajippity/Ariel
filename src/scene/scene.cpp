@@ -78,6 +78,11 @@ vector<objCore::objContainer*>& scene::getLiquidObjects(){
 void scene::buildLevelSets(const int& frame){
 	//first rebuild frame dependent levelsets, then merge with permanent sets if needed
 
+	delete liquidLevelSet;
+	liquidLevelSet = new fluidCore::levelset();
+	delete solidLevelSet;
+	solidLevelSet = new fluidCore::levelset();
+
 	int liquidObjectsCount = liquidObjects.size();
 	bool liquidSDFCreated = false;
 	for(int i=0; i<liquidObjectsCount; i++){
@@ -109,16 +114,6 @@ void scene::buildLevelSets(const int& frame){
 		}
 	}
 
-	if(permaSolidSDFActive){
-		if(!solidSDFCreated){
-			delete solidLevelSet;
-			solidLevelSet = new fluidCore::levelset();
-			solidLevelSet->copy(*permaSolidLevelSet);
-		}else{
-			solidLevelSet->merge(*permaSolidLevelSet);
-		}
-	}
-
 	if(permaLiquidSDFActive){
 		if(!liquidSDFCreated){
 			delete liquidLevelSet;
@@ -136,7 +131,7 @@ void scene::buildLevelSets(const int& frame){
 // }
 
 void scene::generateParticles(vector<fluidCore::particle*>& particles, const vec3& dimensions, 
-					   		  const float& density, fluidCore::particlegrid* pgrid){
+					   		  const float& density, fluidCore::particlegrid* pgrid, const int& frame){
 
 	float maxdimension = glm::max(glm::max(dimensions.x, dimensions.y), dimensions.z);
 
@@ -156,7 +151,8 @@ void scene::generateParticles(vector<fluidCore::particle*>& particles, const vec
 					if( x > thickness && x < 1.0-thickness &&
 						y > thickness && y < 1.0-thickness &&
 						z > thickness && z < 1.0-thickness ) {
-							addParticle(vec3(x,y,z), FLUID, 3.0f/maxdimension, maxdimension, particles);
+							addParticle(vec3(x,y,z), FLUID, 3.0f/maxdimension, maxdimension, particles, 
+										frame);
 					}
 				}
 			}
@@ -172,7 +168,7 @@ void scene::generateParticles(vector<fluidCore::particle*>& particles, const vec
 	                float x = i*w+w/2.0f;
 	                float y = j*w+w/2.0f;
 	                float z = k*w+w/2.0f;
-	                addParticle(vec3(x,y,z), SOLID, 3.0f/maxdimension, maxdimension, particles);
+	                addParticle(vec3(x,y,z), SOLID, 3.0f/maxdimension, maxdimension, particles, frame);
 	            }
 	        }
 	    }
@@ -181,7 +177,7 @@ void scene::generateParticles(vector<fluidCore::particle*>& particles, const vec
 }
 
 void scene::addParticle(const vec3& pos, const geomtype& type, const float& thickness, const float& scale,
-						vector<fluidCore::particle*>& particles){
+						vector<fluidCore::particle*>& particles, const int& frame){
 	bool inside = false;
 
 	if(type==FLUID){
@@ -193,12 +189,22 @@ void scene::addParticle(const vec3& pos, const geomtype& type, const float& thic
 		if(solidLevelSet->getInterpolatedCell(worldpos)<0.0f /*thickness*/){ 
 			inside = false; 
 		}	
+		if(frame==0 && permaSolidSDFActive){
+			if(permaSolidLevelSet->getInterpolatedCell(worldpos)<0.0f /*thickness*/){
+				inside = false;
+			}
+		}
 
 	}else if(type==SOLID){
 		vec3 worldpos = pos*scale;
 		if(solidLevelSet->getInterpolatedCell(worldpos)<0.0f /*thickness*/){
 			inside = true;
 		}	
+		if(frame==0 && permaSolidSDFActive){
+			if(permaSolidLevelSet->getInterpolatedCell(worldpos)<0.0f /*thickness*/){
+				inside = true;
+			}
+		}
 	}
 
 	if(inside){

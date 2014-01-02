@@ -30,7 +30,7 @@ class scene {
 		void addSolidObject(objCore::objContainer* object, int startFrame, int endFrame);
 		void addLiquidObject(objCore::objContainer* object, int startFrame, int endFrame);
 		void generateParticles(vector<fluidCore::particle*>& particles, const vec3& dimensions, 
-							   const float& density, fluidCore::particlegrid* pgrid);
+							   const float& density, fluidCore::particlegrid* pgrid, const int& frame);
 
 		vector<objCore::objContainer*>& getSolidObjects();
 		vector<objCore::objContainer*>& getLiquidObjects();
@@ -49,7 +49,7 @@ class scene {
 	private:
 
 		void addParticle(const vec3& pos, const geomtype& type, const float& thickness, const float& scale,
-						 vector<fluidCore::particle*>& particles);
+						 vector<fluidCore::particle*>& particles, const int& frame);
 
 		vector<objCore::objContainer*> solidObjects;
 		vector<objCore::objContainer*> liquidObjects;
