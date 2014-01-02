@@ -27,10 +27,6 @@ void viewer::load(fluidCore::flipsim* sim, bool retina){
 
     loaded = true;
 
-    frame = 0;
-    // flip3D::init(frame);
-    // particles = flip3D::getParticles();
-
     this->sim = sim;
     siminitialized = false;
 
@@ -68,7 +64,7 @@ bool viewer::launch(){
                 }
                 #pragma omp single
                 {
-                    if(frame==0){
+                    if(sim->frame==0){
                         sim->init();
                         particles = sim->getParticles();
                         siminitialized = true;
@@ -77,7 +73,6 @@ bool viewer::launch(){
                     while(1){
                         if(!pause){
                             sim->step();
-                            frame++;
                             particles = sim->getParticles();
                             if(dumpFramebuffer && dumpReady){
                                 omp_set_lock(&framebufferWriteLock);
@@ -103,7 +98,7 @@ bool viewer::launch(){
 
 void viewer::saveFrame(){
     string filename = sim->getScene()->imagePath;
-    string frameString = utilityCore::padString(4, utilityCore::convertIntToString(frame));
+    string frameString = utilityCore::padString(4, utilityCore::convertIntToString(sim->frame));
     utilityCore::replaceString(filename, ".png", "."+frameString+".png");
 
     char anim_filename[2048];

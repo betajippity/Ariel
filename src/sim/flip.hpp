@@ -34,6 +34,8 @@ class flipsim{
 		vec3 getDimensions();
 		sceneCore::scene* getScene();
 
+		int frame;
+
 	private:
 		void computeDensity();
 		void applyExternalForces();
@@ -60,7 +62,6 @@ class flipsim{
 
 		sceneCore::scene* scene;
 
-		int timestep;
 		float stepsize;
 
 		gridtype type;

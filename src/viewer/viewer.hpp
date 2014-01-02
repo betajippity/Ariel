@@ -100,8 +100,6 @@ class viewer{
 
 		vector<fluidCore::particle*>* particles;
 
-		int frame;
-
     	fluidCore::flipsim* sim;
     	bool siminitialized;
     	bool drawobjects;

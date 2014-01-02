@@ -16,6 +16,10 @@ using namespace sceneCore;
 scene::scene(){
 	solidLevelSet = new fluidCore::levelset();
 	liquidLevelSet = new fluidCore::levelset();
+	permaSolidLevelSet = new fluidCore::levelset();
+	permaLiquidLevelSet = new fluidCore::levelset();
+	permaLiquidSDFActive = false;
+	permaSolidSDFActive = false;
 }
 
 scene::~scene(){
@@ -29,27 +33,37 @@ void scene::setPaths(const string& imagePath, const string& meshPath, const stri
 	this->vdbPath = vdbPath;
 }
 
-void scene::addSolidObject(objCore::objContainer* object){
+void scene::addSolidObject(objCore::objContainer* object, int startFrame, int endFrame){
 	solidObjects.push_back(object);
-	if(solidObjects.size()==1){
-		delete solidLevelSet;
-		solidLevelSet = new fluidCore::levelset(object);
-	}else{
-		fluidCore::levelset* objectSDF = new fluidCore::levelset(object);
-		solidLevelSet->merge(*objectSDF);
-		delete objectSDF;
+	solidObjectFrameRanges.push_back(vec2(startFrame, endFrame));
+
+	if(startFrame<0 && endFrame<0){
+		if(permaSolidSDFActive==false){
+			delete permaSolidLevelSet;
+			permaSolidLevelSet = new fluidCore::levelset(object);
+			permaSolidSDFActive = true;
+		}else{
+			fluidCore::levelset* objectSDF = new fluidCore::levelset(object);
+			permaSolidLevelSet->merge(*objectSDF);
+			delete objectSDF;
+		}
 	}
 }
 
-void scene::addLiquidObject(objCore::objContainer* object){
+void scene::addLiquidObject(objCore::objContainer* object, int startFrame, int endFrame){
 	liquidObjects.push_back(object);
-	if(liquidObjects.size()==1){
-		delete liquidLevelSet;
-		liquidLevelSet = new fluidCore::levelset(object);
-	}else{
-		fluidCore::levelset* objectSDF = new fluidCore::levelset(object);
-		liquidLevelSet->merge(*objectSDF);
-		delete objectSDF;
+	liquidObjectFrameRanges.push_back(vec2(startFrame, endFrame));
+	
+	if(startFrame<0 && endFrame<0){
+		if(permaLiquidSDFActive==false){
+			delete permaLiquidLevelSet;
+			permaLiquidLevelSet = new fluidCore::levelset(object);
+			permaLiquidSDFActive = true;
+		}else{
+			fluidCore::levelset* objectSDF = new fluidCore::levelset(object);
+			permaLiquidLevelSet->merge(*objectSDF);
+			delete objectSDF;
+		}
 	}
 }
 
@@ -61,13 +75,63 @@ vector<objCore::objContainer*>& scene::getLiquidObjects(){
 	return liquidObjects;
 }
 
-void scene::rebuildLiquidLevelSet(vector<fluidCore::particle*>& particles){
+void scene::buildLevelSets(const int& frame){
+	//first rebuild frame dependent levelsets, then merge with permanent sets if needed
+
 	delete liquidLevelSet;
-	liquidLevelSet = new fluidCore::levelset(particles);
+	liquidLevelSet = new fluidCore::levelset();
+	delete solidLevelSet;
+	solidLevelSet = new fluidCore::levelset();
+
+	int liquidObjectsCount = liquidObjects.size();
+	bool liquidSDFCreated = false;
+	for(int i=0; i<liquidObjectsCount; i++){
+		if( (frame<=liquidObjectFrameRanges[i][1] && frame>=liquidObjectFrameRanges[i][0]) ){
+			if(liquidSDFCreated==false){
+				delete liquidLevelSet;
+				liquidLevelSet = new fluidCore::levelset(liquidObjects[i]);
+				liquidSDFCreated = true;
+			}else{
+				fluidCore::levelset* objectSDF = new fluidCore::levelset(liquidObjects[i]);
+				liquidLevelSet->merge(*objectSDF);
+				delete objectSDF;
+			}
+		}
+	}
+	int solidObjectsCount = solidObjects.size();
+	bool solidSDFCreated = false;
+	for(int i=0; i<solidObjectsCount; i++){
+		if( (frame<=solidObjectFrameRanges[i][1] && frame>=solidObjectFrameRanges[i][0]) ){
+			if(solidSDFCreated==false){
+				delete solidLevelSet;
+				solidLevelSet = new fluidCore::levelset(solidObjects[i]);
+				solidSDFCreated = true;
+			}else{
+				fluidCore::levelset* objectSDF = new fluidCore::levelset(solidObjects[i]);
+				solidLevelSet->merge(*objectSDF);
+				delete objectSDF;
+			}
+		}
+	}
+
+	if(permaLiquidSDFActive){
+		if(!liquidSDFCreated){
+			delete liquidLevelSet;
+			liquidLevelSet = new fluidCore::levelset();
+			liquidLevelSet->copy(*permaLiquidLevelSet);
+		}else{
+			liquidLevelSet->merge(*permaLiquidLevelSet);
+		}
+	}
 }
 
+// void scene::rebuildLiquidLevelSet(vector<fluidCore::particle*>& particles){
+// 	delete liquidLevelSet;
+// 	liquidLevelSet = new fluidCore::levelset(particles);
+// }
+
 void scene::generateParticles(vector<fluidCore::particle*>& particles, const vec3& dimensions, 
-					   		  const float& density, fluidCore::particlegrid* pgrid){
+					   		  const float& density, fluidCore::particlegrid* pgrid, const int& frame){
 
 	float maxdimension = glm::max(glm::max(dimensions.x, dimensions.y), dimensions.z);
 
@@ -87,7 +151,8 @@ void scene::generateParticles(vector<fluidCore::particle*>& particles, const vec
 					if( x > thickness && x < 1.0-thickness &&
 						y > thickness && y < 1.0-thickness &&
 						z > thickness && z < 1.0-thickness ) {
-							addParticle(vec3(x,y,z), FLUID, 3.0f/maxdimension, maxdimension, particles);
+							addParticle(vec3(x,y,z), FLUID, 3.0f/maxdimension, maxdimension, particles, 
+										frame);
 					}
 				}
 			}
@@ -103,7 +168,7 @@ void scene::generateParticles(vector<fluidCore::particle*>& particles, const vec
 	                float x = i*w+w/2.0f;
 	                float y = j*w+w/2.0f;
 	                float z = k*w+w/2.0f;
-	                addParticle(vec3(x,y,z), SOLID, 3.0f/maxdimension, maxdimension, particles);
+	                addParticle(vec3(x,y,z), SOLID, 3.0f/maxdimension, maxdimension, particles, frame);
 	            }
 	        }
 	    }
@@ -112,7 +177,7 @@ void scene::generateParticles(vector<fluidCore::particle*>& particles, const vec
 }
 
 void scene::addParticle(const vec3& pos, const geomtype& type, const float& thickness, const float& scale,
-						vector<fluidCore::particle*>& particles){
+						vector<fluidCore::particle*>& particles, const int& frame){
 	bool inside = false;
 
 	if(type==FLUID){
@@ -124,12 +189,22 @@ void scene::addParticle(const vec3& pos, const geomtype& type, const float& thic
 		if(solidLevelSet->getInterpolatedCell(worldpos)<0.0f /*thickness*/){ 
 			inside = false; 
 		}	
+		if(frame==0 && permaSolidSDFActive){
+			if(permaSolidLevelSet->getInterpolatedCell(worldpos)<0.0f /*thickness*/){
+				inside = false;
+			}
+		}
 
 	}else if(type==SOLID){
 		vec3 worldpos = pos*scale;
 		if(solidLevelSet->getInterpolatedCell(worldpos)<0.0f /*thickness*/){
 			inside = true;
 		}	
+		if(frame==0 && permaSolidSDFActive){
+			if(permaSolidLevelSet->getInterpolatedCell(worldpos)<0.0f /*thickness*/){
+				inside = true;
+			}
+		}
 	}
 
 	if(inside){

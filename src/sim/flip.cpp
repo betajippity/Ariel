@@ -22,7 +22,7 @@ flipsim::flipsim(const vec3& maxres, sceneCore::scene* s, const float& density, 
 	max_density = 0.0f;
 	this->density = density;
 	scene = s;
-	timestep = 0;
+	frame = 0;
 	stepsize = 0.005f;
 	subcell = 1;
 	picflipratio = .95f;
@@ -70,8 +70,10 @@ void flipsim::init(){
 	}
 	particles.clear();
 
+	scene->buildLevelSets(frame);
+
 	//Generate particles and sort
-	scene->generateParticles(particles, dimensions, density, pgrid);
+	scene->generateParticles(particles, dimensions, density, pgrid, 0);
 	pgrid->sort(particles);
 	pgrid->markCellTypes(particles, mgrid.A, density);
 
@@ -95,9 +97,12 @@ void flipsim::init(){
 }
 
 void flipsim::step(){
-	timestep++;	
-	cout << "Simulating Step: " << timestep << "..." << endl;
+	frame++;	
+	cout << "Simulating Step: " << frame << "..." << endl;
 	
+	scene->buildLevelSets(frame);
+	scene->generateParticles(particles, dimensions, density, pgrid, frame);
+
 	pgrid->sort(particles);
 	computeDensity();
 	applyExternalForces(); 
