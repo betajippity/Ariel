@@ -54,7 +54,6 @@ bool viewer::launch(){
     if(loaded==true){
         if(init()==true){
 
-
             omp_set_nested(true);
             #pragma omp parallel
             {

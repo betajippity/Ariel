@@ -124,7 +124,7 @@ void flipsim::step(){
 	int particlecount = particles.size();
 
 	#pragma omp parallel for
-	for(int p=0; p<particlecount; p++){
+	for(int p=0; p<particlecount; p++){ //mark particles as inside walls or out of bounds
 		particles[p]->invalid = false;
 		vec3 t = particles[p]->p*maxd;
 		if(t.x>dimensions.x || t.y>dimensions.y || t.z>dimensions.z){
@@ -135,6 +135,17 @@ void flipsim::step(){
 		}
 		if(mgrid.A->getCell(t)==SOLID){
 			particles[p]->invalid = true;
+		}
+	}
+
+	//Remove fluid particles that only valid in this frame
+	for(vector<particle *>::iterator iter=particles.begin(); iter!=particles.end();) {
+		particle &p = **iter;
+		if( p.temp ) {
+			delete *iter;
+			iter = particles.erase(iter);
+		} else {
+			iter ++;
 		}
 	}
 }

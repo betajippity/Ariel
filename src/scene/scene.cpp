@@ -179,6 +179,7 @@ void scene::generateParticles(vector<fluidCore::particle*>& particles, const vec
 void scene::addParticle(const vec3& pos, const geomtype& type, const float& thickness, const float& scale,
 						vector<fluidCore::particle*>& particles, const int& frame){
 	bool inside = false;
+	bool temp = false; //used to flag frame-variante solid particles
 
 	if(type==FLUID){
 		vec3 worldpos = pos*scale;
@@ -199,6 +200,7 @@ void scene::addParticle(const vec3& pos, const geomtype& type, const float& thic
 		vec3 worldpos = pos*scale;
 		if(solidLevelSet->getInterpolatedCell(worldpos)<0.0f /*thickness*/){
 			inside = true;
+			temp = true;
 		}	
 		if(frame==0 && permaSolidSDFActive){
 			if(permaSolidLevelSet->getInterpolatedCell(worldpos)<0.0f /*thickness*/){
@@ -216,6 +218,7 @@ void scene::addParticle(const vec3& pos, const geomtype& type, const float& thic
 		p->type = type;
 		p->mass = 1.0f;
 		p->invalid = false;
+		p->temp = temp;
 		particles.push_back(p);
 	}
 }
