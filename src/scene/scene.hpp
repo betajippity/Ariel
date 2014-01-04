@@ -42,6 +42,9 @@ class scene {
 		// void rebuildLiquidLevelSet(vector<fluidCore::particle*>& particles);
 		void setPaths(const string& imagePath, const string& meshPath, const string& vdbPath);
 
+		vec2 getSolidFrameRange(const int& index);
+		vec2 getLiquidFrameRange(const int& index);
+
 		string imagePath;
 		string meshPath;
 		string vdbPath;

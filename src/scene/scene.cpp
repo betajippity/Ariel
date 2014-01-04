@@ -228,3 +228,10 @@ fluidCore::levelset* scene::getLiquidLevelSet(){
 	return liquidLevelSet;
 }
 
+vec2 scene::getSolidFrameRange(const int& index){
+	return solidObjectFrameRanges[index];
+}
+
+vec2 scene::getLiquidFrameRange(const int& index){
+	return liquidObjectFrameRanges[index];
+}

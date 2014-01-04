@@ -95,6 +95,7 @@ class viewer{
 		GLFWwindow* window;
 		vector<vboData> vbos;
 		map<string, int> vbokeys;
+		map<string, vec2> frameranges;
 
 		glCamera cam;
 

@@ -182,12 +182,20 @@ void viewer::mainLoop(){
                     glLineWidth(2.0f);
                 }
 
+                bool skipDraw = false;
+                if(vbos[i].type==QUADS || vbos[i].type==TRIANGLES){
+                    vec2 frame = frameranges[vbos[i].key];
+                    if(!((frame[0]<0 && frame[1]<0) || (frame[0]<=sim->frame && sim->frame<=frame[1]))){
+                        skipDraw = true;
+                    }
+                }
+
                 if(vbos[i].type==QUADS){
-                    if(!(i!=vbokeys["boundingbox"] && drawobjects==false)){
+                    if(!(i!=vbokeys["boundingbox"] && drawobjects==false) && skipDraw==false){
                         glDrawArrays(GL_QUADS, 0, vbos[i].size/3);
                     }
                 }else if(vbos[i].type==TRIANGLES){
-                    if(!(i!=vbokeys["boundingbox"] && drawobjects==false)){
+                    if(!(i!=vbokeys["boundingbox"] && drawobjects==false) && skipDraw==false){
                         glDrawArrays(GL_TRIANGLES, 0, vbos[i].size/3);
                     }
                 }else if(vbos[i].type==LINES){
@@ -364,6 +372,7 @@ bool viewer::init(){
         objectdata = createVBOFromObj(solids[i], vec4(1,0,0,.75), key);
         vbos.push_back(objectdata);
         vbokeys[key] = vbos.size()-1;
+        frameranges[key] = sim->getScene()->getSolidFrameRange(i);
     }
 
     int numberOfLiquidObjects = sim->getScene()->getLiquidObjects().size();
@@ -374,6 +383,7 @@ bool viewer::init(){
         objectdata = createVBOFromObj(liquids[i], vec4(0,0,1,.75), key);
         vbos.push_back(objectdata);
         vbokeys[key] = vbos.size()-1;
+        frameranges[key] = sim->getScene()->getLiquidFrameRange(i);
     }
 
     return true;
