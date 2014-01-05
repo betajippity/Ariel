@@ -67,6 +67,23 @@ void scene::addLiquidObject(objCore::objContainer* object, int startFrame, int e
 	}
 }
 
+void scene::projectPointsToSolidSurface(vector<vec3>& points){
+	vector<vec3> p1(points);
+	solidLevelSet->projectPointsToSurface(p1);
+	vector<vec3> p2(points);
+	permaSolidLevelSet->projectPointsToSurface(p2);
+
+	int pointsCount = points.size();
+
+	for(int i=0; i<pointsCount; i++){
+		float l1 = length(p1[i] - points[i]);
+		float l2 = length(p2[i] - points[i]);
+		if(l1<l2){
+			points[i] = p1[i];
+		}
+	}
+}
+
 vector<objCore::objContainer*>& scene::getSolidObjects(){
 	return solidObjects;
 }

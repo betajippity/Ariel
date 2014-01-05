@@ -148,6 +148,30 @@ void flipsim::step(){
 			iter ++;
 		}
 	}
+
+	//Attempt to push particles in walls out 
+	particlecount = particles.size();
+	vector<vec3> stuckPositions;
+	vector<particle*> stuckParticles;
+
+	for(int p=0; p<particlecount; p++){
+		if(particles[p]->invalid && particles[p]->type == FLUID){
+			stuckParticles.push_back(particles[p]);
+			stuckPositions.push_back(particles[p]->p*maxd);
+		}
+	}
+
+	scene->projectPointsToSolidSurface(stuckPositions);
+
+	particlecount = stuckPositions.size();
+	for(int p=0; p<particlecount; p++){
+		if(length(stuckPositions[p] - stuckParticles[p]->p*maxd)>0.0001f){
+			float penaltyForce = 10.0f;
+			vec3 vdir = stuckPositions[p] - stuckParticles[p]->p*maxd;
+			stuckParticles[p]->p = stuckPositions[p]/maxd;
+			stuckParticles[p]->u = vdir*penaltyForce;
+		}
+	}
 }
 
 void flipsim::advectParticles(){

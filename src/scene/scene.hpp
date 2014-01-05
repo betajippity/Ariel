@@ -45,6 +45,8 @@ class scene {
 		vec2 getSolidFrameRange(const int& index);
 		vec2 getLiquidFrameRange(const int& index);
 
+		void projectPointsToSolidSurface(vector<vec3>& points);
+
 		string imagePath;
 		string meshPath;
 		string vdbPath;

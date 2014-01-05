@@ -6,6 +6,8 @@
 
 #include "levelset.hpp"
 #include <openvdb/tools/ParticlesToLevelSet.h>
+#include <openvdb/tools/VolumeToSpheres.h>
+#include <openvdb/util/NullInterrupter.h>
 
 using namespace fluidCore;
 using namespace utilityCore;
@@ -57,6 +59,25 @@ levelset::levelset(vector<particle*>& particles){
 	particleList plist(particles);
 	raster.rasterizeSpheres(plist);
 	raster.finalize();
+}
+
+void levelset::projectPointsToSurface(vector<vec3>& points){
+	vector<openvdb::Vec3R> vdbpoints;
+	vector<float> distances;
+	int pointsCount = points.size();
+	vdbpoints.reserve(pointsCount);
+	distances.reserve(pointsCount);
+	for(int i=0; i<pointsCount; i++){
+		openvdb::Vec3s vdbvertex(points[i].x, points[i].y, points[i].z);
+		vdbpoints.push_back(vdbvertex);
+	}
+	openvdb::tools::ClosestSurfacePoint<openvdb::FloatGrid> csp;
+	openvdb::util::NullInterrupter n;
+	csp.initialize(*vdbgrid, 0.0f, &n);
+	csp.searchAndReplace(vdbpoints, distances);
+	for(int i=0; i<pointsCount; i++){
+		points[i] = vec3(vdbpoints[i][0], vdbpoints[i][1], vdbpoints[i][2]);
+	}
 }
 
 void levelset::merge(levelset& ls){

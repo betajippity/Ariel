@@ -69,6 +69,8 @@ class levelset: public floatgrid{
 
 		void merge(levelset& ls);
 		void copy(levelset& ls);
+
+		void projectPointsToSurface(vector<vec3>& points);
 };
 }
 
