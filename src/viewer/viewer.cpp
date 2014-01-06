@@ -35,6 +35,8 @@ void viewer::load(fluidCore::flipsim* sim, bool retina){
     dumpFramebuffer = false;
     dumpReady = false;
 
+    dumpVDB = false;
+
     if(retina){
         framebufferScale = 2;
     }else{
@@ -71,7 +73,7 @@ bool viewer::launch(){
                     
                     while(1){
                         if(!pause){
-                            sim->step();
+                            sim->step(dumpVDB);
                             particles = sim->getParticles();
                             if(dumpFramebuffer && dumpReady){
                                 omp_set_lock(&framebufferWriteLock);
@@ -298,6 +300,11 @@ void viewer::updateInputs(){
             if(pause){
                 cout << "\nSimulation paused.\n" << endl; 
             }
+        }
+    }else if(glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS){
+        if(cam.currentKey!=GLFW_KEY_V){
+            dumpVDB = !dumpVDB;
+            cam.currentKey = GLFW_KEY_V;
         }
     }else{
         cam.currentKey = 0;

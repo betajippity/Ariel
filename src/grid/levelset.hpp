@@ -28,8 +28,9 @@ class particleList{ //used for VDB particle to level set construction
 	public:
 		particleList(){ }
 
-		particleList(vector<particle*> plist){
+		particleList(vector<particle*> plist, float maxdimension){
 			particles = plist;
+			this->maxdimension = maxdimension;
 		}
 
 		~particleList(){ }
@@ -39,16 +40,19 @@ class particleList{ //used for VDB particle to level set construction
 		}
 
 		void getPos(size_t n, openvdb::Vec3R& pos) const {
-			pos = openvdb::Vec3f(particles[n]->p.x*32.0f, particles[n]->p.y*32.0f, particles[n]->p.z*32.0f);
+			pos = openvdb::Vec3f(particles[n]->p.x*maxdimension, particles[n]->p.y*maxdimension, 
+								 particles[n]->p.z*maxdimension);
 		}
 
 		void getPosRad(size_t n, openvdb::Vec3R& pos, openvdb::Real& rad) const {
-		    pos = openvdb::Vec3f(particles[n]->p.x*32.0f, particles[n]->p.y*32.0f, particles[n]->p.z*32.0f);
+		    pos = openvdb::Vec3f(particles[n]->p.x*maxdimension, particles[n]->p.y*maxdimension, 
+		    					 particles[n]->p.z*maxdimension);
 		    rad = particles[n]->density;
 		}
 
 		void getPosRadVel(size_t n, openvdb::Vec3R& pos, openvdb::Real& rad, openvdb::Vec3R& vel) const {
-			pos = openvdb::Vec3f(particles[n]->p.x*32.0f, particles[n]->p.y*32.0f, particles[n]->p.z*32.0f);
+			pos = openvdb::Vec3f(particles[n]->p.x*maxdimension, particles[n]->p.y*maxdimension, 
+								 particles[n]->p.z*maxdimension);
 		    rad = particles[n]->density;
 		    vel = openvdb::Vec3f(particles[n]->u.x, particles[n]->u.y, particles[n]->u.z);
 	    }
@@ -56,6 +60,7 @@ class particleList{ //used for VDB particle to level set construction
 		void getAtt(size_t n, openvdb::Index32& att) const { att = n; }
 	private:
 		vector<particle*> particles;
+		float maxdimension;
 };
 
 class levelset: public floatgrid{
@@ -64,7 +69,7 @@ class levelset: public floatgrid{
 		levelset();
 		// levelset(openvdb::FloatGrid::Ptr grid);
 		levelset(objCore::objContainer* mesh);
-		levelset(vector<particle*>& particles);
+		levelset(vector<particle*>& particles, float maxdimension);
 		~levelset();
 
 		void merge(levelset& ls);

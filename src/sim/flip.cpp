@@ -96,7 +96,7 @@ void flipsim::init(){
 	}
 }
 
-void flipsim::step(){
+void flipsim::step(bool saveVDB){
 	frame++;	
 	cout << "Simulating Step: " << frame << "..." << endl;
 	
@@ -171,6 +171,10 @@ void flipsim::step(){
 			stuckParticles[p]->p = stuckPositions[p]/maxd;
 			stuckParticles[p]->u = vdir*penaltyForce;
 		}
+	}
+
+	if(saveVDB){
+		scene->exportParticlesVDB(particles, maxd, frame);
 	}
 }
 

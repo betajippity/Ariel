@@ -33,6 +33,26 @@ void scene::setPaths(const string& imagePath, const string& meshPath, const stri
 	this->vdbPath = vdbPath;
 }
 
+void scene::exportParticlesVDB(vector<fluidCore::particle*> particles, float maxd, int frame){
+	vector<fluidCore::particle*> sdfparticles;
+	int particlesCount = particles.size();
+	for(int i=0; i<particlesCount; i++){
+		if(particles[i]->type==FLUID){
+			sdfparticles.push_back(particles[i]);
+		}
+	}
+
+	string frameString = utilityCore::padString(4, utilityCore::convertIntToString(frame));
+	string filename = vdbPath;
+    utilityCore::replaceString(filename, ".vdb", "."+frameString+".vdb");
+
+	fluidCore::levelset* fluidSDF = new fluidCore::levelset(sdfparticles, maxd);
+
+	fluidSDF->writeVDBGridToFile(filename);
+
+	delete fluidSDF;
+}
+
 void scene::addSolidObject(objCore::objContainer* object, int startFrame, int endFrame){
 	solidObjects.push_back(object);
 	solidObjectFrameRanges.push_back(vec2(startFrame, endFrame));

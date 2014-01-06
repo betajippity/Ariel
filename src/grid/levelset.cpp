@@ -49,14 +49,14 @@ levelset::levelset(objCore::objContainer* mesh){
 	vdbpolys.clear();
 }
 
-levelset::levelset(vector<particle*>& particles){
+levelset::levelset(vector<particle*>& particles, float maxdimension){
 	type = VDB;
 	vdbgrid = openvdb::createLevelSet<openvdb::FloatGrid>();
 	openvdb::tools::ParticlesToLevelSet<openvdb::FloatGrid> raster(*vdbgrid);
 	raster.setGrainSize(1);
 	raster.setRmin(.01f);
 
-	particleList plist(particles);
+	particleList plist(particles, maxdimension);
 	raster.rasterizeSpheres(plist);
 	raster.finalize();
 }

@@ -39,13 +39,14 @@ class scene {
 		fluidCore::levelset* getLiquidLevelSet();
 
 		void buildLevelSets(const int& frame);
-		// void rebuildLiquidLevelSet(vector<fluidCore::particle*>& particles);
 		void setPaths(const string& imagePath, const string& meshPath, const string& vdbPath);
 
 		vec2 getSolidFrameRange(const int& index);
 		vec2 getLiquidFrameRange(const int& index);
 
 		void projectPointsToSolidSurface(vector<vec3>& points);
+
+		void exportParticlesVDB(vector<fluidCore::particle*> particles, float maxd, int frame);
 
 		string imagePath;
 		string meshPath;

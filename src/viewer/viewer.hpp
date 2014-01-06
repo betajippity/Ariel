@@ -112,6 +112,8 @@ class viewer{
     	omp_lock_t framebufferWriteLock;
 
     	int framebufferScale;
+
+    	bool dumpVDB;
 };
 }
 
