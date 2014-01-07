@@ -76,6 +76,8 @@ class levelset: public floatgrid{
 		void copy(levelset& ls);
 
 		void projectPointsToSurface(vector<vec3>& points);
+
+		void writeObjToFile(string filename);
 };
 }
 

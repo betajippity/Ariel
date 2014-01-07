@@ -1,4 +1,4 @@
-// ObjCore2.5: An (improved) obj mesh wrangling library. Part of TAKUA Render.
+// ObjCore2.6: An (improved) obj mesh wrangling library. Part of TAKUA Render.
 // Written by Yining Karl Li
 //
 // File: objContainer.cpp
@@ -14,14 +14,18 @@ objContainer::objContainer(string filename){
     mesh = new obj;
     preload(filename);
     load(filename);
+    keep = false;
 }
 
 objContainer::objContainer(obj* o){
     mesh = o;
+    keep = false;
 }
 
 objContainer::~objContainer(){
-    clearObj(mesh);
+    if(!keep){
+        clearObj(mesh);
+    }
     delete mesh;
 }
 
@@ -142,20 +146,31 @@ bool objContainer::writeObj(string filename){
             outputFile << "vn " << n.x << " " << n.y << " " << n.z << "\n";
         }
         //Write out faces
-        for(int i=0; i<mesh->numberOfPolys; i++){
-            vec4 fv = mesh->polyVertexIndices[i];
-            vec4 fn = mesh->polyNormalIndices[i];
-            vec4 fuv = mesh->polyUVIndices[i];
-            outputFile << "f ";
-            outputFile << (int)fv.x << "/" << (int)fuv.x << "/" << (int)fn.x << " ";
-            outputFile << (int)fv.y << "/" << (int)fuv.y << "/" << (int)fn.y << " ";
-            outputFile << (int)fv.z << "/" << (int)fuv.z << "/" << (int)fn.z << " ";
-            if(fv.w>=0){
-                outputFile << (int)fv.w << "/" << (int)fuv.w << "/" << (int)fn.w << " ";
-            }
-            outputFile << "\n";
+        if(mesh->numberOfUVs==0 && mesh->numberOfNormals==0){
+            for(int i=0; i<mesh->numberOfPolys; i++){
+                vec4 fv = mesh->polyVertexIndices[i];
+                outputFile << "f ";
+                outputFile << (int)fv.x << " " << (int)fv.y << " " << (int)fv.z << " ";
+                if(fv.w>=0){
+                    outputFile << (int)fv.w;
+                }
+                outputFile << "\n";
+            }   
+        }else{
+            for(int i=0; i<mesh->numberOfPolys; i++){
+                vec4 fv = mesh->polyVertexIndices[i];
+                vec4 fn = mesh->polyNormalIndices[i];
+                vec4 fuv = mesh->polyUVIndices[i];
+                outputFile << "f ";
+                outputFile << (int)fv.x << "/" << (int)fuv.x << "/" << (int)fn.x << " ";
+                outputFile << (int)fv.y << "/" << (int)fuv.y << "/" << (int)fn.y << " ";
+                outputFile << (int)fv.z << "/" << (int)fuv.z << "/" << (int)fn.z << " ";
+                if(fv.w>=0){
+                    outputFile << (int)fv.w << "/" << (int)fuv.w << "/" << (int)fn.w << " ";
+                }
+                outputFile << "\n";
+            }            
         }
-
         outputFile.close();
         cout << "Wrote obj file to " << filename << endl;
         return true;
@@ -174,6 +189,10 @@ void objContainer::bakeTransform(mat4 transform){
     for(int i=0; i<mesh->numberOfNormals; i++){
         mesh->normals[i] = normalize(vec3(transform * vec4(mesh->normals[i], 0.0f)));
     }
+}
+
+void objContainer::keepObj(bool keep){
+    this->keep = keep;
 }
 
 void objContainer::preload(string filename){

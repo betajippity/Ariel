@@ -46,7 +46,8 @@ class scene {
 
 		void projectPointsToSolidSurface(vector<vec3>& points);
 
-		void exportParticlesVDB(vector<fluidCore::particle*> particles, float maxd, int frame);
+		void exportParticles(vector<fluidCore::particle*> particles, float maxd, int frame, bool VDB, 
+							 bool OBJ);
 
 		string imagePath;
 		string meshPath;

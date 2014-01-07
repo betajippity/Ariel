@@ -7,6 +7,7 @@
 #include "levelset.hpp"
 #include <openvdb/tools/ParticlesToLevelSet.h>
 #include <openvdb/tools/VolumeToSpheres.h>
+#include <openvdb/tools/VolumeToMesh.h>
 #include <openvdb/util/NullInterrupter.h>
 
 using namespace fluidCore;
@@ -59,6 +60,55 @@ levelset::levelset(vector<particle*>& particles, float maxdimension){
 	particleList plist(particles, maxdimension);
 	raster.rasterizeSpheres(plist);
 	raster.finalize();
+}
+
+void levelset::writeObjToFile(string filename){
+	openvdb::tools::VolumeToMesh vdbmesher(0,0);
+	vdbmesher(*getVDBGrid());
+
+	//get all mesh points and dump to vec3 vector
+	int vdbPointsCount = vdbmesher.pointListSize();
+	openvdb::tools::PointList& vdbPoints = vdbmesher.pointList();
+	
+	vector<vec3> points;
+	points.reserve(vdbPointsCount);
+	for(int i=0; i<vdbPointsCount; i++){
+		vec3 v(vdbPoints[i][0], vdbPoints[i][1], vdbPoints[i][2]);
+		points.push_back(v);
+	}
+
+	//get all mesh faces and dump to vec4 vector
+	int vdbFacesCount = vdbmesher.polygonPoolListSize();
+	openvdb::tools::PolygonPoolList& vdbFaces = vdbmesher.polygonPoolList();
+
+	int facesCount = 0;
+	for(int i=0; i<vdbFacesCount; i++){
+		facesCount = facesCount + vdbFaces[i].numQuads();
+	}
+
+	vector<vec4> faces;
+	faces.reserve(facesCount);
+
+	int test = 5;
+
+	for(int i=0; i<vdbFacesCount; i++){
+		int count = vdbFaces[i].numQuads();
+		for(int j=0; j<count; j++){
+			openvdb::Vec4I vdbface = vdbFaces[i].quad(j);
+			vec4 f(vdbface[0]+1, vdbface[1]+1, vdbface[2]+1, vdbface[3]+1);
+			faces.push_back(f);
+		}
+	}
+
+	//pack points and faces into objcontainer and write
+	objCore::obj* mesh = objCore::createObj(points.size(), &points[0], 0, NULL, 0, NULL, 
+											faces.size(), &faces[0], NULL, NULL);
+	objCore::objContainer* meshContainer = new objCore::objContainer(mesh);
+	meshContainer->keepObj(true);
+
+	meshContainer->writeObj(filename);
+
+	delete mesh;
 }
 
 void levelset::projectPointsToSurface(vector<vec3>& points){

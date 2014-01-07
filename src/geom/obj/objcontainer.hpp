@@ -1,4 +1,4 @@
-// ObjCore2.5: An (improved) obj mesh wrangling library. Part of TAKUA Render.
+// ObjCore2.6: An (improved) obj mesh wrangling library. Part of TAKUA Render.
 // Written by Yining Karl Li
 //
 // File: objContainer.hpp
@@ -36,12 +36,15 @@ class objContainer {
    	obj* getObj();
     bool writeObj(string filename); //returns true if successful, false otherwise
     
+    void keepObj(bool keep); //if keep is true, destructor won't clear obj
+
   private:
     void preload(string filename);
     void load(string filename); 
 
     ifstream fp_in;
     obj* mesh;
+    bool keep;
 };
 }
 

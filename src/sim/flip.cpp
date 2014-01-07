@@ -96,7 +96,7 @@ void flipsim::init(){
 	}
 }
 
-void flipsim::step(bool saveVDB){
+void flipsim::step(bool saveVDB, bool saveOBJ){
 	frame++;	
 	cout << "Simulating Step: " << frame << "..." << endl;
 	
@@ -173,8 +173,8 @@ void flipsim::step(bool saveVDB){
 		}
 	}
 
-	if(saveVDB){
-		scene->exportParticlesVDB(particles, maxd, frame);
+	if(saveVDB || saveOBJ){
+		scene->exportParticles(particles, maxd, frame, saveVDB, saveOBJ);
 	}
 }
 

@@ -1,4 +1,4 @@
-// ObjCore2.5: An (improved) obj mesh wrangling library. Part of TAKUA Render.
+// ObjCore2.6: An (improved) obj mesh wrangling library. Part of TAKUA Render.
 // Written by Yining Karl Li
 //
 // File: obj.inl
@@ -91,11 +91,15 @@ obj* createObj(int numberOfVertices, vec3* vertices, int numberOfNormals, vec3* 
 //Deletes the contents of the obj struct
 void clearObj(obj* mesh){
     delete [] mesh->vertices;
-    delete [] mesh->normals;
-    delete [] mesh->uvs;
     delete [] mesh->polyVertexIndices;
-    delete [] mesh->polyNormalIndices;
-    delete [] mesh->polyUVIndices;
+    if(mesh->numberOfNormals>0){
+        delete [] mesh->normals; 
+        delete [] mesh->polyNormalIndices; 
+    }
+    if(mesh->numberOfUVs>0){
+        delete [] mesh->uvs; 
+        delete [] mesh->polyUVIndices; 
+    }
 }
 
 //Builds a point struct with the given data

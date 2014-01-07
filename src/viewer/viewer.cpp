@@ -36,6 +36,7 @@ void viewer::load(fluidCore::flipsim* sim, bool retina){
     dumpReady = false;
 
     dumpVDB = false;
+    dumpOBJ = false;
 
     if(retina){
         framebufferScale = 2;
@@ -73,7 +74,7 @@ bool viewer::launch(){
                     
                     while(1){
                         if(!pause){
-                            sim->step(dumpVDB);
+                            sim->step(dumpVDB, dumpOBJ);
                             particles = sim->getParticles();
                             if(dumpFramebuffer && dumpReady){
                                 omp_set_lock(&framebufferWriteLock);
@@ -292,6 +293,11 @@ void viewer::updateInputs(){
             dumpFramebuffer = !dumpFramebuffer;
             dumpReady = false;
             cam.currentKey = GLFW_KEY_R;
+            if(dumpFramebuffer){
+                cout << "\nFramebuffer recording ON.\n" << endl;
+            }else{
+                cout << "\nFramebuffer recording OFF.\n" << endl;
+            }
         }
     }else if(glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS){
         if(cam.currentKey!=GLFW_KEY_P){
@@ -305,6 +311,21 @@ void viewer::updateInputs(){
         if(cam.currentKey!=GLFW_KEY_V){
             dumpVDB = !dumpVDB;
             cam.currentKey = GLFW_KEY_V;
+            if(dumpVDB){
+                cout << "\nVDB Export ON.\n" << endl;
+            }else{
+                cout << "\nVDB Export OFF.\n" << endl;
+            }
+        }
+    }else if(glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS){
+        if(cam.currentKey!=GLFW_KEY_O){
+            dumpOBJ = !dumpOBJ;
+            cam.currentKey = GLFW_KEY_O;
+            if(dumpOBJ){
+                cout << "\nOBJ Export ON.\n" << endl;
+            }else{
+                cout << "\nOBJ Export OFF.\n" << endl;
+            }
         }
     }else{
         cam.currentKey = 0;

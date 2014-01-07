@@ -114,6 +114,7 @@ class viewer{
     	int framebufferScale;
 
     	bool dumpVDB;
+    	bool dumpOBJ;
 };
 }
 
