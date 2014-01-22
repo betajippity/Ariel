@@ -63,7 +63,7 @@ levelset::levelset(vector<particle*>& particles, float maxdimension){
 }
 
 void levelset::writeObjToFile(string filename){
-	openvdb::tools::VolumeToMesh vdbmesher(0,0);
+	openvdb::tools::VolumeToMesh vdbmesher(0,.05f);
 	vdbmesher(*getVDBGrid());
 
 	//get all mesh points and dump to vec3 vector
@@ -83,7 +83,7 @@ void levelset::writeObjToFile(string filename){
 
 	int facesCount = 0;
 	for(int i=0; i<vdbFacesCount; i++){
-		facesCount = facesCount + vdbFaces[i].numQuads();
+		facesCount = facesCount + vdbFaces[i].numQuads() + vdbFaces[i].numTriangles();
 	}
 
 	vector<vec4> faces;
@@ -96,6 +96,12 @@ void levelset::writeObjToFile(string filename){
 		for(int j=0; j<count; j++){
 			openvdb::Vec4I vdbface = vdbFaces[i].quad(j);
 			vec4 f(vdbface[0]+1, vdbface[1]+1, vdbface[2]+1, vdbface[3]+1);
+			faces.push_back(f);
+		}
+		count = vdbFaces[i].numTriangles();
+		for(int j=0; j<count; j++){
+			openvdb::Vec3I vdbface = vdbFaces[i].triangle(j);
+			vec4 f(vdbface[0]+1, vdbface[1]+1, vdbface[2]+1, -1);
 			faces.push_back(f);
 		}
 	}
