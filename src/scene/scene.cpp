@@ -57,7 +57,7 @@ void scene::exportParticles(vector<fluidCore::particle*> particles, float maxd, 
  //    gridB = permaSolidLevelSet->getVDBGrid()->deepCopy();
 	// openvdb::tools::csgDifference(gridA->tree(), gridB->tree(), false);
 
-	fluidSDF->getVDBGrid() = gridA;
+	// fluidSDF->getVDBGrid() = gridA;
 
 	if(VDB){
 		fluidSDF->writeVDBGridToFile(vdbfilename);
