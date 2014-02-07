@@ -74,7 +74,7 @@ bool viewer::launch(){
                     
                     while(1){
                         if(!pause){
-                            sim->step(dumpVDB, dumpOBJ);
+                            sim->step(dumpVDB, dumpOBJ, dumpPARTIO);
                             particles = sim->getParticles();
                             if(dumpFramebuffer && dumpReady){
                                 omp_set_lock(&framebufferWriteLock);
@@ -325,6 +325,16 @@ void viewer::updateInputs(){
                 cout << "\nOBJ Export ON.\n" << endl;
             }else{
                 cout << "\nOBJ Export OFF.\n" << endl;
+            }
+        }
+    }else if(glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS){
+        if(cam.currentKey!=GLFW_KEY_G){
+            dumpPARTIO = !dumpPARTIO;
+            cam.currentKey = GLFW_KEY_G;
+            if(dumpPARTIO){
+                cout << "\nPARTIO Export ON.\n" << endl;
+            }else{
+                cout << "\nPARTIO Export OFF.\n" << endl;
             }
         }
     }else{

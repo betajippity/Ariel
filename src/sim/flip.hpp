@@ -28,7 +28,7 @@ class flipsim{
 		~flipsim();
 
 		void init();
-		void step(bool saveVDB, bool saveOBJ);
+		void step(bool saveVDB, bool saveOBJ, bool savePARTIO);
 
 		vector<particle*>* getParticles();
 		vec3 getDimensions();

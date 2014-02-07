@@ -42,6 +42,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR ${CMAKE_SYSTEM_NAME} MATCHES "Darwin"
 endif()
 
 find_library(OPENVDB "openvdb")
+find_library(PARTIO "partio")
 
 #OpenVDB dynamic links these, so we need to as well
 find_library(TBB "tbb")
@@ -49,7 +50,7 @@ find_library(HALF "half")
 find_library(LIBZ "z")
 
 set(VDBLIBS ${HALF} ${LIBZ} ${TBB})
-set(CORELIBS ${GLFW_LIBRARY} ${GLUT_LIBRARY} ${OPENGL_LIBRARY} ${GLEW_LIBRARY} ${OPENVDB} ${VDBLIBS})
+set(CORELIBS ${GLFW_LIBRARY} ${GLUT_LIBRARY} ${OPENGL_LIBRARY} ${GLEW_LIBRARY} ${OPENVDB} ${VDBLIBS} ${PARTIO})
 
 #Set up OpenMP stuff
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")

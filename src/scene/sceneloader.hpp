@@ -42,6 +42,7 @@ class sceneloader {
 		string imagePath;
 		string meshPath;
 		string vdbPath;
+		string partioPath;
 
 };
 }

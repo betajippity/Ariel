@@ -115,6 +115,7 @@ class viewer{
 
     	bool dumpVDB;
     	bool dumpOBJ;
+    	bool dumpPARTIO;
 };
 }
 

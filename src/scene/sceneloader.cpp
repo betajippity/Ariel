@@ -38,7 +38,7 @@ sceneloader::sceneloader(string filename){
 		loadSim(root["sim"]);
 	}
 
-	s->setPaths(imagePath, meshPath, vdbPath);
+	s->setPaths(imagePath, meshPath, vdbPath, partioPath);
 
 	cout << "Loaded scene from " << filename << ".\n" << endl;
 }
@@ -86,6 +86,9 @@ void sceneloader::loadSettings(const Json::Value& jsonsettings){
 	}
 	if(jsonsettings.isMember("vdb_output")){
 		vdbPath = jsonsettings["vdb_output"].asString();
+	}
+	if(jsonsettings.isMember("partio_output")){
+		partioPath = jsonsettings["partio_output"].asString();
 	}
 }
 

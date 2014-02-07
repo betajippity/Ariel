@@ -10,6 +10,7 @@
 #include <openvdb/tools/MeshToVolume.h>
 #include <openvdb/tools/LevelSetSphere.h>
 #include <openvdb/tools/Composite.h>
+#include <partio/Partio.h>
 
 using namespace sceneCore;
 
@@ -27,47 +28,78 @@ scene::~scene(){
 	delete liquidLevelSet;
 }
 
-void scene::setPaths(const string& imagePath, const string& meshPath, const string& vdbPath){
+void scene::setPaths(const string& imagePath, const string& meshPath, const string& vdbPath,
+					 const string& partioPath){
 	this->imagePath = imagePath;
 	this->meshPath = meshPath;
 	this->vdbPath = vdbPath;
+	this->partioPath = partioPath;
 }
 
-void scene::exportParticles(vector<fluidCore::particle*> particles, float maxd, int frame,
-							bool VDB, bool OBJ){
-	vector<fluidCore::particle*> sdfparticles;
+void scene::exportParticles(vector<fluidCore::particle*> particles, const float& maxd, const int& frame,
+							const bool& VDB, const bool& OBJ, const bool& PARTIO){
 	int particlesCount = particles.size();
+
+	vector<fluidCore::particle*> sdfparticles;
 	for(int i=0; i<particlesCount; i++){
 		if(particles[i]->type==FLUID){
 			sdfparticles.push_back(particles[i]);
 		}
 	}
-
+	int sdfparticlesCount = sdfparticles.size();
+	
 	string frameString = utilityCore::padString(4, utilityCore::convertIntToString(frame));
-	string vdbfilename = vdbPath;
-    utilityCore::replaceString(vdbfilename, ".vdb", "."+frameString+".vdb");
 
-    string objfilename = meshPath;
-    utilityCore::replaceString(objfilename, ".obj", "."+frameString+".obj");
+	if(PARTIO){
+		string partiofilename = partioPath;
+		vector<string> tokens = utilityCore::tokenizeString(partiofilename, ".");
+		string ext = "." + tokens[tokens.size()-1];
 
-	fluidCore::levelset* fluidSDF = new fluidCore::levelset(sdfparticles, maxd);
+	    utilityCore::replaceString(partiofilename, ext, "."+frameString+ext);
 
-	// openvdb::FloatGrid::Ptr
- //    gridA = fluidSDF->getVDBGrid()->deepCopy(),
- //    gridB = permaSolidLevelSet->getVDBGrid()->deepCopy();
-	// openvdb::tools::csgDifference(gridA->tree(), gridB->tree(), false);
+		Partio::ParticlesDataMutable* partioData = Partio::create();
+		partioData->addParticles(sdfparticlesCount);
+		Partio::ParticleAttribute positionAttr = partioData->addAttribute("position", Partio::VECTOR, 3);
+		Partio::ParticleAttribute velocityAttr = partioData->addAttribute("v", Partio::VECTOR, 3);
+		Partio::ParticleAttribute idAttr = partioData->addAttribute("id", Partio::INT, 1);
 
-	// fluidSDF->getVDBGrid() = gridA;
+		for(int i=0; i<sdfparticlesCount; i++){
+			float* pos = partioData->dataWrite<float>(positionAttr, i);
+			pos[0] = sdfparticles[i]->p.x * maxd;
+			pos[1] = sdfparticles[i]->p.y * maxd;
+			pos[2] = sdfparticles[i]->p.z * maxd;
+			float* vel = partioData->dataWrite<float>(velocityAttr, i);
+			vel[0] = sdfparticles[i]->u.x;
+			vel[1] = sdfparticles[i]->u.y;
+			vel[2] = sdfparticles[i]->u.z;
+			int* id = partioData->dataWrite<int>(idAttr, i);
+			id[0] = i;			
+		}
 
-	if(VDB){
-		fluidSDF->writeVDBGridToFile(vdbfilename);
+		Partio::write(partiofilename.c_str() ,*partioData);
+		partioData->release();
 	}
 
-	if(OBJ){
-		fluidSDF->writeObjToFile(objfilename);
+	if(VDB || OBJ){
+		string vdbfilename = vdbPath;
+	    utilityCore::replaceString(vdbfilename, ".vdb", "."+frameString+".vdb");
+
+	    string objfilename = meshPath;
+	    utilityCore::replaceString(objfilename, ".obj", "."+frameString+".obj");
+
+		fluidCore::levelset* fluidSDF = new fluidCore::levelset(sdfparticles, maxd);
+
+		if(VDB){
+			fluidSDF->writeVDBGridToFile(vdbfilename);
+		}
+
+		if(OBJ){
+			fluidSDF->writeObjToFile(objfilename);
+		}
+		delete fluidSDF;
 	}
 
-	delete fluidSDF;
+	
 }
 
 void scene::addSolidObject(objCore::objContainer* object, int startFrame, int endFrame){
@@ -177,6 +209,8 @@ void scene::buildLevelSets(const int& frame){
 			liquidLevelSet->merge(*permaLiquidLevelSet);
 		}
 	}
+
+	// permaSolidLevelSet->writeVDBGridToFile("test.vdb");
 }
 
 // void scene::rebuildLiquidLevelSet(vector<fluidCore::particle*>& particles){

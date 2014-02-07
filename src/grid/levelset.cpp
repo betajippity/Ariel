@@ -58,7 +58,8 @@ levelset::levelset(vector<particle*>& particles, float maxdimension){
 	raster.setRmin(.01f);
 
 	particleList plist(particles, maxdimension);
-	raster.rasterizeSpheres(plist);
+	// raster.rasterizeSpheres(plist);
+	raster.rasterizeTrails(plist);
 	raster.finalize();
 }
 

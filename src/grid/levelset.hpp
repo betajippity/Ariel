@@ -48,6 +48,7 @@ class particleList{ //used for VDB particle to level set construction
 		    pos = openvdb::Vec3f(particles[n]->p.x*maxdimension, particles[n]->p.y*maxdimension, 
 		    					 particles[n]->p.z*maxdimension);
 		    rad = particles[n]->density;
+		    rad = .5f;
 		    if(particles[n]->invalid){
 		    	rad = 0.0f;
 		    }
@@ -57,6 +58,7 @@ class particleList{ //used for VDB particle to level set construction
 			pos = openvdb::Vec3f(particles[n]->p.x*maxdimension, particles[n]->p.y*maxdimension, 
 								 particles[n]->p.z*maxdimension);
 		    rad = particles[n]->density;
+		    rad = .5f;
 		    vel = openvdb::Vec3f(particles[n]->u.x, particles[n]->u.y, particles[n]->u.z);
 		    if(particles[n]->invalid){
 		    	rad = 0.0f;
