@@ -42,7 +42,7 @@ void scene::exportParticles(vector<fluidCore::particle*> particles, const float&
 
 	vector<fluidCore::particle*> sdfparticles;
 	for(int i=0; i<particlesCount; i++){
-		if(particles[i]->type==FLUID){
+		if(particles[i]->type==FLUID && !particles[i]->invalid){
 			sdfparticles.push_back(particles[i]);
 		}
 	}
@@ -54,6 +54,9 @@ void scene::exportParticles(vector<fluidCore::particle*> particles, const float&
 		string partiofilename = partioPath;
 		vector<string> tokens = utilityCore::tokenizeString(partiofilename, ".");
 		string ext = "." + tokens[tokens.size()-1];
+		if(strcmp(ext.c_str(), ".gz")==0){
+			ext = "." + tokens[tokens.size()-2] + ext;
+		}
 
 	    utilityCore::replaceString(partiofilename, ext, "."+frameString+ext);
 
