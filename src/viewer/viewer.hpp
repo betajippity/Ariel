@@ -40,6 +40,8 @@ struct glCamera{
 	vec2 mouseOld;
 	vec3 rotate;
 	vec3 translate;
+	vec2 fov;
+	float lookat;
 	int currentKey;
 	int currentMouseClick;
 	float rotateSpeed;
@@ -50,6 +52,8 @@ struct glCamera{
 	glCamera(): mouseOld(vec2(0.0f,0.0f)), 
 				rotate(vec3(0.0f,0.0f,0.0f)), 
 				translate(vec3(0.0f,0.0f,0.0f)),
+				lookat(0.0f),
+				fov(45.0f),
 				currentKey(0),
 				currentMouseClick(0),
 				rotateSpeed(0.2f),
@@ -68,6 +72,8 @@ class viewer{
 
 		bool launch();
 		void load(fluidCore::flipsim* sim, bool retina);
+		void load(fluidCore::flipsim* sim, bool retina, vec2 resolution, vec3 camrotate, vec3 camtranslate, 
+				  vec2 camfov, float camlookat);
 	private:
 		//Initialize stuff
 		bool init();

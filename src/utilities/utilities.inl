@@ -149,9 +149,9 @@ int utilityCore::compareMilliseconds(int referenceTime){
 
 glm::mat4 utilityCore::buildTransformationMatrix(glm::vec3 translation, glm::vec3 rotation, glm::vec3 scale){
     glm::mat4 translationMat = glm::translate(glm::mat4(), translation);
-    glm::mat4 rotationMat = glm::rotate(glm::mat4(), rotation.x, glm::vec3(1,0,0));
+    glm::mat4 rotationMat = glm::rotate(glm::mat4(), rotation.z, glm::vec3(0,0,1));
     rotationMat = rotationMat*glm::rotate(glm::mat4(), rotation.y, glm::vec3(0,1,0));
-    rotationMat = rotationMat*glm::rotate(glm::mat4(), rotation.z, glm::vec3(0,0,1));
+    rotationMat = rotationMat*glm::rotate(glm::mat4(), rotation.x, glm::vec3(1,0,0));
     glm::mat4 scaleMat = glm::scale(glm::mat4(), scale);
     return translationMat*rotationMat*scaleMat;
 }

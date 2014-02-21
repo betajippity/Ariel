@@ -64,7 +64,8 @@ int main(int argc, char** argv){
     											   sloader->getDensity(), type, verbose);
 
     viewerCore::viewer* glview = new viewerCore::viewer();
-    glview->load(f, retina);
+    glview->load(f, retina, sloader->camera_resolution, sloader->camera_rotate, sloader->camera_translate,
+    			 sloader->camera_fov, sloader->camera_lookat);
     glview->launch();
 
 }

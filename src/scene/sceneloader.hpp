@@ -28,12 +28,19 @@ class sceneloader {
 		float getDensity();
 		vec3 getDimensions();
 
+		vec3 camera_rotate;
+		vec3 camera_translate;
+		float camera_lookat;
+		vec2 camera_resolution;
+		vec2 camera_fov;
+		
 	private:
 		void loadSettings(const Json::Value& jsonsettings);
 		void loadSim(const Json::Value& jsonsettings);
 		void loadBox(const Json::Value& jsoncube);
 		void loadSphere(const Json::Value& jsonsphere);
 		void loadObj(const Json::Value& jsonobj);
+		void loadCamera(const Json::Value& jsoncamera);
 
 		scene* s;
 		vec3 dimensions;
@@ -43,7 +50,7 @@ class sceneloader {
 		string meshPath;
 		string vdbPath;
 		string partioPath;
-
+		
 };
 }
 

@@ -20,10 +20,19 @@ viewer::~viewer(){
 }
 
 void viewer::load(fluidCore::flipsim* sim, bool retina){
-    resolution = vec2(1000, 1000);
+    load(sim, retina, vec2(1024), vec3(0), vec3(0,0,30), vec2(45.0f), 30.0f);
+}
 
-    cam.zoomSpeed = 1.0f;
-    cam.panSpeed = 0.2f;
+void viewer::load(fluidCore::flipsim* sim, bool retina, vec2 resolution, vec3 camrotate, vec3 camtranslate, 
+                  vec2 camfov, float camlookat){
+    this->resolution = resolution;
+
+    cam.zoomSpeed = 0.1f;
+    cam.panSpeed = 0.1f;
+    cam.translate = camtranslate;
+    cam.rotate = camrotate;
+    cam.lookat = camlookat;
+    cam.fov = camfov;
 
     loaded = true;
 
@@ -161,11 +170,11 @@ void viewer::mainLoop(){
         glBlendFunc (GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA);
 
         glPushMatrix();
-            glTranslatef(cam.translate.x, cam.translate.y, cam.translate.z);
             // apply the current rotation
-            glRotatef(cam.rotate.x, 1, 0, 0);
-            glRotatef(cam.rotate.y, 0, 1, 0);
-            glRotatef(cam.rotate.z, 0, 0, 1);
+            glRotatef(-cam.rotate.x, 1, 0, 0);
+            glRotatef(-cam.rotate.y, 0, 1, 0);
+            glRotatef(-cam.rotate.z, 0, 0, 1);
+            glTranslatef(-cam.translate.x, -cam.translate.y, -cam.translate.z);
             
             for(int i=0; i<vbos.size(); i++){
                 glPushMatrix();
@@ -267,15 +276,33 @@ void viewer::updateInputs(){
         }
         if(doCamera==true){
             if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == 1){
-                cam.rotate.x += d.y * cam.rotateSpeed;
-                cam.rotate.y += d.x * cam.rotateSpeed;
+                mat4 m = utilityCore::buildTransformationMatrix(vec3(0), cam.rotate, vec3(1,1,1));
+                vec3 view = normalize(vec3(m*vec4(0,0,-1,0)));
+                vec3 lookatPoint = cam.translate + view*cam.lookat;
+
+                cam.rotate.x += -d.y * cam.rotateSpeed;
+                cam.rotate.y += -d.x * cam.rotateSpeed;
+
+                m = utilityCore::buildTransformationMatrix(vec3(0), cam.rotate, vec3(1,1,1));
+                view = normalize(vec3(m*vec4(0,0,1,0)));
+
+                cam.translate = lookatPoint +  view*cam.lookat;
             }
             if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == 1){
-                cam.translate.z += d.y * cam.zoomSpeed;
+                mat4 m = utilityCore::buildTransformationMatrix(vec3(0), cam.rotate, vec3(1,1,1));
+                vec3 view = normalize(vec3(m*vec4(0,0,-1,0)));
+
+                vec3 lookatPoint = cam.translate + view*cam.lookat;
+                cam.translate = cam.translate + (d.y * view * cam.zoomSpeed);
+                cam.lookat = length(cam.translate-lookatPoint);
             }
             if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE) == 1){
-                cam.translate.x += d.x * cam.panSpeed;
-                cam.translate.y -= d.y * cam.panSpeed;
+                mat4 m = utilityCore::buildTransformationMatrix(vec3(0), cam.rotate, vec3(1,1,1));
+                vec3 up = normalize(vec3(m*vec4(0,1,0,0)));
+                vec3 right = normalize(vec3(m*vec4(-1,0,0,0)));
+
+                cam.translate = cam.translate + (d.x * right * cam.panSpeed);
+                cam.translate = cam.translate + (d.y * up * cam.panSpeed);
             } 
         }else{
             if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == 1){
@@ -348,8 +375,7 @@ void viewer::updateInputs(){
 
 bool viewer::init(){
     //Camera setup stuff
-    vec2 fov = vec2(45.0f, 45.0f);
-    cam.translate = vec3(0.0f,0.0f,-30.0f);
+    vec2 fov = cam.fov;
 
     //Window setup stuff
     glfwSetErrorCallback(errorCallback);
@@ -374,7 +400,7 @@ bool viewer::init(){
     glLoadIdentity();
     vec2 xBounds;
     vec2 yBounds;
-    utilityCore::fovToPerspective(fov.x, 1, 1, xBounds, yBounds); 
+    utilityCore::fovToPerspective(fov.x, (float)resolution.x/resolution.y, 1, xBounds, yBounds); 
     glFrustum(xBounds[0], xBounds[1], yBounds[0], yBounds[1], 1, 10000000);
     glEnable(GL_DEPTH_TEST);
 

@@ -11,6 +11,12 @@ using namespace sceneCore;
 sceneloader::sceneloader(string filename){
 	cout << "Loading scene from " << filename << "..." << endl;
 
+	camera_rotate = vec3(0);
+	camera_translate = vec3(0);
+	camera_lookat = 0.0f;
+	camera_resolution = vec2(1024);
+	camera_fov = vec2(45.0f);
+
 	//grab relative path
 	vector<string> pathTokens = utilityCore::tokenizeString(filename, "/");
     if(strcmp(filename.substr(0,1).c_str(), "/")==0){
@@ -36,6 +42,9 @@ sceneloader::sceneloader(string filename){
 	}else{
 		loadSettings(root["settings"][0]);
 		loadSim(root["sim"]);
+		if(root.isMember("camera")){
+			loadCamera(root["camera"][0]);
+		}
 	}
 
 	s->setPaths(imagePath, meshPath, vdbPath, partioPath);
@@ -89,6 +98,37 @@ void sceneloader::loadSettings(const Json::Value& jsonsettings){
 	}
 	if(jsonsettings.isMember("partio_output")){
 		partioPath = jsonsettings["partio_output"].asString();
+	}
+}
+
+void sceneloader::loadCamera(const Json::Value& jsoncamera){
+	//load camera rotation
+	if(jsoncamera.isMember("rotation")){
+		camera_rotate[0] = jsoncamera["rotation"]["x"].asFloat();
+		camera_rotate[1] = jsoncamera["rotation"]["y"].asFloat();
+		camera_rotate[2] = jsoncamera["rotation"]["z"].asFloat();
+	}
+	//load camera translation
+	if(jsoncamera.isMember("translation")){
+		camera_translate[0] = jsoncamera["translation"]["x"].asFloat();
+		camera_translate[1] = jsoncamera["translation"]["y"].asFloat();
+		camera_translate[2] = jsoncamera["translation"]["z"].asFloat();
+	}
+	//load camera resolution
+	if(jsoncamera.isMember("resolution")){
+		camera_resolution[0] = jsoncamera["resolution"]["x"].asInt();
+		camera_resolution[1] = jsoncamera["resolution"]["y"].asInt();	
+	}
+	//load camera lookat
+	if(jsoncamera.isMember("lookat")){
+		camera_lookat = jsoncamera["lookat"].asFloat();
+	}
+	//load camera fov
+	if(jsoncamera.isMember("fovx")){
+		camera_fov[0] = jsoncamera["fovx"].asFloat();
+		float xscaled = tan(camera_fov.x*(PI/180));
+	    float yscaled = (xscaled * camera_resolution.y)/camera_resolution.x;
+	    camera_fov.y = (atan(xscaled)*180)/PI;
 	}
 }
 
