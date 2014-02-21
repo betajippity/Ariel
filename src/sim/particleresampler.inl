@@ -23,17 +23,18 @@ namespace fluidCore {
 //====================================
 
 //Forward declarations for externed inlineable methods
-extern inline void resampleParticles(particlegrid* pgrid, vector<particle*>& particles, const float& dt, 
-									 const float& re, const vec3& dimensions);
-inline vec3 resample(particlegrid* pgrid, const vec3& p, const vec3& u, float re, const vec3& dimensions);
+extern inline void resampleParticles(particlegrid* pgrid, vector<particle*>& particles, 
+									 const float& dt, const float& re, const vec3& dimensions);
+inline vec3 resample(particlegrid* pgrid, const vec3& p, const vec3& u, float re, 
+					 const vec3& dimensions);
 
 
 //====================================
 // Function Implementations
 //====================================
 
-void resampleParticles(particlegrid* pgrid, vector<particle*>& particles, const float& dt, const float& re, 
-					   const vec3& dimensions){
+void resampleParticles(particlegrid* pgrid, vector<particle*>& particles, const float& dt, 
+					   const float& re, const vec3& dimensions){
 	int nx = (int)dimensions.x; int ny = (int)dimensions.y; int nz = (int)dimensions.z;
 	float maxd = glm::max(glm::max(nx, ny), nz);
 	pgrid->sort(particles);

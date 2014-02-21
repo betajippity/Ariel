@@ -80,8 +80,8 @@ objCore::objContainer* cube::tesselate(){
 	polyUVIndices[3] = vec4(1,2,3,4);
 	polyUVIndices[4] = vec4(1,2,3,4);
 	polyUVIndices[5] = vec4(1,2,3,4);
-	objCore::obj* mesh = objCore::createObj(8, vertices, 24, normals, 4, uvs, 6, polyVertexIndices, 
-											polyNormalIndices, polyUVIndices);
+	objCore::obj* mesh = objCore::createObj(8, vertices, 24, normals, 4, uvs, 6, 
+											polyVertexIndices, polyNormalIndices, polyUVIndices);
 	objCore::objContainer* o = new objCore::objContainer(mesh);
 	return o;
 }

@@ -2,7 +2,7 @@
 // Written by Yining Karl Li
 //
 // File: particlegrid.cpp
-// Helper class for projecting particles back onto the grid and storing what particles are in what cells
+// Helper class for projecting particles back onto the grid and storing particles in cells
 
 #ifndef FLUIDGRID_HPP
 #define FLUIDGRID_HPP

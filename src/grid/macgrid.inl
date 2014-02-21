@@ -28,7 +28,8 @@ struct macgrid{
 	//face velocities
 	floatgrid* u_x;
 	floatgrid* u_y;
-	floatgrid* u_z; //technically this is the part that is an actual MAC grid, the rest is other useful stuff
+	floatgrid* u_z; 
+	//technically this is the part that is an actual MAC grid, the rest is other useful stuff
 
 	floatgrid* D; //divergence 
 	floatgrid* P; //pressure
@@ -52,8 +53,8 @@ struct particle{
 };
 
 //Forward declarations for externed inlineable methods
-extern inline particle createParticle(const vec3& position, const vec3& velocity, const vec3& normal, 
-									  const float& density);
+extern inline particle createParticle(const vec3& position, const vec3& velocity, 
+									  const vec3& normal, const float& density);
 extern inline macgrid createMacgrid(const vec3& dimensions, const gridtype& type);
 extern inline void clearMacgrid(macgrid& m);
 

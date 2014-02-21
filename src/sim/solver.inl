@@ -28,15 +28,19 @@ inline void flipDivergence(macgrid& mgrid);
 inline void buildPreconditioner(floatgrid* pc, macgrid& mgrid, int subcell);
 inline float fluidRef(intgrid* A, int i, int j, int k, int qi, int qj, int qk, vec3 dimensions);
 inline float preconditionerRef(floatgrid* p, int i, int j, int k, vec3 dimensions);
-inline float fluidDiag(intgrid* A, floatgrid* L, int i, int j, int k, vec3 dimensions, int subcell);
-inline void solveConjugateGradient(macgrid& mgrid, floatgrid* pc, int subcell, const bool& verbose);
+inline float fluidDiag(intgrid* A, floatgrid* L, int i, int j, int k, vec3 dimensions, 
+					   int subcell);
+inline void solveConjugateGradient(macgrid& mgrid, floatgrid* pc, int subcell, 
+								   const bool& verbose);
 inline void computeAx(intgrid* A, floatgrid* L, floatgrid* X, floatgrid* target, vec3 dimensions, 
 					  int subcell);
-inline float xRef(intgrid* A, floatgrid* L, floatgrid* X, vec3 f, vec3 p, vec3 dimensions, int subcell);
-inline void op(intgrid* A, floatgrid* X, floatgrid* Y, floatgrid* target, float alpha, vec3 dimensions);
+inline float xRef(intgrid* A, floatgrid* L, floatgrid* X, vec3 f, vec3 p, vec3 dimensions, 
+				  int subcell);
+inline void op(intgrid* A, floatgrid* X, floatgrid* Y, floatgrid* target, float alpha, 
+			   vec3 dimensions);
 inline float product(intgrid* A, floatgrid* X, floatgrid* Y, vec3 dimensions);
-inline void applyPreconditioner(floatgrid* Z, floatgrid* R, floatgrid* P, floatgrid* L, intgrid* A, 
-								vec3 dimensions, gridtype type);
+inline void applyPreconditioner(floatgrid* Z, floatgrid* R, floatgrid* P, floatgrid* L, 
+								intgrid* A, vec3 dimensions, gridtype type);
 
 //====================================
 // Function Implementations
@@ -62,7 +66,8 @@ float ARef(intgrid* A, int i, int j, int k, int qi, int qj, int qk, vec3 dimensi
 	if( i<0 || i>x-1 || j<0 || j>y-1 || k<0 || k>z-1 || A->getCell(i,j,k)!=FLUID ){ //if not liquid
 		return 0.0;
 	} 
-	if( qi<0 || qi>x-1 || qj<0 || qj>y-1 || qk<0 || qk>z-1 || A->getCell(qi,qj,qk)!=FLUID ){ //if not liquid
+	//if not liquid
+	if( qi<0 || qi>x-1 || qj<0 || qj>y-1 || qk<0 || qk>z-1 || A->getCell(qi,qj,qk)!=FLUID ){ 
 		return 0.0;
 	} 
 	return -1.0;	
@@ -100,7 +105,8 @@ float ADiag(intgrid* A, floatgrid* L, int i, int j, int k, vec3 dimensions, int 
 
 //Does what it says
 void buildPreconditioner(floatgrid* pc, macgrid& mgrid, int subcell){
-	int x = (int)mgrid.dimensions.x; int y = (int)mgrid.dimensions.y; int z = (int)mgrid.dimensions.z;
+	int x = (int)mgrid.dimensions.x; int y = (int)mgrid.dimensions.y; 
+	int z = (int)mgrid.dimensions.z;
 	float a = 0.25f;
 	#pragma omp parallel for
 	for(int i=0; i<x; i++){
@@ -180,7 +186,8 @@ float product(intgrid* A, floatgrid* X, floatgrid* Y, vec3 dimensions){
 }
 
 //Helper for PCG solver: target = AX
-void computeAx(intgrid* A, floatgrid* L, floatgrid* X, floatgrid* target, vec3 dimensions, int subcell){
+void computeAx(intgrid* A, floatgrid* L, floatgrid* X, floatgrid* target, vec3 dimensions, 
+			   int subcell){
 	int x = (int)dimensions.x; int y = (int)dimensions.y; int z = (int)dimensions.z;
 	float n = (float)glm::max(glm::max(x,y),z);
 	float h = 1.0f/(n*n);
@@ -195,7 +202,8 @@ void computeAx(intgrid* A, floatgrid* L, floatgrid* X, floatgrid* target, vec3 d
 									-xRef(A, L, X, vec3(i,j,k), vec3(i,j+1,k), dimensions, subcell)
 									-xRef(A, L, X, vec3(i,j,k), vec3(i,j-1,k), dimensions, subcell)
 									-xRef(A, L, X, vec3(i,j,k), vec3(i,j,k+1), dimensions, subcell)
-									-xRef(A, L, X, vec3(i,j,k), vec3(i,j,k-1), dimensions, subcell))/h;
+									-xRef(A, L, X, vec3(i,j,k), vec3(i,j,k-1), dimensions, subcell)
+									)/h;
 
 					target->setCell(i,j,k,result);
 				} else {
@@ -257,7 +265,8 @@ void applyPreconditioner(floatgrid* Z, floatgrid* R, floatgrid* P, floatgrid* L,
 
 //Does what it says
 void solveConjugateGradient(macgrid& mgrid, floatgrid* PC, int subcell, const bool& verbose){
-	int x = (int)mgrid.dimensions.x; int y = (int)mgrid.dimensions.y; int z = (int)mgrid.dimensions.z;
+	int x = (int)mgrid.dimensions.x; int y = (int)mgrid.dimensions.y; 
+	int z = (int)mgrid.dimensions.z;
 
 	floatgrid* R = new floatgrid(mgrid.type, mgrid.dimensions, 0.0f);
 	floatgrid* Z = new floatgrid(mgrid.type, mgrid.dimensions, 0.0f);
@@ -317,7 +326,8 @@ void solveConjugateGradient(macgrid& mgrid, floatgrid* PC, int subcell, const bo
 
 void solve(macgrid& mgrid, const int& subcell, const bool& verbose){
 
-	//if in VDB mode, force to single threaded to prevent VDB write issues. this is a kludgey fix for now.
+	//if in VDB mode, force to single threaded to prevent VDB write issues. 
+	//this is a kludgey fix for now.
 	if(mgrid.type==VDB){
 		omp_set_num_threads(1);
 	}

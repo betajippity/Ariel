@@ -92,7 +92,7 @@ float floatgrid::getInterpolatedCell(const float& x, const float& y, const float
 	{
 		openvdb::Vec3f p(x,y,z);
 		openvdb::tools::GridSampler<openvdb::FloatTree, openvdb::tools::BoxSampler> interpolator(
-														 vdbgrid->constTree(), vdbgrid->transform());
+													  vdbgrid->constTree(), vdbgrid->transform());
 		value = interpolator.wsSample(p);
 	}
 	return value;

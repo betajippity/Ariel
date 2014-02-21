@@ -18,7 +18,7 @@ int main(int argc, char** argv){
 	cout << "" << endl;
 	cout << "===================================================" << endl;
 	cout << "Ariel: FLIP Fluid Simulator" << endl;
-	cout << "Version 0.1.13.52a" << endl;
+	cout << "Version 0.1.14.08a" << endl;
 	cout << "Copyright (C) Yining Karl Li. All rights reserved." << endl;
 	cout << "===================================================" << endl;
 	cout << "" << endl;
@@ -64,8 +64,8 @@ int main(int argc, char** argv){
     											   sloader->getDensity(), type, verbose);
 
     viewerCore::viewer* glview = new viewerCore::viewer();
-    glview->load(f, retina, sloader->camera_resolution, sloader->camera_rotate, sloader->camera_translate,
-    			 sloader->camera_fov, sloader->camera_lookat);
+    glview->load(f, retina, sloader->camera_resolution, sloader->camera_rotate, 
+    			 sloader->camera_translate, sloader->camera_fov, sloader->camera_lookat);
     glview->launch();
 
 }

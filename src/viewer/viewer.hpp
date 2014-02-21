@@ -72,8 +72,8 @@ class viewer{
 
 		bool launch();
 		void load(fluidCore::flipsim* sim, bool retina);
-		void load(fluidCore::flipsim* sim, bool retina, vec2 resolution, vec3 camrotate, vec3 camtranslate, 
-				  vec2 camfov, float camlookat);
+		void load(fluidCore::flipsim* sim, bool retina, vec2 resolution, vec3 camrotate, 
+				  vec3 camtranslate, vec2 camfov, float camlookat);
 	private:
 		//Initialize stuff
 		bool init();

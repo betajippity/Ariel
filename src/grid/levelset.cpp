@@ -23,7 +23,7 @@ levelset::~levelset(){
 
 levelset::levelset(objCore::objContainer* mesh){
 	type = VDB;
-	openvdb::math::Transform::Ptr transform = openvdb::math::Transform::createLinearTransform(.25f);
+	openvdb::math::Transform::Ptr transform=openvdb::math::Transform::createLinearTransform(.25f);
 	//copy vertices into vdb format
 	vector<openvdb::Vec3s> vdbpoints;
 	for(int i=0; i<mesh->getObj()->numberOfVertices; i++){

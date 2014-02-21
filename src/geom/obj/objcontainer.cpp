@@ -64,7 +64,8 @@ void objContainer::load(string filename){
                                                             atof(tokens[3].c_str()));
                         currentNormal++;
                     }else if(tokens[0].compare("vt")==0){
-                        mesh->uvs[currentUV] = vec2(atof(tokens[1].c_str()), atof(tokens[2].c_str()));
+                        mesh->uvs[currentUV] = vec2(atof(tokens[1].c_str()), 
+                                                    atof(tokens[2].c_str()));
                         currentUV++;
                     }else if(tokens[0].compare("f")==0){
                         vec4 vertices(-1,-1,-1,-1);
@@ -72,7 +73,8 @@ void objContainer::load(string filename){
                         vec4 uvs(-1,-1,-1,-1);
                         int loops = std::min(4, (int)tokens.size()-1)+1;
                         for(int i=1; i<loops; i++){
-                            vector<string> faceindices = utilityCore::tokenizeString(tokens[i], "/");
+                            vector<string> faceindices = utilityCore::tokenizeString(tokens[i], 
+                                                                                     "/");
                             vertices[i-1] = atoi(faceindices[0].c_str());
                             if(faceindices.size()==2 && mesh->numberOfNormals>1){
                                 normals[i-1] = atoi(faceindices[1].c_str());

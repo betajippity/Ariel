@@ -147,7 +147,8 @@ int utilityCore::compareMilliseconds(int referenceTime){
 // Matrix stuff
 //====================================
 
-glm::mat4 utilityCore::buildTransformationMatrix(glm::vec3 translation, glm::vec3 rotation, glm::vec3 scale){
+glm::mat4 utilityCore::buildTransformationMatrix(glm::vec3 translation, glm::vec3 rotation,
+                                                 glm::vec3 scale){
     glm::mat4 translationMat = glm::translate(glm::mat4(), translation);
     glm::mat4 rotationMat = glm::rotate(glm::mat4(), rotation.z, glm::vec3(0,0,1));
     rotationMat = rotationMat*glm::rotate(glm::mat4(), rotation.y, glm::vec3(0,1,0));
@@ -156,7 +157,8 @@ glm::mat4 utilityCore::buildTransformationMatrix(glm::vec3 translation, glm::vec
     return translationMat*rotationMat*scaleMat;
 }
 
-glm::mat4 utilityCore::buildInverseTransformationMatrix(glm::vec3 translation, glm::vec3 rotation, glm::vec3 scale){
+glm::mat4 utilityCore::buildInverseTransformationMatrix(glm::vec3 translation, glm::vec3 rotation, 
+                                                        glm::vec3 scale){
     return glm::inverse(buildTransformationMatrix(translation, rotation, scale));
 }
 

@@ -38,7 +38,8 @@ objCore::objContainer* sphere::tesselate(const vec3& center, const float& radius
 	return o;
 }
 
-/*Returns sphere mesh with specified subdiv counts. Axis and height must have a minimum of 3 subdivs and 
+/*Returns sphere mesh with specified subdiv counts. 
+Axis and height must have a minimum of 3 subdivs and 
 tesselate() will default to 3 if subdiv count is below 3.*/
 //Yes, this function is total spaghetti and hacked together in many places. Will fix later. Maybe.
 objCore::objContainer* sphere::tesselate(){
@@ -161,8 +162,9 @@ objCore::objContainer* sphere::tesselate(){
 	for(int i=0; i<vertCount+(3*h); i++){
 		uvs[i].x = 1.0f-uvs[i].x;
 	}
-	objCore::obj* mesh = objCore::createObj(vertCount, vertices, vertCount, normals, vertCount+(3*h), uvs, 
-											faceCount, polyVertexIndices, polyNormalIndices, polyUVIndices);
+	objCore::obj* mesh = objCore::createObj(vertCount, vertices, vertCount, normals, 
+											vertCount+(3*h), uvs, faceCount, polyVertexIndices,
+											polyNormalIndices, polyUVIndices);
 	objCore::objContainer* o = new objCore::objContainer(mesh);
 	return o;
 }

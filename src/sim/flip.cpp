@@ -13,8 +13,8 @@
 
 using namespace fluidCore;
 
-flipsim::flipsim(const vec3& maxres, sceneCore::scene* s, const float& density, const gridtype& type,
-				 const bool& verbose){
+flipsim::flipsim(const vec3& maxres, sceneCore::scene* s, const float& density, 
+				 const gridtype& type, const bool& verbose){
 	dimensions = maxres;	
 	pgrid = new particlegrid(maxres, type);
 	mgrid = createMacgrid(maxres, type);
@@ -42,7 +42,8 @@ flipsim::~flipsim(){
 }
 
 void flipsim::init(){
-	//We need to figure out maximum particle pressure, so we generate a bunch of temporary particles
+	//We need to figure out maximum particle pressure, 
+	//so we generate a bunch of temporary particles
 	//inside of a known area, sort them back onto the underlying grid, and calculate the density
 	float maxd = glm::max(glm::max(dimensions.x, dimensions.z), dimensions.y);
 	float h = density/maxd;
@@ -359,7 +360,8 @@ void flipsim::project(){
 			for(int k = 0; k < z; k++){
 				float divergence = (mgrid.u_x->getCell(i+1, j, k) - mgrid.u_x->getCell(i, j, k) + 
 								    mgrid.u_y->getCell(i, j+1, k) - mgrid.u_y->getCell(i, j, k) +
-								    mgrid.u_z->getCell(i, j, k+1) - mgrid.u_z->getCell(i, j, k)) / h;
+								    mgrid.u_z->getCell(i, j, k+1) - mgrid.u_z->getCell(i, j, k)
+								    ) / h;
 				mgrid.D->setCell(i,j,k,divergence);
 			}
 		}
@@ -492,7 +494,8 @@ void flipsim::subtractPressureGradient(){
 							pf = mgrid.P->getCell(i,j,k);
 						}else{
 							pf = mgrid.L->getCell(i,j,k)/
-								 glm::min(1.0e-3f,mgrid.L->getCell(i-1,j,k))*mgrid.P->getCell(i-1,j,k);
+								 glm::min(1.0e-3f,mgrid.L->getCell(i-1,j,k))*
+								 		  mgrid.P->getCell(i-1,j,k);
 						}
 						if(mgrid.L->getCell(i-1,j,k)<0.0f){
 							pb = mgrid.P->getCell(i-1,j,k);
@@ -521,7 +524,8 @@ void flipsim::subtractPressureGradient(){
 							pf = mgrid.P->getCell(i,j,k);
 						}else{
 							pf = mgrid.L->getCell(i,j,k)/
-								 glm::min(1.0e-3f,mgrid.L->getCell(i,j-1,k))*mgrid.P->getCell(i,j-1,k);
+								 glm::min(1.0e-3f,mgrid.L->getCell(i,j-1,k))*
+								 		  mgrid.P->getCell(i,j-1,k);
 						}
 						if(mgrid.L->getCell(i,j-1,k)<0.0f){
 							pb = mgrid.P->getCell(i,j-1,k);
@@ -550,7 +554,8 @@ void flipsim::subtractPressureGradient(){
 							pf = mgrid.P->getCell(i,j,k);
 						}else{
 							pf = mgrid.L->getCell(i,j,k)/
-								 glm::min(1.0e-3f,mgrid.L->getCell(i,j,k-1))*mgrid.P->getCell(i,j,k-1);
+								 glm::min(1.0e-3f,mgrid.L->getCell(i,j,k-1))*
+								 		  mgrid.P->getCell(i,j,k-1);
 						}
 						if(mgrid.L->getCell(i,j,k-1)<0.0f){
 							pb = mgrid.P->getCell(i,j,k-1);

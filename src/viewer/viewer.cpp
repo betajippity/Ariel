@@ -23,8 +23,8 @@ void viewer::load(fluidCore::flipsim* sim, bool retina){
     load(sim, retina, vec2(1024), vec3(0), vec3(0,0,30), vec2(45.0f), 30.0f);
 }
 
-void viewer::load(fluidCore::flipsim* sim, bool retina, vec2 resolution, vec3 camrotate, vec3 camtranslate, 
-                  vec2 camfov, float camlookat){
+void viewer::load(fluidCore::flipsim* sim, bool retina, vec2 resolution, 
+                  vec3 camrotate, vec3 camtranslate, vec2 camfov, float camlookat){
     this->resolution = resolution;
 
     cam.zoomSpeed = 0.1f;
@@ -141,21 +141,20 @@ void viewer::mainLoop(){
                 if(particles->operator[](j)->type==FLUID){
                     vertexData.push_back(particles->operator[](j)->p*maxd);
                     float c = length(particles->operator[](j)->u)/3.0f;
-                    c = glm::max(c, 1.0f * glm::max((.7f - particles->operator[](j)->density),0.0f));
+                    c = glm::max(c, 1.0f*glm::max((.7f - particles->operator[](j)->density),0.0f));
                     bool invalid = particles->operator[](j)->invalid;
                     if(invalid){
                         colorData.push_back(vec4(1,0,0,0));
                     }else{
                         colorData.push_back(vec4(c,c,1,0));
                     }
-                    
                 }
             }
             glDeleteBuffers(1, &data.vboID);
             glDeleteBuffers(1, &data.cboID);
             string key = "fluid";
-            data = createVBO(data, (float*)&vertexData[0], vertexData.size()*3, (float*)&colorData[0], 
-                             colorData.size()*4, POINTS, key);
+            data = createVBO(data, (float*)&vertexData[0], vertexData.size()*3, 
+                             (float*)&colorData[0], colorData.size()*4, POINTS, key);
             vertexData.clear();
             colorData.clear();
             vbos[vbokeys["fluid"]] = data;
@@ -196,7 +195,8 @@ void viewer::mainLoop(){
                 bool skipDraw = false;
                 if(vbos[i].type==QUADS || vbos[i].type==TRIANGLES){
                     vec2 frame = frameranges[vbos[i].key];
-                    if(!((frame[0]<0 && frame[1]<0) || (frame[0]<=sim->frame && sim->frame<=frame[1]))){
+                    if(!((frame[0]<0 && frame[1]<0) || (frame[0]<=sim->frame 
+                        && sim->frame<=frame[1]))){
                         skipDraw = true;
                     }
                 }
@@ -383,7 +383,8 @@ bool viewer::init(){
         return false;
     }
 
-    window = glfwCreateWindow(resolution.x, resolution.y, "Ariel: now with 100% more FLIP!", NULL, NULL);
+    window = glfwCreateWindow(resolution.x, resolution.y, "Ariel: now with 100% more FLIP!", 
+                              NULL, NULL);
     if (!window){
         glfwTerminate();
         return false;

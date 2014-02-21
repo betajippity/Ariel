@@ -54,7 +54,8 @@ class particleList{ //used for VDB particle to level set construction
 		    }
 		}
 
-		void getPosRadVel(size_t n, openvdb::Vec3R& pos, openvdb::Real& rad, openvdb::Vec3R& vel) const {
+		void getPosRadVel(size_t n, openvdb::Vec3R& pos, openvdb::Real& rad, 
+						  openvdb::Vec3R& vel) const {
 			pos = openvdb::Vec3f(particles[n]->p.x*maxdimension, particles[n]->p.y*maxdimension, 
 								 particles[n]->p.z*maxdimension);
 		    rad = particles[n]->density;

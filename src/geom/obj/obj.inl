@@ -54,9 +54,10 @@ struct poly {
 };
     
 //Forward declarations for externed inlineable methods
-extern inline obj* createObj(int numberOfVertices, vec3* vertices, int numberOfNormals, vec3* normals, 
-                             int numberOfUVs, vec2* uvs, int numberOfPolys, vec4* polyVertexIndices, 
-                             vec4* polyNormalIndices, vec4* polyUVIndices);
+extern inline obj* createObj(int numberOfVertices, vec3* vertices, int numberOfNormals, 
+                             vec3* normals, int numberOfUVs, vec2* uvs, int numberOfPolys, 
+                             vec4* polyVertexIndices, vec4* polyNormalIndices, 
+                             vec4* polyUVIndices);
 extern inline void clearObj(obj* mesh);
 HOST DEVICE extern inline point createPoint(vec3 position, vec3 normal, vec2 uv);
 HOST DEVICE extern inline poly createPoly(point v1, point v2, point v3);
@@ -69,11 +70,11 @@ HOST DEVICE extern inline poly getPoly(obj* mesh, int polyIndex);
 // Function Implementations
 //====================================
     
-/*Build an obj given inputs. No sanity-checking is done, this method trusts whatever it is given, so be
-careful!*/
-obj* createObj(int numberOfVertices, vec3* vertices, int numberOfNormals, vec3* normals, int numberOfUVs, 
-               vec2* uvs, int numberOfPolys, vec4* polyVertexIndices, vec4* polyNormalIndices, 
-               vec4* polyUVIndices){
+/*Build an obj given inputs. No sanity-checking is done, this method trusts whatever it is given, 
+so be careful!*/
+obj* createObj(int numberOfVertices, vec3* vertices, int numberOfNormals, vec3* normals, 
+               int numberOfUVs, vec2* uvs, int numberOfPolys, vec4* polyVertexIndices, 
+               vec4* polyNormalIndices, vec4* polyUVIndices){
     obj* mesh = new obj;
     mesh->numberOfVertices = numberOfVertices;
     mesh->vertices = vertices;
@@ -131,8 +132,8 @@ HOST DEVICE poly createPoly(point v1, point v2, point v3, point v4){
     return t;
 }
 
-/*Return the requested face from the mesh, unless the index is out of range, in which case return a 
-face of area zero*/
+/*Return the requested face from the mesh, unless the index is out of range, 
+in which case return a face of area zero*/
 HOST DEVICE poly getPoly(obj* mesh, int polyIndex){
     point pNull = createPoint(vec3(0,0,0), vec3(0,1,0), vec2(0,0));
     if(polyIndex<0 || polyIndex>=mesh->numberOfPolys){

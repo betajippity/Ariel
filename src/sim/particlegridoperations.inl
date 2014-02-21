@@ -107,7 +107,8 @@ float interpolate(floatgrid* q, vec3 p, vec3 n){
 }
 
 vec3 interpolateVelocity(vec3 p, macgrid& mgrid){
-	int x = (int)mgrid.dimensions.x; int y = (int)mgrid.dimensions.y; int z = (int)mgrid.dimensions.z;
+	int x = (int)mgrid.dimensions.x; int y = (int)mgrid.dimensions.y; 
+	int z = (int)mgrid.dimensions.z;
 	float maxd = glm::max(glm::max(x,y),z);
 	x = maxd; y = maxd; z = maxd;
 	vec3 u;
@@ -129,7 +130,8 @@ void splatParticlesToMACGrid(particlegrid* sgrid, vector<particle*>& particles, 
 	
 	float RE = 1.4f; //sharpen kernel weight
 
-	int x = (int)mgrid.dimensions.x; int y = (int)mgrid.dimensions.y; int z = (int)mgrid.dimensions.z;
+	int x = (int)mgrid.dimensions.x; int y = (int)mgrid.dimensions.y; 
+	int z = (int)mgrid.dimensions.z;
 	float maxd = glm::max(glm::max(x,y),z);
 
 	#pragma omp parallel for

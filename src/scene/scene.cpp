@@ -36,8 +36,9 @@ void scene::setPaths(const string& imagePath, const string& meshPath, const stri
 	this->partioPath = partioPath;
 }
 
-void scene::exportParticles(vector<fluidCore::particle*> particles, const float& maxd, const int& frame,
-							const bool& VDB, const bool& OBJ, const bool& PARTIO){
+void scene::exportParticles(vector<fluidCore::particle*> particles, const float& maxd, 
+							const int& frame, const bool& VDB, const bool& OBJ, 
+							const bool& PARTIO){
 	int particlesCount = particles.size();
 
 	vector<fluidCore::particle*> sdfparticles;
@@ -62,7 +63,8 @@ void scene::exportParticles(vector<fluidCore::particle*> particles, const float&
 
 		Partio::ParticlesDataMutable* partioData = Partio::create();
 		partioData->addParticles(sdfparticlesCount);
-		Partio::ParticleAttribute positionAttr = partioData->addAttribute("position", Partio::VECTOR, 3);
+		Partio::ParticleAttribute positionAttr = partioData->addAttribute("position", 
+																		  Partio::VECTOR, 3);
 		Partio::ParticleAttribute velocityAttr = partioData->addAttribute("v", Partio::VECTOR, 3);
 		Partio::ParticleAttribute idAttr = partioData->addAttribute("id", Partio::INT, 1);
 
@@ -222,7 +224,8 @@ void scene::buildLevelSets(const int& frame){
 // }
 
 void scene::generateParticles(vector<fluidCore::particle*>& particles, const vec3& dimensions, 
-					   		  const float& density, fluidCore::particlegrid* pgrid, const int& frame){
+					   		  const float& density, fluidCore::particlegrid* pgrid, 
+					   		  const int& frame){
 
 	float maxdimension = glm::max(glm::max(dimensions.x, dimensions.y), dimensions.z);
 
@@ -242,8 +245,8 @@ void scene::generateParticles(vector<fluidCore::particle*>& particles, const vec
 					if( x > thickness && x < 1.0-thickness &&
 						y > thickness && y < 1.0-thickness &&
 						z > thickness && z < 1.0-thickness ) {
-							addParticle(vec3(x,y,z), FLUID, 3.0f/maxdimension, maxdimension, particles, 
-										frame);
+							addParticle(vec3(x,y,z), FLUID, 3.0f/maxdimension, maxdimension, 
+										particles, frame);
 					}
 				}
 			}
@@ -259,7 +262,8 @@ void scene::generateParticles(vector<fluidCore::particle*>& particles, const vec
 	                float x = i*w+w/2.0f;
 	                float y = j*w+w/2.0f;
 	                float z = k*w+w/2.0f;
-	                addParticle(vec3(x,y,z), SOLID, 3.0f/maxdimension, maxdimension, particles, frame);
+	                addParticle(vec3(x,y,z), SOLID, 3.0f/maxdimension, maxdimension, particles,
+	                		    frame);
 	            }
 	        }
 	    }
@@ -267,14 +271,16 @@ void scene::generateParticles(vector<fluidCore::particle*>& particles, const vec
     // cout << "Solid+Fluid particles: " << particles.size() << endl;
 }
 
-void scene::addParticle(const vec3& pos, const geomtype& type, const float& thickness, const float& scale,
-						vector<fluidCore::particle*>& particles, const int& frame){
+void scene::addParticle(const vec3& pos, const geomtype& type, const float& thickness, 
+						const float& scale, vector<fluidCore::particle*>& particles, 
+						const int& frame){
 	bool inside = false;
 	bool temp = false; //used to flag frame-variante solid particles
 
 	if(type==FLUID){
 		vec3 worldpos = pos*scale;
-		if(liquidLevelSet->getInterpolatedCell(worldpos)<0.0f /*thickness*/){ //TODO: figure out if we need this
+		if(liquidLevelSet->getInterpolatedCell(worldpos)<0.0f /*thickness*/){ 
+			//TODO: figure out if we need this
 			inside = true;
 		}
 		//if particles are in a wall, don't generate them

@@ -64,8 +64,8 @@ extern inline int compareMilliseconds(int referenceTime);
 //Matrix stuff
 extern inline glm::mat4 buildTransformationMatrix(glm::vec3 translation, glm::vec3 rotation, 
                                                   glm::vec3 scale);
-extern inline glm::mat4 buildInverseTransformationMatrix(glm::vec3 translation, glm::vec3 rotation, 
-                                                  glm::vec3 scale);
+extern inline glm::mat4 buildInverseTransformationMatrix(glm::vec3 translation, 
+														 glm::vec3 rotation, glm::vec3 scale);
 HOST DEVICE extern inline glm::vec4 multiply(glm::mat4 m, glm::vec4 v);
 
 //GLM Printers
