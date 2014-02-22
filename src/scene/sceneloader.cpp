@@ -125,7 +125,7 @@ void sceneloader::loadCamera(const Json::Value& jsoncamera){
 	}
 	//load camera fov
 	if(jsoncamera.isMember("fovx")){
-		camera_fov[0] = jsoncamera["fovx"].asFloat();
+		camera_fov[0] = jsoncamera["fovx"].asFloat()/2.0f;
 		float xscaled = tan(camera_fov.x*(PI/180));
 	    float yscaled = (xscaled * camera_resolution.y)/camera_resolution.x;
 	    camera_fov.y = (atan(xscaled)*180)/PI;

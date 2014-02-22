@@ -110,7 +110,8 @@ class viewer{
     	fluidCore::flipsim* sim;
     	bool siminitialized;
     	bool drawobjects;
-
+    	bool drawInvalid;
+    	
     	unsigned char* bitmapData;
     	bool dumpFramebuffer;
     	bool dumpReady;

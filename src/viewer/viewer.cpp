@@ -40,6 +40,7 @@ void viewer::load(fluidCore::flipsim* sim, bool retina, vec2 resolution,
     siminitialized = false;
 
     drawobjects = true;
+    drawInvalid = false;
 
     dumpFramebuffer = false;
     dumpReady = false;
@@ -139,14 +140,18 @@ void viewer::mainLoop(){
 
             for(int j=0; j<psize; j++){
                 if(particles->operator[](j)->type==FLUID){
-                    vertexData.push_back(particles->operator[](j)->p*maxd);
-                    float c = length(particles->operator[](j)->u)/3.0f;
-                    c = glm::max(c, 1.0f*glm::max((.7f - particles->operator[](j)->density),0.0f));
-                    bool invalid = particles->operator[](j)->invalid;
-                    if(invalid){
-                        colorData.push_back(vec4(1,0,0,0));
-                    }else{
-                        colorData.push_back(vec4(c,c,1,0));
+                    if(!particles->operator[](j)->invalid || 
+                       (particles->operator[](j)->invalid && drawInvalid)){
+                        vertexData.push_back(particles->operator[](j)->p*maxd);
+                        float c = length(particles->operator[](j)->u)/3.0f;
+                        c = glm::max(c, 
+                                     1.0f*glm::max((.7f-particles->operator[](j)->density),0.0f));
+                        bool invalid = particles->operator[](j)->invalid;
+                        if(invalid){
+                            colorData.push_back(vec4(1,0,0,0));
+                        }else{
+                            colorData.push_back(vec4(c,c,1,0));
+                        }
                     }
                 }
             }
@@ -362,6 +367,16 @@ void viewer::updateInputs(){
                 cout << "\nPARTIO Export ON.\n" << endl;
             }else{
                 cout << "\nPARTIO Export OFF.\n" << endl;
+            }
+        }
+    }else if(glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS){
+        if(cam.currentKey!=GLFW_KEY_I){
+            drawInvalid = !drawInvalid;
+            cam.currentKey = GLFW_KEY_I;
+            if(drawInvalid){
+                cout << "\nDraw out of bound particles ON.\n" << endl;
+            }else{
+                cout << "\nDraw out of bound particles OFF.\n" << endl;
             }
         }
     }else{
