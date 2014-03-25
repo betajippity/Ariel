@@ -16,7 +16,7 @@
 #define DEVICE
 #endif
 
-#include <glm/glm.hpp>
+#include <glm/fwd.hpp>
 #include <algorithm>
 #include <istream>
 #include <ostream>
@@ -47,6 +47,8 @@ namespace utilityCore {
 extern inline float clamp(float f, float min, float max);
 extern inline glm::vec3 clampRGB(glm::vec3 color);
 HOST DEVICE extern inline bool epsilonCheck(float a, float b);
+HOST DEVICE extern inline float toRadian(float degree);
+HOST DEVICE extern inline float toDegree(float radian);
 
 //String wrangling stuff
 extern inline bool replaceString(std::string& str, const std::string& from, const std::string& to);

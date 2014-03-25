@@ -16,6 +16,8 @@
 #define DEVICE
 #endif
 
+#define GLM_FORCE_RADIANS
+
 #include <glm/gtc/matrix_transform.inl>
 #include <glm/glm.hpp>
 #include <iostream>
@@ -27,6 +29,14 @@
 //====================================
 // Math stuff
 //====================================
+
+HOST DEVICE float utilityCore::toRadian(float degree){
+    return degree*PI/180.0f;
+}
+
+HOST DEVICE float utilityCore::toDegree(float radian){
+    return radian*180.0f/PI;
+}
 
 float utilityCore::clamp(float f, float min, float max){
     if(f<min){
@@ -150,9 +160,9 @@ int utilityCore::compareMilliseconds(int referenceTime){
 glm::mat4 utilityCore::buildTransformationMatrix(glm::vec3 translation, glm::vec3 rotation,
                                                  glm::vec3 scale){
     glm::mat4 translationMat = glm::translate(glm::mat4(), translation);
-    glm::mat4 rotationMat = glm::rotate(glm::mat4(), rotation.z, glm::vec3(0,0,1));
-    rotationMat = rotationMat*glm::rotate(glm::mat4(), rotation.y, glm::vec3(0,1,0));
-    rotationMat = rotationMat*glm::rotate(glm::mat4(), rotation.x, glm::vec3(1,0,0));
+    glm::mat4 rotationMat = glm::rotate(glm::mat4(), toRadian(rotation.z), glm::vec3(0,0,1));
+    rotationMat = rotationMat*glm::rotate(glm::mat4(), toRadian(rotation.y), glm::vec3(0,1,0));
+    rotationMat = rotationMat*glm::rotate(glm::mat4(), toRadian(rotation.x), glm::vec3(1,0,0));
     glm::mat4 scaleMat = glm::scale(glm::mat4(), scale);
     return translationMat*rotationMat*scaleMat;
 }

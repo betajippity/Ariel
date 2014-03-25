@@ -125,7 +125,7 @@ void buildPreconditioner(floatgrid* pc, macgrid& mgrid, int subcell){
 						if( e < a*diag ){
 							e = diag;
 						}
-						pc->setCell(i,j,k, 1.0f/sqrt(e));
+						pc->setCell(i,j,k, 1.0f/glm::sqrt(e));
 					}
 				}
 			}

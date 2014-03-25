@@ -1,4 +1,10 @@
 cmake_minimum_required(VERSION 2.8)
+
+if(NOT WIN32)
+	set (CMAKE_C_COMPILER gcc)
+	set (CMAKE_CXX_COMPILER g++)
+endif()
+
 project(ariel)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/build/cmake")
@@ -22,16 +28,6 @@ set(GLFW_INCLUDE_DIR ${NUPARU}/include)
 set(GLFW_LIBRARY_DIR ${CMAKE_LIBRARY_PATH})
 set(GLEW_INCLUDE_DIR ${NUPARU}/include)
 set(GLEW_LIBRARY_DIR ${CMAKE_LIBRARY_PATH})
-
-#Use GCC instead of clang for now, since clang doesn't have OpenMP support yet
-if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-	set (CMAKE_C_COMPILER "gcc")
-	set (CMAKE_CXX_COMPILER "g++")
-	#Force XCode to gcc
-	if(CMAKE_GENERATOR STREQUAL Xcode)
-		set(CMAKE_XCODE_ATTRIBUTE_GCC_VERSION "com.apple.compilers.llvmgcc42")
-	endif()
-endif()
 
 #find up and set up core dependency libs
 find_library(GLFW_LIBRARY "glfw3" HINTS ${GLFW_LIBRARY_DIR})
@@ -101,7 +97,6 @@ set(SOURCE_FILES "src/main.cpp"
 				 "${NUPARU}/src/stb_image/stb_image_write.c"
 				 "${NUPARU}/src/json/jsoncpp.cpp"
 				 )
-
 
 add_executable(ariel ${SOURCE_FILES})
 
