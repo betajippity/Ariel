@@ -149,9 +149,9 @@ void splatParticlesToMACGrid(particlegrid* sgrid, vector<particle*>& particles, 
 						particle* p = neighbors[n];
 						if(p->type == FLUID){
 							vec3 pos;
-							pos.x = fmax(0,fmin(maxd,maxd*p->p.x));
-							pos.y = fmax(0,fmin(maxd,maxd*p->p.y));
-							pos.z = fmax(0,fmin(maxd,maxd*p->p.z));
+							pos.x = glm::max(0.0f,glm::min(maxd,maxd*p->p.x));
+							pos.y = glm::max(0.0f,glm::min(maxd,maxd*p->p.y));
+							pos.z = glm::max(0.0f,glm::min(maxd,maxd*p->p.z));
 							float w = p->mass * mathCore::sharpen(mathCore::sqrlength(pos,px),RE);
 							sumx += w*p->u.x;
 							sumw += w;
@@ -175,9 +175,9 @@ void splatParticlesToMACGrid(particlegrid* sgrid, vector<particle*>& particles, 
 						particle* p = neighbors[n];
 						if(p->type == FLUID){
 							vec3 pos;
-							pos.x = fmax(0,fmin(maxd,maxd*p->p.x));
-							pos.y = fmax(0,fmin(maxd,maxd*p->p.y));
-							pos.z = fmax(0,fmin(maxd,maxd*p->p.z));
+							pos.x = glm::max(0.0f,glm::min(maxd,maxd*p->p.x));
+							pos.y = glm::max(0.0f,glm::min(maxd,maxd*p->p.y));
+							pos.z = glm::max(0.0f,glm::min(maxd,maxd*p->p.z));
 							float w = p->mass * mathCore::sharpen(mathCore::sqrlength(pos,py),RE);
 							sumy += w*p->u.y;
 							sumw += w;
@@ -201,9 +201,9 @@ void splatParticlesToMACGrid(particlegrid* sgrid, vector<particle*>& particles, 
 						particle* p = neighbors[n];
 						if(p->type == FLUID){
 							vec3 pos;
-							pos.x = fmax(0,fmin(maxd,maxd*p->p.x));
-							pos.y = fmax(0,fmin(maxd,maxd*p->p.y));
-							pos.z = fmax(0,fmin(maxd,maxd*p->p.z));
+							pos.x = glm::max(0.0f,glm::min(maxd,maxd*p->p.x));
+							pos.y = glm::max(0.0f,glm::min(maxd,maxd*p->p.y));
+							pos.z = glm::max(0.0f,glm::min(maxd,maxd*p->p.z));
 							float w = p->mass * mathCore::sharpen(mathCore::sqrlength(pos,pz),RE);
 							sumz += w*p->u.z;
 							sumw += w;

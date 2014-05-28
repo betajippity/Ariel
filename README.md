@@ -3,4 +3,4 @@ Ariel
 
 Experimental implementation of a FLIP fluid solver on top of [OpenVDB](http://www.openvdb.org).
 
-Requires GCC4.7 or newer to build on OSX. Requires Nuparu v0.1.14.09.
+Requires a compiled with OpenMP 2.x support or better, and Nuparu v0.1.14.22.

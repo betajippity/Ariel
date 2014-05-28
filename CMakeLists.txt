@@ -81,6 +81,24 @@ elseif(WIN32)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:SSE2")
 endif()
 
+if(MSVC)
+	set(CompilerFlags
+	        CMAKE_CXX_FLAGS
+	        CMAKE_CXX_FLAGS_DEBUG
+	        CMAKE_CXX_FLAGS_RELEASE
+	        CMAKE_C_FLAGS
+	        CMAKE_C_FLAGS_DEBUG
+	        CMAKE_C_FLAGS_RELEASE
+	        )
+	foreach(CompilerFlag ${CompilerFlags})
+	  string(REPLACE "/MD" "/MT" ${CompilerFlag} "${${CompilerFlag}}")
+	endforeach()
+	# /bigobj is required for windows builds because of the size of
+	# some object files (CastImage for instance)
+	set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj" )
+	set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /bigobj" )
+endif()
+
 set(SOURCE_FILES "src/main.cpp"
 				 "src/grid/floatgrid.cpp"
 				 "src/grid/intgrid.cpp"

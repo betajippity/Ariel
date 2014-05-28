@@ -66,7 +66,7 @@ void flipsim::init(){
 	//sum densities across particles
 	for( int n=0; n<particles.size(); n++ ) {
 		particle *p = particles[n];
-		max_density = fmax(max_density,p->density);
+		max_density = glm::max(max_density,p->density);
 		delete p;
 	}
 	particles.clear();
@@ -595,9 +595,9 @@ void flipsim::computeDensity(){
 		}else{
 			vec3 position = particles[i]->p;
 
-			position.x = (int)fmax(0,fmin((int)maxd-1,(int)maxd*position.x));
-			position.y = (int)fmax(0,fmin((int)maxd-1,(int)maxd*position.y));
-			position.z = (int)fmax(0,fmin((int)maxd-1,(int)maxd*position.z));
+			position.x = (int)glm::max(0.0f,glm::min((int)maxd-1.0f,(int)maxd*position.x));
+			position.y = (int)glm::max(0.0f,glm::min((int)maxd-1.0f,(int)maxd*position.y));
+			position.z = (int)glm::max(0.0f,glm::min((int)maxd-1.0f,(int)maxd*position.z));
 			vector<particle *> neighbors;
 			neighbors = pgrid->getCellNeighbors(position, vec3(1));
 			float weightsum = 0.0f;

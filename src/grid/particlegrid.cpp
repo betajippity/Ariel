@@ -148,9 +148,9 @@ void particlegrid::sort(vector<particle*>& particles){
 		particle* p = particles[i];
 
 		vec3 pos = p->p;
-		pos.x = (int)fmax(0, fmin((int)maxd-1, int(maxd*pos.x)));
-		pos.y = (int)fmax(0, fmin((int)maxd-1, int(maxd*pos.y)));
-		pos.z = (int)fmax(0, fmin((int)maxd-1, int(maxd*pos.z)));
+		pos.x = (int)glm::max(0.0f, glm::min((int)maxd-1.0f, int(maxd)*pos.x));
+		pos.y = (int)glm::max(0.0f, glm::min((int)maxd-1.0f, int(maxd)*pos.y));
+		pos.z = (int)glm::max(0.0f, glm::min((int)maxd-1.0f, int(maxd)*pos.z));
 
 		int cellindex = grid->getCell(pos);
 	
