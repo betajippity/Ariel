@@ -1,10 +1,5 @@
 cmake_minimum_required(VERSION 2.8)
 
-if(NOT WIN32)
-	set (CMAKE_C_COMPILER gcc)
-	set (CMAKE_CXX_COMPILER g++)
-endif()
-
 project(ariel)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/build/cmake")
@@ -49,20 +44,6 @@ set(VDBLIBS ${HALF} ${LIBZ} ${TBB})
 set(CORELIBS ${GLFW_LIBRARY} ${GLUT_LIBRARY} ${OPENGL_LIBRARY} ${GLEW_LIBRARY} ${OPENVDB}
    ${VDBLIBS} ${PARTIO})
 
-#Set up OpenMP stuff
-if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fopenmp")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
-	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fopenmp")
-else()
-	find_package(OpenMP)
-	if(OPENMP_FOUND)
-		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
-	endif()
-endif()
-
 # Mac OS X specific hacks/fixes
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
    	#Link IOKit
@@ -76,7 +57,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 endif()
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11  -O3 -m64 -msse2 -w")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11  -stdlib=libc++ -O3 -m64 -msse2 -w")
 elseif(WIN32)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:SSE2")
 endif()

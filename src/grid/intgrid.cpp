@@ -18,13 +18,18 @@ intgrid::intgrid(const gridtype& type, const vec3& dimensions, const int& backgr
 		vdbgrid = openvdb::Int32Grid::create(background);
 	}else if(type==RAW){
 		rawgrid = createGrid<int>(dimensions.x+1, dimensions.y+1, dimensions.z+1);
-		for(int i=0; i<(int)dimensions.x+1; i++){
-			for(int j=0; j<(int)dimensions.y+1; j++){
-				for(int k=0; k<(int)dimensions.z+1; k++){
-					rawgrid[i][j][k] = background;
+
+		tbb::parallel_for(tbb::blocked_range<unsigned int>(0,(int)dimensions.x+1),
+			[=](const tbb::blocked_range<unsigned int>& r){
+				for(unsigned int i=r.begin(); i!=r.end(); ++i){	
+					for(int j=0; j<(int)dimensions.y+1; ++j){
+						for(int k=0; k<(int)dimensions.z+1; ++k){
+							rawgrid[i][j][k] = background;
+						}
+					}
 				}
 			}
-		}
+		);
 	}
 }
 
@@ -59,12 +64,13 @@ void intgrid::setCell(const vec3& index, const int& value){
 
 void intgrid::setCell(const int& x, const int& y, const int& z, const int& value){
 	if(type==VDB){
-		#pragma omp critical
+		SetCellLock.lock();
 		{
 			openvdb::Coord coord = openvdb::Coord(x,y,z);
 			openvdb::Int32Grid::Accessor accessor = vdbgrid->getAccessor();
 			accessor.setValue(coord, value);
 		}
+		SetCellLock.unlock();
 	}else if(type==RAW){
 		rawgrid[x][y][z] = value;
 	}

@@ -7,10 +7,12 @@
 #ifndef FLOATGRID_HPP
 #define FLOATGRID_HPP
 
-#include "../utilities/utilities.h"
-#include "gridutils.inl"
 #include <openvdb/openvdb.h>
 #include <openvdb/tools/Interpolation.h>
+#include <tbb/tbb.h>
+#include <tbb/mutex.h>
+#include "../utilities/utilities.h"
+#include "gridutils.inl"
 
 using namespace std;
 using namespace glm;
@@ -52,6 +54,9 @@ class floatgrid{
 		vec3 dimensions;
 
 		int background;
+
+		tbb::mutex GetInterpolatedCellLock;
+		tbb::mutex SetCellLock;
 };
 }
 

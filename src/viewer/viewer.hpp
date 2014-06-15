@@ -9,7 +9,9 @@
 
 #define GLEW_STATIC
 
-#include <omp.h>
+#include <tbb/tbb.h>
+#include <tbb/mutex.h>
+#include <thread> 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <stdlib.h>
@@ -78,6 +80,9 @@ class viewer{
 		//Initialize stuff
 		bool init();
 
+		//Sim thread stuff
+		void simLoopThread();
+
 		//Main draw functions
 		void mainLoop();
 		void updateInputs();
@@ -116,7 +121,7 @@ class viewer{
     	bool dumpFramebuffer;
     	bool dumpReady;
     	bool pause;
-    	omp_lock_t framebufferWriteLock;
+    	tbb::mutex framebufferWriteLock;
 
     	int framebufferScale;
 

@@ -7,11 +7,10 @@
 #ifndef FLIP_HPP
 #define FLIP_HPP
 
+#include <tbb/tbb.h>
 #include "../grid/macgrid.inl"
 #include "../grid/particlegrid.hpp"
 #include "../scene/scene.hpp"
-#include <vector>
-#include <omp.h>
 
 using namespace std;
 using namespace glm;
@@ -66,6 +65,18 @@ class flipsim{
 
 		gridtype type;
 		bool verbose;
+};
+
+class fliptask: public tbb::task {
+	public:
+		fliptask(flipsim* sim, bool dumpVDB, bool dumpOBJ, bool dumpPARTIO);
+
+		tbb::task* execute();
+	private:
+		flipsim* m_sim;
+		bool m_dumpPARTIO;
+		bool m_dumpOBJ;
+		bool m_dumpVDB;
 };
 }
 

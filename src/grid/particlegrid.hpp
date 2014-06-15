@@ -7,6 +7,7 @@
 #ifndef FLUIDGRID_HPP
 #define FLUIDGRID_HPP
 
+#include <tbb/tbb.h>
 #include "../utilities/utilities.h"
 #include "macgrid.inl"
 #include "gridutils.inl"

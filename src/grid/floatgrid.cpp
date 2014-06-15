@@ -24,14 +24,17 @@ floatgrid::floatgrid(const gridtype& type, const vec3& dimensions, const int& ba
 		vdbgrid = openvdb::FloatGrid::create(background);
 	}else if(type==RAW){
 		rawgrid = createGrid<float>(dimensions.x+1, dimensions.y+1, dimensions.z+1);
-		#pragma omp parallel for
-		for(int i=0; i<(int)dimensions.x+1; i++){
-			for(int j=0; j<(int)dimensions.y+1; j++){
-				for(int k=0; k<(int)dimensions.z+1; k++){
-					rawgrid[i][j][k] = background;
+		tbb::parallel_for(tbb::blocked_range<unsigned int>(0,(int)dimensions.x+1),
+			[=](const tbb::blocked_range<unsigned int>& r){
+				for(unsigned int i=r.begin(); i!=r.end(); ++i){		
+					for(unsigned int j=0; j<(int)dimensions.y+1; ++j){
+						for(unsigned int k=0; k<(int)dimensions.z+1; ++k){
+							rawgrid[i][j][k] = background;
+						}
+					}
 				}
 			}
-		}
+		);
 	}
 }
 
@@ -71,12 +74,13 @@ void floatgrid::setCell(const vec3& index, const float& value){
 
 void floatgrid::setCell(const int& x, const int& y, const int& z, const float& value){
 	if(type==VDB){
-		#pragma omp critical
+		SetCellLock.lock();
 		{
 			openvdb::Coord coord = openvdb::Coord(x,y,z);
 			openvdb::FloatGrid::Accessor accessor = vdbgrid->getAccessor();
 			accessor.setValue(coord, value);
 		}
+		SetCellLock.unlock();
 	}else if(type==RAW){
 		rawgrid[x][y][z] = value;
 	}
@@ -88,13 +92,14 @@ float floatgrid::getInterpolatedCell(const vec3& index){
 
 float floatgrid::getInterpolatedCell(const float& x, const float& y, const float& z){
 	float value;
-	#pragma omp critical
+	GetInterpolatedCellLock.lock();
 	{
 		openvdb::Vec3f p(x,y,z);
 		openvdb::tools::GridSampler<openvdb::FloatTree, openvdb::tools::BoxSampler> interpolator(
 													  vdbgrid->constTree(), vdbgrid->transform());
 		value = interpolator.wsSample(p);
 	}
+	GetInterpolatedCellLock.unlock();
 	return value;
 }
 
@@ -114,13 +119,16 @@ void floatgrid::clear(){
 	if(type==VDB){
 		vdbgrid->clear();
 	}else if(type==RAW){
-		#pragma omp parallel for
-		for(int i=0; i<(int)dimensions.x+1; i++){
-			for(int j=0; j<(int)dimensions.y+1; j++){
-				for(int k=0; k<(int)dimensions.z+1; k++){
-					rawgrid[i][j][k] = background;
+		tbb::parallel_for(tbb::blocked_range<unsigned int>(0,(int)dimensions.x+1),
+			[=](const tbb::blocked_range<unsigned int>& r){
+				for(unsigned int i=r.begin(); i!=r.end(); ++i){
+					for(unsigned int j=0; j<(int)dimensions.y+1; ++j){
+						for(unsigned int k=0; k<(int)dimensions.z+1; ++k){
+							rawgrid[i][j][k] = background;
+						}
+					}
 				}
 			}
-		}
+		);	
 	}
 }

@@ -7,9 +7,11 @@
 #ifndef INTGRID_HPP
 #define INTGRID_HPP
 
+#include <openvdb/openvdb.h>
+#include <tbb/tbb.h>
+#include <tbb/mutex.h>
 #include "../utilities/utilities.h"
 #include "gridutils.inl"
-#include <openvdb/openvdb.h>
 
 using namespace std;
 using namespace glm;
@@ -45,6 +47,8 @@ class intgrid{
 		vec3 dimensions;
 
 		int background;
+
+		tbb::mutex SetCellLock;
 };
 }
 

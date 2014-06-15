@@ -4,9 +4,9 @@
 // File: objContainer.cpp
 // Implements objContainer.hpp
 
+#include <tbb/tbb.h>
 #include <vector>
 #include "objcontainer.hpp"
-#include <omp.h>
 
 using namespace objCore;
 
@@ -183,14 +183,20 @@ bool objContainer::writeObj(string filename){
 }
 
 void objContainer::bakeTransform(mat4 transform){
-    #pragma parallel for
-    for(int i=0; i<mesh->numberOfVertices; i++){
-        mesh->vertices[i] = vec3(transform * vec4(mesh->vertices[i], 1.0f));
-    }
-    #pragma parallel for
-    for(int i=0; i<mesh->numberOfNormals; i++){
-        mesh->normals[i] = normalize(vec3(transform * vec4(mesh->normals[i], 0.0f)));
-    }
+    tbb::parallel_for(tbb::blocked_range<unsigned int>(0,mesh->numberOfVertices),
+        [=](const tbb::blocked_range<unsigned int>& r){
+            for(unsigned int i=r.begin(); i!=r.end(); ++i){ 
+                mesh->vertices[i] = vec3(transform * vec4(mesh->vertices[i], 1.0f));
+            }
+        }
+    );
+    tbb::parallel_for(tbb::blocked_range<unsigned int>(0,mesh->numberOfNormals),
+        [=](const tbb::blocked_range<unsigned int>& r){
+            for(unsigned int i=r.begin(); i!=r.end(); ++i){ 
+                mesh->normals[i] = normalize(vec3(transform * vec4(mesh->normals[i], 0.0f)));
+            }
+        }
+    );
 }
 
 void objContainer::keepObj(bool keep){

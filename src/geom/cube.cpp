@@ -1,12 +1,12 @@
 // TAKUA Render: Physically Based Renderer
 // Written by Yining Karl Li
 //
-// File: cube.cp p
-// Impleme nts cube.hpp
+// File: cube.cpp
+// Implements cube.hpp
 
+#include <tbb/tbb.h>
 #include "cube.hpp"
 #include "../utilities/utilities.h" 
-#include <omp.h>
 
 using namespace geomCore;
 
@@ -92,12 +92,15 @@ objCore::objContainer* cube::tesselate(const vec3& lowerCorner, const vec3& uppe
 	mat4 transform = utilityCore::buildTransformationMatrix(center, vec3(0,0,0), scale);
 
 	objCore::objContainer* o = tesselate();
-	int numberOfPoints = o->getObj()->numberOfVertices;
+	unsigned int numberOfPoints = o->getObj()->numberOfVertices;
 
-	#pragma omp parallel for
-	for(int i=0; i<numberOfPoints; i++){
-		o->getObj()->vertices[i] = vec3(transform*vec4(o->getObj()->vertices[i], 1.0f));
-	}
+	tbb::parallel_for(tbb::blocked_range<unsigned int>(0,numberOfPoints),
+		[=](const tbb::blocked_range<unsigned int>& r){
+			for(unsigned int i=r.begin(); i!=r.end(); ++i){	
+				o->getObj()->vertices[i] = vec3(transform*vec4(o->getObj()->vertices[i], 1.0f));
+			}
+		}
+	);
 
 	return o;
 }
