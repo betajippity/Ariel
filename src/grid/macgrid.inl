@@ -11,9 +11,6 @@
 #include "intgrid.hpp"
 #include "../utilities/utilities.h"
 
-using namespace std;
-using namespace glm;
-
 enum geomtype {SOLID=2, FLUID=1, AIR=0};
 
 namespace fluidCore {
@@ -23,7 +20,7 @@ namespace fluidCore {
 
 //A macgrid in this simulator is built up entirely out of VDB volumes
 struct macgrid{
-	vec3 dimensions;
+	glm::vec3 dimensions;
 
 	//face velocities
 	floatgrid* u_x;
@@ -40,30 +37,30 @@ struct macgrid{
 };
 
 struct particle{
-	vec3 p; //position
-	vec3 u; //velocity
-	vec3 n; //normal
+	glm::vec3 p; //position
+	glm::vec3 u; //velocity
+	glm::vec3 n; //normal
 	float density;
 	float mass;
 	int type;
-	vec3 t;
-	vec3 t2;
+	glm::vec3 t;
+	glm::vec3 t2;
 	bool invalid;
 	bool temp;
 };
 
 //Forward declarations for externed inlineable methods
-extern inline particle createParticle(const vec3& position, const vec3& velocity, 
-									  const vec3& normal, const float& density);
-extern inline macgrid createMacgrid(const vec3& dimensions, const gridtype& type);
+extern inline particle createParticle(const glm::vec3& position, const glm::vec3& velocity, 
+									  const glm::vec3& normal, const float& density);
+extern inline macgrid createMacgrid(const glm::vec3& dimensions, const gridtype& type);
 extern inline void clearMacgrid(macgrid& m);
 
 //====================================
 // Function Implementations
 //====================================
 
-particle createParticle(const vec3& position, const vec3& velocity, const vec3& normal, 
-						const float& density){
+particle createParticle(const glm::vec3& position, const glm::vec3& velocity, 
+						const glm::vec3& normal, const float& density){
 	particle p;
 	p.p = position;
 	p.u = velocity;
@@ -72,17 +69,17 @@ particle createParticle(const vec3& position, const vec3& velocity, const vec3& 
 	return p;
 }
 
-macgrid createMacgrid(const vec3& dimensions, const gridtype& type){
+macgrid createMacgrid(const glm::vec3& dimensions, const gridtype& type){
 	int x = (int)dimensions.x; int y = (int)dimensions.y; int z = (int)dimensions.z;
 	macgrid m;
 	m.dimensions = dimensions;
-	m.u_x = new floatgrid(type, vec3(x+1,y,z), 0.0f);
-	m.u_y = new floatgrid(type, vec3(x,y+1,z), 0.0f);
-	m.u_z = new floatgrid(type, vec3(x,y,z+1), 0.0f);
-	m.D = new floatgrid(type, vec3(x,y,z), 0.0f);
-	m.P = new floatgrid(type, vec3(x,y,z), 0.0f);
-	m.A = new intgrid(type, vec3(x,y,z), 0);
-	m.L = new floatgrid(type, vec3(x,y,z), 1.6f);
+	m.u_x = new floatgrid(type, glm::vec3(x+1,y,z), 0.0f);
+	m.u_y = new floatgrid(type, glm::vec3(x,y+1,z), 0.0f);
+	m.u_z = new floatgrid(type, glm::vec3(x,y,z+1), 0.0f);
+	m.D = new floatgrid(type, glm::vec3(x,y,z), 0.0f);
+	m.P = new floatgrid(type, glm::vec3(x,y,z), 0.0f);
+	m.A = new intgrid(type, glm::vec3(x,y,z), 0);
+	m.L = new floatgrid(type, glm::vec3(x,y,z), 1.6f);
 	m.type = type;
 	return m;
 }

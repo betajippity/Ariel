@@ -14,22 +14,19 @@
 #include "../utilities/utilities.h"
 #include "../grid/gridutils.inl"
 
-using namespace std;
-using namespace glm;
-
 namespace fluidCore {
 //====================================
 // Struct and Function Declarations
 //====================================
 
 //Forward declarations for externed inlineable methods
-extern inline void splatParticlesToMACGrid(particlegrid* sgrid, vector<particle*>& particles,
+extern inline void splatParticlesToMACGrid(particlegrid* sgrid, std::vector<particle*>& particles,
 										   macgrid* mgrid);
-extern inline void splatMACGridToParticles(vector<particle*>& particles, macgrid* mgrid);
+extern inline void splatMACGridToParticles(std::vector<particle*>& particles, macgrid* mgrid);
 extern inline void enforceBoundaryVelocity(macgrid* mgrid);
-extern inline vec3 interpolateVelocity(vec3 p, macgrid* mgrid);
+extern inline glm::vec3 interpolateVelocity(glm::vec3 p, macgrid* mgrid);
 inline float checkWall(intgrid* A, const int& x, const int& y, const int& z);
-inline float interpolate(floatgrid* q, vec3 p, vec3 n);
+inline float interpolate(floatgrid* q, glm::vec3 p, glm::vec3 n);
 	
 //====================================
 // Function Implementations
@@ -104,7 +101,7 @@ void enforceBoundaryVelocity(macgrid* mgrid){
 	);
 }
 
-float interpolate(floatgrid* q, vec3 p, vec3 n){
+float interpolate(floatgrid* q, glm::vec3 p, glm::vec3 n){
 	float x = glm::max(0.0f,glm::min(n.x,p.x));
 	float y = glm::max(0.0f,glm::min(n.y,p.y));
 	float z = glm::max(0.0f,glm::min(n.z,p.z));
@@ -118,19 +115,19 @@ float interpolate(floatgrid* q, vec3 p, vec3 n){
 	return (k+1-z)*(term1 + term2) + (z-k)*(term3 + term4);
 }
 
-vec3 interpolateVelocity(vec3 p, macgrid* mgrid){
+glm::vec3 interpolateVelocity(glm::vec3 p, macgrid* mgrid){
 	int x = (int)mgrid->dimensions.x; int y = (int)mgrid->dimensions.y; 
 	int z = (int)mgrid->dimensions.z;
 	float maxd = glm::max(glm::max(x,y),z);
 	x = maxd; y = maxd; z = maxd;
-	vec3 u;
-	u.x = interpolate(mgrid->u_x, vec3(x*p.x, y*p.y-0.5f, z*p.z-0.5f), vec3(x+1, y, z));
-	u.y = interpolate(mgrid->u_y, vec3(x*p.x-0.5f, y*p.y, z*p.z-0.5f), vec3(x, y+1, z));
-	u.z = interpolate(mgrid->u_z, vec3(x*p.x-0.5f, y*p.y-0.5f, z*p.z), vec3(x, y, z+1));
+	glm::vec3 u;
+	u.x = interpolate(mgrid->u_x, glm::vec3(x*p.x, y*p.y-0.5f, z*p.z-0.5f), glm::vec3(x+1, y, z));
+	u.y = interpolate(mgrid->u_y, glm::vec3(x*p.x-0.5f, y*p.y, z*p.z-0.5f), glm::vec3(x, y+1, z));
+	u.z = interpolate(mgrid->u_z, glm::vec3(x*p.x-0.5f, y*p.y-0.5f, z*p.z), glm::vec3(x, y, z+1));
 	return u;
 }
 
-void splatMACGridToParticles(vector<particle*>& particles, macgrid* mgrid){
+void splatMACGridToParticles(std::vector<particle*>& particles, macgrid* mgrid){
 	unsigned int particleCount = particles.size();
 	tbb::parallel_for(tbb::blocked_range<unsigned int>(0,particleCount),
 		[=](const tbb::blocked_range<unsigned int>& r){
@@ -141,7 +138,8 @@ void splatMACGridToParticles(vector<particle*>& particles, macgrid* mgrid){
 	);
 }
 
-void splatParticlesToMACGrid(particlegrid* sgrid, vector<particle*>& particles, macgrid* mgrid){
+void splatParticlesToMACGrid(particlegrid* sgrid, std::vector<particle*>& particles, 
+							 macgrid* mgrid){
 	
 	float RE = 1.4f; //sharpen kernel weight
 
@@ -154,17 +152,18 @@ void splatParticlesToMACGrid(particlegrid* sgrid, vector<particle*>& particles, 
 			for(unsigned int i=r.begin(); i!=r.end(); ++i){	
 				for(unsigned int j = 0; j < y+1; ++j){
 					for(unsigned int k = 0; k < z+1; ++k){
-						vector<particle*> neighbors;
+						std::vector<particle*> neighbors;
 						//Splat X direction
 						if(j<y && k<z){
-							vec3 px = vec3(i, j+0.5f, k+0.5f);
+							glm::vec3 px = glm::vec3(i, j+0.5f, k+0.5f);
 							float sumw = 0.0f;
 							float sumx = 0.0f;
-							neighbors = sgrid->getWallNeighbors(vec3(i,j,k), vec3(1,2,2));
+							neighbors = sgrid->getWallNeighbors(glm::vec3(i,j,k), 
+																glm::vec3(1,2,2));
 							for(unsigned int n=0; n<neighbors.size(); n++){
 								particle* p = neighbors[n];
 								if(p->type == FLUID){
-									vec3 pos;
+									glm::vec3 pos;
 									pos.x = glm::max(0.0f,glm::min(maxd,maxd*p->p.x));
 									pos.y = glm::max(0.0f,glm::min(maxd,maxd*p->p.y));
 									pos.z = glm::max(0.0f,glm::min(maxd,maxd*p->p.z));
@@ -184,14 +183,15 @@ void splatParticlesToMACGrid(particlegrid* sgrid, vector<particle*>& particles, 
 
 						//Splat Y direction
 						if(i<x && k<z){
-							vec3 py = vec3(i+0.5f, j, k+0.5f);
+							glm::vec3 py = glm::vec3(i+0.5f, j, k+0.5f);
 							float sumw = 0.0f;
 							float sumy = 0.0f;
-							neighbors = sgrid->getWallNeighbors(vec3(i,j,k), vec3(2,1,2));
+							neighbors = sgrid->getWallNeighbors(glm::vec3(i,j,k), 
+																glm::vec3(2,1,2));
 							for(unsigned int n=0; n<neighbors.size(); n++){
 								particle* p = neighbors[n];
 								if(p->type == FLUID){
-									vec3 pos;
+									glm::vec3 pos;
 									pos.x = glm::max(0.0f,glm::min(maxd,maxd*p->p.x));
 									pos.y = glm::max(0.0f,glm::min(maxd,maxd*p->p.y));
 									pos.z = glm::max(0.0f,glm::min(maxd,maxd*p->p.z));
@@ -211,14 +211,15 @@ void splatParticlesToMACGrid(particlegrid* sgrid, vector<particle*>& particles, 
 
 						//Splat Z direction
 						if(i<x && j<y){
-							vec3 pz = vec3(i+0.5f, j+0.5f, k);
+							glm::vec3 pz = glm::vec3(i+0.5f, j+0.5f, k);
 							float sumw = 0.0f;
 							float sumz = 0.0f;
-							neighbors = sgrid->getWallNeighbors(vec3(i,j,k), vec3(2,2,1));
+							neighbors = sgrid->getWallNeighbors(glm::vec3(i,j,k), 
+																glm::vec3(2,2,1));
 							for(unsigned int n=0; n<neighbors.size(); n++){
 								particle* p = neighbors[n];
 								if(p->type == FLUID){
-									vec3 pos;
+									glm::vec3 pos;
 									pos.x = glm::max(0.0f,glm::min(maxd,maxd*p->p.x));
 									pos.y = glm::max(0.0f,glm::min(maxd,maxd*p->p.y));
 									pos.z = glm::max(0.0f,glm::min(maxd,maxd*p->p.z));

@@ -13,9 +13,6 @@
 #include "../utilities/utilities.h"
 #include "gridutils.inl"
 
-using namespace std;
-using namespace glm;
-
 namespace fluidCore {
 //====================================
 // Class Declarations
@@ -24,27 +21,27 @@ namespace fluidCore {
 class intgrid{
 	public:
 		//Initializers
-		intgrid(const gridtype& type, const vec3& dimensions, const int& background);
+		intgrid(const gridtype& type, const glm::vec3& dimensions, const int& background);
 		~intgrid();
 
 		//Cell accessors and setters and whatever
-		int getCell(const vec3& index);
+		int getCell(const glm::vec3& index);
 		int getCell(const int& x, const int& y, const int& z);
 
-		void setCell(const vec3& index, const int& value);
+		void setCell(const glm::vec3& index, const int& value);
 		void setCell(const int& x, const int& y, const int& z, const int& value);
 
 		gridtype getGridType();
 
 		openvdb::Int32Grid::Ptr& getVDBGrid();
-		void writeVDBGridToFile(string filename);
+		void writeVDBGridToFile(std::string filename);
 
 	private:
 		openvdb::Int32Grid::Ptr vdbgrid;
 		int*** rawgrid;
 
 		gridtype type;
-		vec3 dimensions;
+		glm::vec3 dimensions;
 
 		int background;
 

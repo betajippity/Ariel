@@ -4,10 +4,10 @@
 // File: viewer.cpp
 // Implements viewer.hpp
 
-#include "viewer.hpp"
-#include "../utilities/utilities.h"
 #include <stb_image/stb_image_write.h>
 #include <sstream>
+#include "viewer.hpp"
+#include "../utilities/utilities.h"
 
 using namespace viewerCore;
 
@@ -20,11 +20,11 @@ viewer::~viewer(){
 }
 
 void viewer::load(fluidCore::flipsim* sim, bool retina){
-    load(sim, retina, vec2(1024), vec3(0), vec3(0,0,30), vec2(45.0f), 30.0f);
+    load(sim, retina, glm::vec2(1024), glm::vec3(0), glm::vec3(0,0,30), glm::vec2(45.0f), 30.0f);
 }
 
-void viewer::load(fluidCore::flipsim* sim, bool retina, vec2 resolution, 
-                  vec3 camrotate, vec3 camtranslate, vec2 camfov, float camlookat){
+void viewer::load(fluidCore::flipsim* sim, bool retina, glm::vec2 resolution, 
+                  glm::vec3 camrotate, glm::vec3 camtranslate, glm::vec2 camfov, float camlookat){
     this->resolution = resolution;
 
     cam.zoomSpeed = 0.1f;
@@ -92,18 +92,19 @@ bool viewer::launch(){
             mainLoop();
             return true;
         }else{
-            cout << "Error: GL initialization failed.\n" << endl;
+            std::cout << "Error: GL initialization failed.\n" << std::endl;
             return false;
         }
     }else{
-        cout << "Error: No sim loaded!\n" << endl;
+        std::cout << "Error: No sim loaded!\n" << std::endl;
         return false;
     } 
 }
 
 void viewer::saveFrame(){
-    string filename = sim->getScene()->imagePath;
-    string frameString = utilityCore::padString(4, utilityCore::convertIntToString(sim->frame));
+    std::string filename = sim->getScene()->imagePath;
+    std::string frameString = utilityCore::padString(4, 
+                                                     utilityCore::convertIntToString(sim->frame));
     utilityCore::replaceString(filename, ".png", "."+frameString+".png");
 
     char anim_filename[2048];
@@ -122,11 +123,11 @@ void viewer::mainLoop(){
 
         if(siminitialized){
             vboData data = vbos[vbokeys["fluid"]];
-            vector<vec3> vertexData;
-            vector<vec4> colorData;
+            std::vector<glm::vec3> vertexData;
+            std::vector<glm::vec4> colorData;
             int psize = particles->size();
 
-            vec3 gridSize = sim->getDimensions();
+            glm::vec3 gridSize = sim->getDimensions();
             vertexData.reserve(psize);
             colorData.reserve(psize);
             float maxd = glm::max(glm::max(gridSize.x, gridSize.z), gridSize.y);
@@ -136,23 +137,23 @@ void viewer::mainLoop(){
                     if(!particles->operator[](j)->invalid || 
                        (particles->operator[](j)->invalid && drawInvalid)){
                         vertexData.push_back(particles->operator[](j)->p*maxd);
-                        float c = length(particles->operator[](j)->u)/3.0f;
+                        float c = glm::length(particles->operator[](j)->u)/3.0f;
                         c = glm::max(c, 
                                      1.0f*glm::max((.7f-particles->operator[](j)->density),0.0f));
                         bool invalid = particles->operator[](j)->invalid;
                         if(invalid){
-                            colorData.push_back(vec4(1,0,0,0));
+                            colorData.push_back(glm::vec4(1,0,0,0));
                         }else{
-                            colorData.push_back(vec4(c,c,1,0));
+                            colorData.push_back(glm::vec4(c,c,1,0));
                         }
                     }
                 }
             }
             glDeleteBuffers(1, &data.vboID);
             glDeleteBuffers(1, &data.cboID);
-            string key = "fluid";
+            std::string key = "fluid";
             data = createVBO(data, (float*)&vertexData[0], vertexData.size()*3, 
-                             (float*)&colorData[0], colorData.size()*4, POINTS, key);
+                             (float*)&colorData[0], colorData.size()*4, GL_POINTS, key);
             vertexData.clear();
             colorData.clear();
             vbos[vbokeys["fluid"]] = data;
@@ -183,7 +184,7 @@ void viewer::mainLoop(){
                 glEnableClientState(GL_COLOR_ARRAY);
                 glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-                vec3 res = sim->getDimensions();
+                glm::vec3 res = sim->getDimensions();
                 glTranslatef(-res.x/2, 0, -res.y/2);
 
                 if(i==vbokeys["boundingbox"]){
@@ -191,25 +192,25 @@ void viewer::mainLoop(){
                 }
 
                 bool skipDraw = false;
-                if(vbos[i].type==QUADS || vbos[i].type==TRIANGLES){
-                    vec2 frame = frameranges[vbos[i].key];
+                if(vbos[i].type==GL_QUADS || vbos[i].type==GL_TRIANGLES){
+                    glm::vec2 frame = frameranges[vbos[i].key];
                     if(!((frame[0]<0 && frame[1]<0) || (frame[0]<=sim->frame 
                         && sim->frame<=frame[1]))){
                         skipDraw = true;
                     }
                 }
 
-                if(vbos[i].type==QUADS){
+                if(vbos[i].type==GL_QUADS){
                     if(!(i!=vbokeys["boundingbox"] && drawobjects==false) && skipDraw==false){
                         glDrawArrays(GL_QUADS, 0, vbos[i].size/3);
                     }
-                }else if(vbos[i].type==TRIANGLES){
+                }else if(vbos[i].type==GL_TRIANGLES){
                     if(!(i!=vbokeys["boundingbox"] && drawobjects==false) && skipDraw==false){
                         glDrawArrays(GL_TRIANGLES, 0, vbos[i].size/3);
                     }
-                }else if(vbos[i].type==LINES){
+                }else if(vbos[i].type==GL_LINES){
                     glDrawArrays(GL_LINES, 0, vbos[i].size/3);
-                }else if(vbos[i].type==POINTS){
+                }else if(vbos[i].type==GL_POINTS){
                     glPointSize(5.0f);
                     glDrawArrays(GL_POINTS, 0, vbos[i].size/3);
                 }
@@ -260,7 +261,7 @@ void viewer::mainLoop(){
 void viewer::updateInputs(){
     double x; double y;
     glfwGetCursorPos(window, &x, &y);
-    vec2 d;
+    glm::vec2 d;
     d.x = float(x-cam.mouseOld.x);
     d.y = float(y-cam.mouseOld.y);
     cam.mouseOld.x = x;
@@ -277,30 +278,34 @@ void viewer::updateInputs(){
         }
         if(doCamera==true){
             if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == 1){
-                mat4 m = utilityCore::buildTransformationMatrix(vec3(0), cam.rotate, vec3(1,1,1));
-                vec3 view = normalize(vec3(m*vec4(0,0,-1,0)));
-                vec3 lookatPoint = cam.translate + view*cam.lookat;
+                glm::mat4 m = utilityCore::buildTransformationMatrix(glm::vec3(0), cam.rotate, 
+                                                                     glm::vec3(1,1,1));
+                glm::vec3 view = glm::normalize(glm::vec3(m*glm::vec4(0,0,-1,0)));
+                glm::vec3 lookatPoint = cam.translate + view*cam.lookat;
 
                 cam.rotate.x += -d.y * cam.rotateSpeed;
                 cam.rotate.y += -d.x * cam.rotateSpeed;
 
-                m = utilityCore::buildTransformationMatrix(vec3(0), cam.rotate, vec3(1,1,1));
-                view = normalize(vec3(m*vec4(0,0,1,0)));
+                m = utilityCore::buildTransformationMatrix(glm::vec3(0), cam.rotate, 
+                                                           glm::vec3(1,1,1));
+                view = glm::normalize(glm::vec3(m*glm::vec4(0,0,1,0)));
 
                 cam.translate = lookatPoint +  view*cam.lookat;
             }
             if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == 1){
-                mat4 m = utilityCore::buildTransformationMatrix(vec3(0), cam.rotate, vec3(1,1,1));
-                vec3 view = normalize(vec3(m*vec4(0,0,-1,0)));
+                glm::mat4 m = utilityCore::buildTransformationMatrix(glm::vec3(0), cam.rotate, 
+                                                                     glm::vec3(1,1,1));
+                glm::vec3 view = glm::normalize(glm::vec3(m*glm::vec4(0,0,-1,0)));
 
-                vec3 lookatPoint = cam.translate + view*cam.lookat;
+                glm::vec3 lookatPoint = cam.translate + view*cam.lookat;
                 cam.translate = cam.translate + (d.y * view * cam.zoomSpeed);
-                cam.lookat = length(cam.translate-lookatPoint);
+                cam.lookat = glm::length(cam.translate-lookatPoint);
             }
             if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE) == 1){
-                mat4 m = utilityCore::buildTransformationMatrix(vec3(0), cam.rotate, vec3(1,1,1));
-                vec3 up = normalize(vec3(m*vec4(0,1,0,0)));
-                vec3 right = normalize(vec3(m*vec4(-1,0,0,0)));
+                glm::mat4 m = utilityCore::buildTransformationMatrix(glm::vec3(0), cam.rotate, 
+                                                                     glm::vec3(1,1,1));
+                glm::vec3 up = glm::normalize(glm::vec3(m*glm::vec4(0,1,0,0)));
+                glm::vec3 right = glm::normalize(glm::vec3(m*glm::vec4(-1,0,0,0)));
 
                 cam.translate = cam.translate + (d.x * right * cam.panSpeed);
                 cam.translate = cam.translate + (d.y * up * cam.panSpeed);
@@ -322,9 +327,9 @@ void viewer::updateInputs(){
             dumpReady = false;
             cam.currentKey = GLFW_KEY_R;
             if(dumpFramebuffer){
-                cout << "\nFramebuffer recording ON.\n" << endl;
+                std::cout << "\nFramebuffer recording ON.\n" << std::endl;
             }else{
-                cout << "\nFramebuffer recording OFF.\n" << endl;
+                std::cout << "\nFramebuffer recording OFF.\n" << std::endl;
             }
         }
     }else if(glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS){
@@ -332,7 +337,7 @@ void viewer::updateInputs(){
             pause = !pause;
             cam.currentKey = GLFW_KEY_P;
             if(pause){
-                cout << "\nSimulation paused.\n" << endl; 
+                std::cout << "\nSimulation paused.\n" << std::endl; 
             }
         }
     }else if(glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS){
@@ -340,9 +345,9 @@ void viewer::updateInputs(){
             dumpVDB = !dumpVDB;
             cam.currentKey = GLFW_KEY_V;
             if(dumpVDB){
-                cout << "\nVDB Export ON.\n" << endl;
+                std::cout << "\nVDB Export ON.\n" << std::endl;
             }else{
-                cout << "\nVDB Export OFF.\n" << endl;
+                std::cout << "\nVDB Export OFF.\n" << std::endl;
             }
         }
     }else if(glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS){
@@ -350,9 +355,9 @@ void viewer::updateInputs(){
             dumpOBJ = !dumpOBJ;
             cam.currentKey = GLFW_KEY_O;
             if(dumpOBJ){
-                cout << "\nOBJ Export ON.\n" << endl;
+                std::cout << "\nOBJ Export ON.\n" << std::endl;
             }else{
-                cout << "\nOBJ Export OFF.\n" << endl;
+                std::cout << "\nOBJ Export OFF.\n" << std::endl;
             }
         }
     }else if(glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS){
@@ -360,9 +365,9 @@ void viewer::updateInputs(){
             dumpPARTIO = !dumpPARTIO;
             cam.currentKey = GLFW_KEY_G;
             if(dumpPARTIO){
-                cout << "\nPARTIO Export ON.\n" << endl;
+                std::cout << "\nPARTIO Export ON.\n" << std::endl;
             }else{
-                cout << "\nPARTIO Export OFF.\n" << endl;
+                std::cout << "\nPARTIO Export OFF.\n" << std::endl;
             }
         }
     }else if(glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS){
@@ -370,9 +375,9 @@ void viewer::updateInputs(){
             drawInvalid = !drawInvalid;
             cam.currentKey = GLFW_KEY_I;
             if(drawInvalid){
-                cout << "\nDraw out of bound particles ON.\n" << endl;
+                std::cout << "\nDraw out of bound particles ON.\n" << std::endl;
             }else{
-                cout << "\nDraw out of bound particles OFF.\n" << endl;
+                std::cout << "\nDraw out of bound particles OFF.\n" << std::endl;
             }
         }
     }else{
@@ -386,7 +391,7 @@ void viewer::updateInputs(){
 
 bool viewer::init(){
     //Camera setup stuff
-    vec2 fov = cam.fov;
+    glm::vec2 fov = cam.fov;
 
     //Window setup stuff
     glfwSetErrorCallback(errorCallback);
@@ -410,8 +415,8 @@ bool viewer::init(){
     //camera stuff
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    vec2 xBounds;
-    vec2 yBounds;
+    glm::vec2 xBounds;
+    glm::vec2 yBounds;
     utilityCore::fovToPerspective(fov.x, (float)resolution.x/resolution.y, 1, xBounds, yBounds); 
     glFrustum(xBounds[0], xBounds[1], yBounds[0], yBounds[1], 1, 10000000);
     glEnable(GL_DEPTH_TEST);
@@ -420,42 +425,42 @@ bool viewer::init(){
 
     //dummy buffer for particles
     vboData data;
-    vector<vec3> vertexData;
-    vertexData.push_back(vec3(0,0,0));
-    vector<vec4> colorData;
-    colorData.push_back(vec4(0,0,0,0));
-    string key = "fluid";
+    std::vector<glm::vec3> vertexData;
+    vertexData.push_back(glm::vec3(0,0,0));
+    std::vector<glm::vec4> colorData;
+    colorData.push_back(glm::vec4(0,0,0,0));
+    std::string key = "fluid";
     data = createVBO(data, (float*)&vertexData[0], vertexData.size()*3, (float*)&colorData[0], 
-                     colorData.size()*4, POINTS, key);
+                     colorData.size()*4, GL_POINTS, key);
     vertexData.clear();
     vbos.push_back(data);
     vbokeys["fluid"] = vbos.size()-1;
 
     //buffer for sim bounding box
     key = "boundingbox";
-    vec3 res = sim->getDimensions();
+    glm::vec3 res = sim->getDimensions();
     geomCore::cube cubebuilder;
-    data = createVBOFromObj(cubebuilder.tesselate(vec3(0), res), vec4(.2,.2,.2,0), key);
+    data = createVBOFromObj(cubebuilder.tesselate(glm::vec3(0), res), glm::vec4(.2,.2,.2,0), key);
     vbos.push_back(data);
     vbokeys["boundingbox"] = vbos.size()-1;
 
     int numberOfSolidObjects = sim->getScene()->getSolidObjects().size();
-    vector<objCore::objContainer*> solids = sim->getScene()->getSolidObjects();
+    std::vector<objCore::objContainer*> solids = sim->getScene()->getSolidObjects();
     for(int i=0; i<numberOfSolidObjects; i++){
         vboData objectdata;
         key = "solid"+utilityCore::convertIntToString(i);
-        objectdata = createVBOFromObj(solids[i], vec4(1,0,0,.75), key);
+        objectdata = createVBOFromObj(solids[i], glm::vec4(1,0,0,.75), key);
         vbos.push_back(objectdata);
         vbokeys[key] = vbos.size()-1;
         frameranges[key] = sim->getScene()->getSolidFrameRange(i);
     }
 
     int numberOfLiquidObjects = sim->getScene()->getLiquidObjects().size();
-    vector<objCore::objContainer*> liquids = sim->getScene()->getLiquidObjects();
+    std::vector<objCore::objContainer*> liquids = sim->getScene()->getLiquidObjects();
     for(int i=0; i<numberOfLiquidObjects; i++){
         vboData objectdata;
         key = "liquid"+utilityCore::convertIntToString(i);
-        objectdata = createVBOFromObj(liquids[i], vec4(0,0,1,.75), key);
+        objectdata = createVBOFromObj(liquids[i], glm::vec4(0,0,1,.75), key);
         vbos.push_back(objectdata);
         vbokeys[key] = vbos.size()-1;
         frameranges[key] = sim->getScene()->getLiquidFrameRange(i);
@@ -465,7 +470,7 @@ bool viewer::init(){
 }
 
 vboData viewer::createVBO(vboData data, float* vertices, int vertexcount, float* colors,
-                          int colorcount, vbotype type, string key){
+                          int colorcount, GLenum type, std::string key){
     data.size = vertexcount;
     glGenBuffers(1, &data.vboID);
     glGenBuffers(1, &data.cboID);
@@ -481,20 +486,20 @@ vboData viewer::createVBO(vboData data, float* vertices, int vertexcount, float*
     return data;
 }
 
-vboData viewer::createVBOFromObj(objCore::objContainer* o, vec4 color, string key){
+vboData viewer::createVBOFromObj(objCore::objContainer* o, glm::vec4 color, std::string key){
     objCore::obj* oData = o->getObj();
     vboData data;
-    vector<vec3> vertexData;
-    vector<vec4> colorData;
+    std::vector<glm::vec3> vertexData;
+    std::vector<glm::vec4> colorData;
 
-    vec4 fcheck = oData->polyVertexIndices[0];
+    glm::vec4 fcheck = oData->polyVertexIndices[0];
     if(int(fcheck[3])-1>0){
         for(int i=0; i<oData->numberOfPolys; i++){
-            vec4 f = oData->polyVertexIndices[i];
-            vec3 p0 = oData->vertices[int(f[0])-1];
-            vec3 p1 = oData->vertices[int(f[1])-1];
-            vec3 p2 = oData->vertices[int(f[2])-1];
-            vec3 p3 = oData->vertices[int(f[3])-1];
+            glm::vec4 f = oData->polyVertexIndices[i];
+            glm::vec3 p0 = oData->vertices[int(f[0])-1];
+            glm::vec3 p1 = oData->vertices[int(f[1])-1];
+            glm::vec3 p2 = oData->vertices[int(f[2])-1];
+            glm::vec3 p3 = oData->vertices[int(f[3])-1];
             if(int(f[3])-1<0){
                 p3 = p0;
             }
@@ -508,19 +513,19 @@ vboData viewer::createVBOFromObj(objCore::objContainer* o, vec4 color, string ke
             colorData.push_back(color);
         }
         data = createVBO(data, (float*)&vertexData[0], vertexData.size()*3, (float*)&colorData[0],
-                         colorData.size()*4, QUADS, key);
+                         colorData.size()*4, GL_QUADS, key);
         colorData.clear();
     }else{
         for(int i=0; i<oData->numberOfPolys; i++){
-            vec4 f = oData->polyVertexIndices[i];
-            vec3 p0 = oData->vertices[int(f[0])-1];
-            vec3 p1 = oData->vertices[int(f[1])-1];
-            vec3 p2 = oData->vertices[int(f[2])-1];
+            glm::vec4 f = oData->polyVertexIndices[i];
+            glm::vec3 p0 = oData->vertices[int(f[0])-1];
+            glm::vec3 p1 = oData->vertices[int(f[1])-1];
+            glm::vec3 p2 = oData->vertices[int(f[2])-1];
             vertexData.push_back(p0);
             vertexData.push_back(p1);
             vertexData.push_back(p2);  
             if(int(f[3])-1>=0){
-                vec3 p3 = oData->vertices[int(f[3])-1];
+                glm::vec3 p3 = oData->vertices[int(f[3])-1];
                 vertexData.push_back(p3);
                 vertexData.push_back(p1);
                 vertexData.push_back(p2); 
@@ -531,7 +536,7 @@ vboData viewer::createVBOFromObj(objCore::objContainer* o, vec4 color, string ke
             colorData.push_back(color);
         }
         data = createVBO(data, (float*)&vertexData[0], vertexData.size()*3, (float*)&colorData[0],
-                         colorData.size()*4, TRIANGLES, key); 
+                         colorData.size()*4, GL_TRIANGLES, key); 
         colorData.clear();
     }
     vertexData.clear();

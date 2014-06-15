@@ -12,7 +12,7 @@
 
 using namespace fluidCore;
 
-flipsim::flipsim(const vec3& maxres, sceneCore::scene* s, const float& density, 
+flipsim::flipsim(const glm::vec3& maxres, sceneCore::scene* s, const float& density, 
 				 const gridtype& type, const bool& verbose){
 	dimensions = maxres;	
 	pgrid = new particlegrid(maxres, type);
@@ -51,7 +51,7 @@ void flipsim::init(){
 		for(unsigned int j = 0; j < 10; j++){ 
 			for(unsigned int k = 0; k < 10; k++){ 
 				particle* p = new particle;
-				p->p = (vec3(i,j,k) + vec3(0.5f))*h;
+				p->p = (glm::vec3(i,j,k) + glm::vec3(0.5f))*h;
 				p->type = FLUID;
 				p->mass = 1.0f;
 				particles.push_back(p);
@@ -78,7 +78,8 @@ void flipsim::init(){
 	pgrid->markCellTypes(particles, mgrid.A, density);
 
 	//Remove fluid particles that are stuck in walls
-	for(vector<particle *>::iterator iter=particles.begin(); iter!=particles.end();) { //NONCHECKED
+	for(std::vector<particle *>::iterator iter=particles.begin(); 
+		iter!=particles.end();) { //NONCHECKED
 		particle &p = **iter;
 		if(p.type == SOLID){
 			iter++;
@@ -98,7 +99,7 @@ void flipsim::init(){
 
 void flipsim::step(bool saveVDB, bool saveOBJ, bool savePARTIO){
 	frame++;	
-	cout << "Simulating Step: " << frame << "..." << endl;
+	std::cout << "Simulating Step: " << frame << "..." << std::endl;
 	
 	scene->buildLevelSets(frame);
 	scene->generateParticles(particles, dimensions, density, pgrid, frame);
@@ -128,7 +129,7 @@ void flipsim::step(bool saveVDB, bool saveOBJ, bool savePARTIO){
 		[=](const tbb::blocked_range<unsigned int>& r){
 			for(unsigned int p=r.begin(); p!=r.end(); ++p){	
 				particles[p]->invalid = false;
-				vec3 t = particles[p]->p*maxd;
+				glm::vec3 t = particles[p]->p*maxd;
 				if(t.x>dimensions.x || t.y>dimensions.y || t.z>dimensions.z){
 					particles[p]->invalid = true;
 				}
@@ -143,7 +144,7 @@ void flipsim::step(bool saveVDB, bool saveOBJ, bool savePARTIO){
 	);
 
 	//Remove fluid particles that only valid in this frame
-	for(vector<particle *>::iterator iter=particles.begin(); iter!=particles.end();) {
+	for(std::vector<particle *>::iterator iter=particles.begin(); iter!=particles.end();) {
 		particle &p = **iter;
 		if( p.temp ) {
 			delete *iter;
@@ -155,8 +156,8 @@ void flipsim::step(bool saveVDB, bool saveOBJ, bool savePARTIO){
 
 	//Attempt to push particles in walls out 
 	particlecount = particles.size();
-	vector<vec3> stuckPositions;
-	vector<particle*> stuckParticles;
+	std::vector<glm::vec3> stuckPositions;
+	std::vector<particle*> stuckParticles;
 
 	for(unsigned int p=0; p<particlecount; p++){
 		if(particles[p]->invalid && particles[p]->type == FLUID){
@@ -169,9 +170,9 @@ void flipsim::step(bool saveVDB, bool saveOBJ, bool savePARTIO){
 
 	particlecount = stuckPositions.size();
 	for(unsigned int p=0; p<particlecount; p++){
-		if(length(stuckPositions[p] - stuckParticles[p]->p*maxd)>0.0001f){
+		if(glm::length(stuckPositions[p] - stuckParticles[p]->p*maxd)>0.0001f){
 			float penaltyForce = 10.0f;
-			vec3 vdir = stuckPositions[p] - stuckParticles[p]->p*maxd;
+			glm::vec3 vdir = stuckPositions[p] - stuckParticles[p]->p*maxd;
 			stuckParticles[p]->p = stuckPositions[p]/maxd;
 			stuckParticles[p]->u = vdir*penaltyForce;
 		}
@@ -193,7 +194,7 @@ void flipsim::advectParticles(){
 		[=](const tbb::blocked_range<unsigned int>& r){
 			for(unsigned int i=r.begin(); i!=r.end(); ++i){	
 				if(particles[i]->type == FLUID){
-					vec3 velocity = interpolateVelocity(particles[i]->p, &mgrid);
+					glm::vec3 velocity = interpolateVelocity(particles[i]->p, &mgrid);
 					particles[i]->p += stepsize*velocity;
 				}
 			}
@@ -207,7 +208,8 @@ void flipsim::advectParticles(){
 			for(unsigned int p0=r.begin(); p0!=r.end(); ++p0){	
 				float r = 1.0f/maxd;
 				if( particles[p0]->type == FLUID ) {
-					particles[p0]->p = glm::max(vec3(r),glm::min(vec3(1.0f-r),particles[p0]->p));
+					particles[p0]->p = glm::max(glm::vec3(r),glm::min(glm::vec3(1.0f-r),
+												particles[p0]->p));
 				}
 
 				particle *p = particles[p0];
@@ -215,19 +217,20 @@ void flipsim::advectParticles(){
 					unsigned int i = glm::min(x-1.0f,p->p.x*maxd);
 					unsigned int j = glm::min(y-1.0f,p->p.y*maxd);
 					unsigned int k = glm::min(z-1.0f,p->p.z*maxd);			
-					vector<particle*> neighbors = pgrid->getCellNeighbors(vec3(i,j,k), vec3(1));
+					std::vector<particle*> neighbors = pgrid->getCellNeighbors(glm::vec3(i,j,k), 
+																			   glm::vec3(1));
 					for(int p1=0; p1<neighbors.size(); p1++){
 						particle* np = neighbors[p1];
 						float re = 1.5f*density/maxd;
 						if(np->type == SOLID){
-							float dist = length(p->p-np->p); //check this later
+							float dist = glm::length(p->p-np->p); //check this later
 							if(dist<re){
-								vec3 normal = np->n;
-								if(length(normal)<0.0000001f && dist){
-									normal = normalize(p->p - np->p);
+								glm::vec3 normal = np->n;
+								if(glm::length(normal)<0.0000001f && dist){
+									normal = glm::normalize(p->p - np->p);
 								}
 								p->p += (re-dist)*normal;
-								p->u -= dot(p->u, normal) * normal;
+								p->u -= glm::dot(p->u, normal) * normal;
 							}
 						}
 					}
@@ -237,7 +240,7 @@ void flipsim::advectParticles(){
 	);
 
 	//remove stuck particles
-	/*vector<unsigned int> repositionList;
+	/*std::vector<unsigned int> repositionList;
 	for(unsigned int n=0; n<particles.size(); n++){
 		particle& p = *particles[n];
 		bool reposition = false;
@@ -423,7 +426,7 @@ void flipsim::project(){
 	solve(mgrid, subcell, verbose);
 
 	if(verbose){
-		cout << " " << endl; //TODO: no more stupid formatting hacks like this to std::out
+		std::cout << " " << std::endl; //TODO: no more stupid formatting hacks like this to std::out
 	}
 
 	//subtract pressure gradient
@@ -501,8 +504,9 @@ void flipsim::extrapolateVelocity(){
 							if(!mark[n]->getCell(i,j,k) && wallmark[n]->getCell(i,j,k)){
 								unsigned int wsum = 0;
 								float sum = 0.0f;
-								vec3 q[6] = { vec3(i-1,j,k), vec3(i+1,j,k), vec3(i,j-1,k), 
-											  vec3(i,j+1,k), vec3(i,j,k-1), vec3(i,j,k+1) };
+								glm::vec3 q[6] = { glm::vec3(i-1,j,k), glm::vec3(i+1,j,k), 
+												   glm::vec3(i,j-1,k), glm::vec3(i,j+1,k), 
+												   glm::vec3(i,j,k-1), glm::vec3(i,j,k+1) };
 								for(unsigned int qk=0; qk<6; ++qk){
 									if(q[qk][0]>=0 && q[qk][0]<x+(n==0) && q[qk][1]>=0 && 
 									   q[qk][1]<y+(n==1) && q[qk][2]>=0 && q[qk][2]<z+(n==2) ) {
@@ -660,7 +664,7 @@ void flipsim::subtractPressureGradient(){
 }
 
 void flipsim::applyExternalForces(){
-	vec3 gravity = vec3(0,-9.8f, 0); //for now, just gravity
+	glm::vec3 gravity = glm::vec3(0,-9.8f, 0); //for now, just gravity
 	unsigned int particlecount = particles.size();
 	tbb::parallel_for(tbb::blocked_range<unsigned int>(0,particlecount),
 		[=](const tbb::blocked_range<unsigned int>& r){
@@ -683,13 +687,13 @@ void flipsim::computeDensity(){
 				if(particles[i]->type==SOLID){
 					particles[i]->density = 1.0f;
 				}else{
-					vec3 position = particles[i]->p;
+					glm::vec3 position = particles[i]->p;
 
 					position.x = (int)glm::max(0.0f,glm::min((int)maxd-1.0f,(int)maxd*position.x));
 					position.y = (int)glm::max(0.0f,glm::min((int)maxd-1.0f,(int)maxd*position.y));
 					position.z = (int)glm::max(0.0f,glm::min((int)maxd-1.0f,(int)maxd*position.z));
-					vector<particle *> neighbors;
-					neighbors = pgrid->getCellNeighbors(position, vec3(1));
+					std::vector<particle *> neighbors;
+					neighbors = pgrid->getCellNeighbors(position, glm::vec3(1));
 					float weightsum = 0.0f;
 					unsigned int neighborscount = neighbors.size();
 					for(unsigned int m=0; m<neighborscount; m++){
@@ -717,11 +721,11 @@ bool flipsim::isCellFluid(const int& x, const int& y, const int& z){
 	}
 }
 
-vector<particle*>* flipsim::getParticles(){
+std::vector<particle*>* flipsim::getParticles(){
 	return &particles;
 }
 
-vec3 flipsim::getDimensions(){
+glm::vec3 flipsim::getDimensions(){
 	return dimensions;
 }
 

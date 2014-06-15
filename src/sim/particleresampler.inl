@@ -14,27 +14,25 @@
 #include "../utilities/utilities.h"
 #include "../grid/gridutils.inl"
 
-using namespace std;
-using namespace glm;
-
 namespace fluidCore {
 //====================================
 // Struct and Function Declarations
 //====================================
 
 //Forward declarations for externed inlineable methods
-extern inline void resampleParticles(particlegrid* pgrid, vector<particle*>& particles, 
-									 const float& dt, const float& re, const vec3& dimensions);
-inline vec3 resample(particlegrid* pgrid, const vec3& p, const vec3& u, float re, 
-					 const vec3& dimensions);
+extern inline void resampleParticles(particlegrid* pgrid, std::vector<particle*>& particles, 
+									 const float& dt, const float& re, 
+									 const glm::vec3& dimensions);
+inline glm::vec3 resample(particlegrid* pgrid, const glm::vec3& p, const glm::vec3& u, float re, 
+					 const glm::vec3& dimensions);
 
 
 //====================================
 // Function Implementations
 //====================================
 
-void resampleParticles(particlegrid* pgrid, vector<particle*>& particles, const float& dt, 
-					   const float& re, const vec3& dimensions){
+void resampleParticles(particlegrid* pgrid, std::vector<particle*>& particles, const float& dt, 
+					   const float& re, const glm::vec3& dimensions){
 	int nx = (int)dimensions.x; int ny = (int)dimensions.y; int nz = (int)dimensions.z;
 	float maxd = glm::max(glm::max(nx, ny), nz);
 	pgrid->sort(particles);
@@ -48,16 +46,17 @@ void resampleParticles(particlegrid* pgrid, vector<particle*>& particles, const 
 			for(unsigned int n0=r.begin(); n0!=r.end(); ++n0){	
 				if(particles[n0]->type==FLUID){
 					particle* p = particles[n0];
-					vec3 spring(0.0f, 0.0f, 0.0f);
+					glm::vec3 spring(0.0f, 0.0f, 0.0f);
 					float x = glm::max(0.0f,glm::min((float)maxd,maxd*p->p.x));
 					float y = glm::max(0.0f,glm::min((float)maxd,maxd*p->p.y));
 					float z = glm::max(0.0f,glm::min((float)maxd,maxd*p->p.z));
-					vector<particle*> neighbors = pgrid->getCellNeighbors(vec3(x,y,z),vec3(1));
+					std::vector<particle*> neighbors = pgrid->getCellNeighbors(glm::vec3(x,y,z),
+																			   glm::vec3(1));
 					unsigned int neighrborsCount;
 					for(unsigned int n1=0; n1<neighrborsCount; ++n1){
 						particle* np = neighbors[n1];
 						if(p!=np){
-							float dist = length(p->p-np->p);
+							float dist = glm::length(p->p-np->p);
 							float w = springforce * np->mass * mathCore::smooth(dist*dist,re);
 							if(dist > 0.1f*re){
 								spring.x += w * (p->p.x-np->p.x) / dist * re;
@@ -113,17 +112,18 @@ void resampleParticles(particlegrid* pgrid, vector<particle*>& particles, const 
 	);
 }
 
-vec3 resample(particlegrid* pgrid, const vec3& p, const vec3& u, float re, const vec3& dimensions){
+glm::vec3 resample(particlegrid* pgrid, const glm::vec3& p, const glm::vec3& u, float re, 
+				   const glm::vec3& dimensions){
 	int nx = (int)dimensions.x; int ny = (int)dimensions.y; int nz = (int)dimensions.z;
 	float maxd = glm::max(glm::max(nx, ny), nz);
 
 	float wsum = 0.0f;
-	vec3 ru = vec3(0);
+	glm::vec3 ru = glm::vec3(0);
 
 	float x = glm::max(0.0f,glm::min((float)maxd-1,maxd*p.x));
 	float y = glm::max(0.0f,glm::min((float)maxd-1,maxd*p.y));
 	float z = glm::max(0.0f,glm::min((float)maxd-1,maxd*p.z));
-	vector<particle*> neighbors = pgrid->getCellNeighbors(vec3(x,y,z),vec3(1));
+	std::vector<particle*> neighbors = pgrid->getCellNeighbors(glm::vec3(x,y,z),glm::vec3(1));
 
 	for(int n=0; n<neighbors.size(); n++){
 		particle *np = neighbors[n];

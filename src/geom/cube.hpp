@@ -9,9 +9,6 @@
 
 #include "geom.hpp"
 
-using namespace std;
-using namespace glm;
-
 namespace geomCore {
 //====================================
 // Class Declarations
@@ -25,7 +22,7 @@ class cube: public geom {
 
 		//Getters
 		objCore::objContainer* tesselate();
-		objCore::objContainer* tesselate(const vec3& lowerCorner, const vec3& upperCorner);
+    objCore::objContainer* tesselate(const glm::vec3& lowerCorner, const glm::vec3& upperCorner);
 };
 }
 

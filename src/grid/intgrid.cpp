@@ -9,7 +9,7 @@
 using namespace fluidCore;
 using namespace utilityCore;
 
-intgrid::intgrid(const gridtype& type, const vec3& dimensions, const int& background){
+intgrid::intgrid(const gridtype& type, const glm::vec3& dimensions, const int& background){
 	this->type = type;
 	this->dimensions = dimensions;
 	this->background = background;
@@ -42,7 +42,7 @@ intgrid::~intgrid(){
 	}
 }
 
-int intgrid::getCell(const vec3& index){
+int intgrid::getCell(const glm::vec3& index){
 	return getCell((int)index.x, (int)index.y, (int)index.z);
 }
 
@@ -58,7 +58,7 @@ int intgrid::getCell(const int& x, const int& y, const int& z){
 	return cell;
 }
 
-void intgrid::setCell(const vec3& index, const int& value){
+void intgrid::setCell(const glm::vec3& index, const int& value){
 	setCell((int)index.x, (int)index.y, (int)index.z, value);
 }
 
@@ -80,7 +80,7 @@ openvdb::Int32Grid::Ptr& intgrid::getVDBGrid(){
 	return vdbgrid;
 }
 
-void intgrid::writeVDBGridToFile(string filename){
+void intgrid::writeVDBGridToFile(std::string filename){
 	openvdb::io::File file(filename);
 	openvdb::GridPtrVec grids;
     grids.push_back(vdbgrid);

@@ -12,9 +12,6 @@
 #include "../grid/particlegrid.hpp"
 #include "../scene/scene.hpp"
 
-using namespace std;
-using namespace glm;
-
 namespace fluidCore {
 //====================================
 // Class Declarations
@@ -22,15 +19,15 @@ namespace fluidCore {
 
 class flipsim{
 	public:
-		flipsim(const vec3& maxres, sceneCore::scene* scene, const float& density, 
+		flipsim(const glm::vec3& maxres, sceneCore::scene* scene, const float& density, 
 				const gridtype& type, const bool& verbose);
 		~flipsim();
 
 		void init();
 		void step(bool saveVDB, bool saveOBJ, bool savePARTIO);
 
-		vector<particle*>* getParticles();
-		vec3 getDimensions();
+		std::vector<particle*>* getParticles();
+		glm::vec3 getDimensions();
 		sceneCore::scene* getScene();
 
 		int frame;
@@ -47,8 +44,8 @@ class flipsim{
 		void advectParticles();
 		bool isCellFluid(const int& x, const int& y, const int& z);
 
-		vec3 dimensions;
-		vector<particle*> particles;
+		glm::vec3 dimensions;
+		std::vector<particle*> particles;
 		macgrid mgrid;
 		macgrid mgrid_previous;
 		particlegrid* pgrid;

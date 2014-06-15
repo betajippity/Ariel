@@ -14,9 +14,6 @@
 #include "../utilities/utilities.h"
 #include "gridutils.inl"
 
-using namespace std;
-using namespace glm;
-
 namespace fluidCore {
 //====================================
 // Class Declarations
@@ -25,24 +22,24 @@ namespace fluidCore {
 class floatgrid{
 	public:
 		//Initializers
-		floatgrid(const gridtype& type, const vec3& dimensions, const int& background);
+		floatgrid(const gridtype& type, const glm::vec3& dimensions, const int& background);
 		floatgrid();
 		floatgrid(openvdb::FloatGrid::Ptr grid);
 		~floatgrid();
 
 		//Cell accessors and setters and whatever
-		float getCell(const vec3& index);
+		float getCell(const glm::vec3& index);
 		float getCell(const int& x, const int& y, const int& z);
 
-		void setCell(const vec3& index, const float& value);
+		void setCell(const glm::vec3& index, const float& value);
 		void setCell(const int& x, const int& y, const int& z, const float& value);
 
-		float getInterpolatedCell(const vec3& index);
+		float getInterpolatedCell(const glm::vec3& index);
 		float getInterpolatedCell(const float& x, const float& y, const float& z);
 
 		openvdb::FloatGrid::Ptr& getVDBGrid();
 
-		void writeVDBGridToFile(string filename);
+		void writeVDBGridToFile(std::string filename);
 
 		void clear();
 
@@ -51,7 +48,7 @@ class floatgrid{
 		float*** rawgrid;
 
 		gridtype type;
-		vec3 dimensions;
+		glm::vec3 dimensions;
 
 		int background;
 

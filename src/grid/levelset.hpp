@@ -7,17 +7,14 @@
 #ifndef LEVELSET_HPP
 #define LEVELSET_HPP
 
-#include "floatgrid.hpp"
-#include "macgrid.inl"
-#include "../geom/geom.inl"
 #include <openvdb/openvdb.h>
 #include <openvdb/tools/Interpolation.h>
 #include <openvdb/tools/MeshToVolume.h>
 #include <openvdb/tools/LevelSetSphere.h>
 #include <openvdb/tools/Composite.h>
-
-using namespace std;
-using namespace glm;
+#include "floatgrid.hpp"
+#include "macgrid.inl"
+#include "../geom/geom.inl"
 
 namespace fluidCore {
 //====================================
@@ -28,7 +25,7 @@ class particleList{ //used for VDB particle to level set construction
 	public:
 		particleList(){ }
 
-		particleList(vector<particle*> plist, float maxdimension){
+		particleList(std::vector<particle*> plist, float maxdimension){
 			particles = plist;
 			this->maxdimension = maxdimension;
 		}
@@ -68,7 +65,7 @@ class particleList{ //used for VDB particle to level set construction
 
 		void getAtt(size_t n, openvdb::Index32& att) const { att = n; }
 	private:
-		vector<particle*> particles;
+		std::vector<particle*> particles;
 		float maxdimension;
 };
 
@@ -78,15 +75,15 @@ class levelset: public floatgrid{
 		levelset();
 		// levelset(openvdb::FloatGrid::Ptr grid);
 		levelset(objCore::objContainer* mesh);
-		levelset(vector<particle*>& particles, float maxdimension);
+		levelset(std::vector<particle*>& particles, float maxdimension);
 		~levelset();
 
 		void merge(levelset& ls);
 		void copy(levelset& ls);
 
-		void projectPointsToSurface(vector<vec3>& points);
+		void projectPointsToSurface(std::vector<glm::vec3>& points);
 
-		void writeObjToFile(string filename);
+		void writeObjToFile(std::string filename);
 };
 }
 

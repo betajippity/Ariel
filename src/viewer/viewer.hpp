@@ -22,27 +22,22 @@
 #include <map>
 #include "../sim/flip.hpp"
 
-enum vbotype{QUADS, TRIANGLES, LINES, POINTS};
-
-using namespace std;
-using namespace glm;
-
 namespace viewerCore {
 
 struct vboData{
 	GLuint vboID;
 	GLuint cboID;
 	int size;
-	vbotype type;
-	string key;
+	GLenum type;
+	std::string key;
 };
 
 //Used just for tracking OpenGL viewport camera position/keeping in sync with rendercam
 struct glCamera{
-	vec2 mouseOld;
-	vec3 rotate;
-	vec3 translate;
-	vec2 fov;
+	glm::vec2 mouseOld;
+	glm::vec3 rotate;
+	glm::vec3 translate;
+	glm::vec2 fov;
 	float lookat;
 	int currentKey;
 	int currentMouseClick;
@@ -51,9 +46,9 @@ struct glCamera{
 	float panSpeed;
 
 	//Initializer
-	glCamera(): mouseOld(vec2(0.0f,0.0f)), 
-				rotate(vec3(0.0f,0.0f,0.0f)), 
-				translate(vec3(0.0f,0.0f,0.0f)),
+	glCamera(): mouseOld(glm::vec2(0.0f,0.0f)), 
+				rotate(glm::vec3(0.0f,0.0f,0.0f)), 
+				translate(glm::vec3(0.0f,0.0f,0.0f)),
 				lookat(0.0f),
 				fov(45.0f),
 				currentKey(0),
@@ -74,8 +69,8 @@ class viewer{
 
 		bool launch();
 		void load(fluidCore::flipsim* sim, bool retina);
-		void load(fluidCore::flipsim* sim, bool retina, vec2 resolution, vec3 camrotate, 
-				  vec3 camtranslate, vec2 camfov, float camlookat);
+		void load(fluidCore::flipsim* sim, bool retina, glm::vec2 resolution, glm::vec3 camrotate, 
+				  glm::vec3 camtranslate, glm::vec2 camfov, float camlookat);
 	private:
 		//Initialize stuff
 		bool init();
@@ -89,8 +84,8 @@ class viewer{
 
 		//VBO stuff
 		vboData createVBO(vboData data, float* vertices, int vertexcount, float* colors,
-                          int colorcount, vbotype type, string key);
-		vboData createVBOFromObj(objCore::objContainer* o, vec4 color, string key);
+                          int colorcount, GLenum type, std::string key);
+		vboData createVBOFromObj(objCore::objContainer* o, glm::vec4 color, std::string key);
 
 		void saveFrame();
 
@@ -102,15 +97,15 @@ class viewer{
 		bool loaded;
 		bool runrender;
 
-		vec2 resolution;
+		glm::vec2 resolution;
 		GLFWwindow* window;
-		vector<vboData> vbos;
-		map<string, int> vbokeys;
-		map<string, vec2> frameranges;
+		std::vector<vboData> vbos;
+		std::map<std::string, int> vbokeys;
+		std::map<std::string, glm::vec2> frameranges;
 
 		glCamera cam;
 
-		vector<fluidCore::particle*>* particles;
+		std::vector<fluidCore::particle*>* particles;
 
     	fluidCore::flipsim* sim;
     	bool siminitialized;

@@ -14,9 +14,6 @@
 #include "../utilities/utilities.h"
 #include "../grid/gridutils.inl"
 
-using namespace std;
-using namespace glm;
-
 namespace fluidCore {
 //====================================
 // Struct and Function Declarations
@@ -26,28 +23,29 @@ namespace fluidCore {
 extern inline void solve(macgrid& mgrid, const int& subcell, const bool& verbose);
 inline void flipDivergence(macgrid& mgrid);
 inline void buildPreconditioner(floatgrid* pc, macgrid& mgrid, int subcell);
-inline float fluidRef(intgrid* A, int i, int j, int k, int qi, int qj, int qk, vec3 dimensions);
-inline float preconditionerRef(floatgrid* p, int i, int j, int k, vec3 dimensions);
-inline float fluidDiag(intgrid* A, floatgrid* L, int i, int j, int k, vec3 dimensions, 
+inline float fluidRef(intgrid* A, int i, int j, int k, int qi, int qj, int qk, 
+					  glm::vec3 dimensions);
+inline float preconditionerRef(floatgrid* p, int i, int j, int k, glm::vec3 dimensions);
+inline float fluidDiag(intgrid* A, floatgrid* L, int i, int j, int k, glm::vec3 dimensions, 
 					   int subcell);
 inline void solveConjugateGradient(macgrid& mgrid, floatgrid* pc, int subcell, 
 								   const bool& verbose);
-inline void computeAx(intgrid* A, floatgrid* L, floatgrid* X, floatgrid* target, vec3 dimensions, 
-					  int subcell);
-inline float xRef(intgrid* A, floatgrid* L, floatgrid* X, vec3 f, vec3 p, vec3 dimensions, 
-				  int subcell);
+inline void computeAx(intgrid* A, floatgrid* L, floatgrid* X, floatgrid* target, 
+					  glm::vec3 dimensions, int subcell);
+inline float xRef(intgrid* A, floatgrid* L, floatgrid* X, glm::vec3 f, glm::vec3 p, 
+				  glm::vec3 dimensions, int subcell);
 inline void op(intgrid* A, floatgrid* X, floatgrid* Y, floatgrid* target, float alpha, 
-			   vec3 dimensions);
-inline float product(intgrid* A, floatgrid* X, floatgrid* Y, vec3 dimensions);
+			   glm::vec3 dimensions);
+inline float product(intgrid* A, floatgrid* X, floatgrid* Y, glm::vec3 dimensions);
 inline void applyPreconditioner(floatgrid* Z, floatgrid* R, floatgrid* P, floatgrid* L, 
-								intgrid* A, vec3 dimensions, gridtype type);
+								intgrid* A, glm::vec3 dimensions, gridtype type);
 
 //====================================
 // Function Implementations
 //====================================
 
 //Takes a grid, multiplies everything by -1
-void flipGrid(floatgrid* grid, vec3 dimensions){
+void flipGrid(floatgrid* grid, glm::vec3 dimensions){
 	int x = (int)dimensions.x; int y = (int)dimensions.y; int z = (int)dimensions.z;
 	tbb::parallel_for(tbb::blocked_range<unsigned int>(0,x),
 		[=](const tbb::blocked_range<unsigned int>& r){
@@ -64,7 +62,7 @@ void flipGrid(floatgrid* grid, vec3 dimensions){
 }
 
 //Helper for preconditioner builder
-float ARef(intgrid* A, int i, int j, int k, int qi, int qj, int qk, vec3 dimensions){
+float ARef(intgrid* A, int i, int j, int k, int qi, int qj, int qk, glm::vec3 dimensions){
 	int x = (int)dimensions.x; int y = (int)dimensions.y; int z = (int)dimensions.z;
 	if( i<0 || i>x-1 || j<0 || j>y-1 || k<0 || k>z-1 || A->getCell(i,j,k)!=FLUID ){ //if not liquid
 		return 0.0;
@@ -77,7 +75,7 @@ float ARef(intgrid* A, int i, int j, int k, int qi, int qj, int qk, vec3 dimensi
 }
 
 //Helper for preconditioner builder
-float PRef(floatgrid* p, int i, int j, int k, vec3 dimensions){
+float PRef(floatgrid* p, int i, int j, int k, glm::vec3 dimensions){
 	int x = (int)dimensions.x; int y = (int)dimensions.y; int z = (int)dimensions.z;
 	if( i<0 || i>x-1 || j<0 || j>y-1 || k<0 || k>z-1 || p->getCell(i,j,k)!=FLUID ){ //if not liquid
 		return 0.0f;
@@ -86,7 +84,7 @@ float PRef(floatgrid* p, int i, int j, int k, vec3 dimensions){
 }
 
 //Helper for preconditioner builder
-float ADiag(intgrid* A, floatgrid* L, int i, int j, int k, vec3 dimensions, int subcell){
+float ADiag(intgrid* A, floatgrid* L, int i, int j, int k, glm::vec3 dimensions, int subcell){
 	int x = (int)dimensions.x; int y = (int)dimensions.y; int z = (int)dimensions.z;
 	float diag = 6.0;
 	if( A->getCell(i,j,k) != FLUID ){
@@ -142,7 +140,8 @@ void buildPreconditioner(floatgrid* pc, macgrid& mgrid, int subcell){
 }
 
 //Helper for PCG solver: read X with clamped bounds
-float xRef(intgrid* A, floatgrid* L, floatgrid* X, vec3 f, vec3 p, vec3 dimensions, int subcell){
+float xRef(intgrid* A, floatgrid* L, floatgrid* X, glm::vec3 f, glm::vec3 p, glm::vec3 dimensions, 
+		   int subcell){
 	int x = (int)dimensions.x; int y = (int)dimensions.y; int z = (int)dimensions.z;
 	int i = glm::min(glm::max(0,(int)p.x),x-1); int fi = (int)f.x;
 	int j = glm::min(glm::max(0,(int)p.y),y-1); int fj = (int)f.y;
@@ -160,7 +159,8 @@ float xRef(intgrid* A, floatgrid* L, floatgrid* X, vec3 f, vec3 p, vec3 dimensio
 }
 
 // target = X + alpha*Y
-void op(intgrid* A, floatgrid* X, floatgrid* Y, floatgrid* target, float alpha, vec3 dimensions){
+void op(intgrid* A, floatgrid* X, floatgrid* Y, floatgrid* target, float alpha, 
+		glm::vec3 dimensions){
 	int x = (int)dimensions.x; int y = (int)dimensions.y; int z = (int)dimensions.z;
 	tbb::parallel_for(tbb::blocked_range<unsigned int>(0,x),
 		[=](const tbb::blocked_range<unsigned int>& r){
@@ -181,7 +181,7 @@ void op(intgrid* A, floatgrid* X, floatgrid* Y, floatgrid* target, float alpha, 
 }
 
 // ans = x^T * x
-float product(intgrid* A, floatgrid* X, floatgrid* Y, vec3 dimensions){
+float product(intgrid* A, floatgrid* X, floatgrid* Y, glm::vec3 dimensions){
 	int x = (int)dimensions.x; int y = (int)dimensions.y; int z = (int)dimensions.z;
 	float result = 0.0f;
 	for(unsigned int i=0; i<x; i++){
@@ -197,7 +197,7 @@ float product(intgrid* A, floatgrid* X, floatgrid* Y, vec3 dimensions){
 }
 
 //Helper for PCG solver: target = AX
-void computeAx(intgrid* A, floatgrid* L, floatgrid* X, floatgrid* target, vec3 dimensions, 
+void computeAx(intgrid* A, floatgrid* L, floatgrid* X, floatgrid* target, glm::vec3 dimensions, 
 			   int subcell){
 	int x = (int)dimensions.x; int y = (int)dimensions.y; int z = (int)dimensions.z;
 	float n = (float)glm::max(glm::max(x,y),z);
@@ -209,17 +209,17 @@ void computeAx(intgrid* A, floatgrid* L, floatgrid* X, floatgrid* target, vec3 d
 					for(unsigned int k=0; k<z; ++k){
 						if(A->getCell(i,j,k) == FLUID){
 							float result = (6.0f*X->getCell(i,j,k)
-											-xRef(A, L, X, vec3(i,j,k), vec3(i+1,j,k), 
+											-xRef(A, L, X, glm::vec3(i,j,k), glm::vec3(i+1,j,k), 
 												  dimensions, subcell)
-											-xRef(A, L, X, vec3(i,j,k), vec3(i-1,j,k), 
+											-xRef(A, L, X, glm::vec3(i,j,k), glm::vec3(i-1,j,k), 
 												  dimensions, subcell)
-											-xRef(A, L, X, vec3(i,j,k), vec3(i,j+1,k), 
+											-xRef(A, L, X, glm::vec3(i,j,k), glm::vec3(i,j+1,k), 
 												  dimensions, subcell)
-											-xRef(A, L, X, vec3(i,j,k), vec3(i,j-1,k), 
+											-xRef(A, L, X, glm::vec3(i,j,k), glm::vec3(i,j-1,k), 
 												  dimensions, subcell)
-											-xRef(A, L, X, vec3(i,j,k), vec3(i,j,k+1), 
+											-xRef(A, L, X, glm::vec3(i,j,k), glm::vec3(i,j,k+1), 
 												  dimensions, subcell)
-											-xRef(A, L, X, vec3(i,j,k), vec3(i,j,k-1), 
+											-xRef(A, L, X, glm::vec3(i,j,k), glm::vec3(i,j,k-1), 
 												  dimensions, subcell)
 											)/h;
 							target->setCell(i,j,k,result);
@@ -234,7 +234,7 @@ void computeAx(intgrid* A, floatgrid* L, floatgrid* X, floatgrid* target, vec3 d
 }
 
 void applyPreconditioner(floatgrid* Z, floatgrid* R, floatgrid* P, floatgrid* L, intgrid* A, 
-						 vec3 dimensions, gridtype type){
+						 glm::vec3 dimensions, gridtype type){
 	int x = (int)dimensions.x; int y = (int)dimensions.y; int z = (int)dimensions.z;
 	floatgrid* Q = new floatgrid(type, dimensions, 0.0f);
 
@@ -333,7 +333,8 @@ void solveConjugateGradient(macgrid& mgrid, floatgrid* PC, int subcell, const bo
         //Output progress
         float rate = 1.0f - glm::max(0.0f,glm::min(1.0f,(error1-eps)/(error0-eps)));
         if(verbose){
-        	cout << "PCG Iteration " << k+1 << ": " << 100.0f*pow(rate,6) << "%% solved" << endl;
+        	std::cout << "PCG Iteration " << k+1 << ": " << 100.0f*pow(rate,6) << "%% solved" 
+        			  << std::endl;
         }
         if(error1<=eps){
         	break;

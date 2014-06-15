@@ -10,9 +10,6 @@
 #include <glm/glm.hpp>
 #include "obj/objcontainer.hpp"
 
-using namespace std;
-using namespace glm;
-
 namespace geomCore {
 //====================================
 // Class Declarations

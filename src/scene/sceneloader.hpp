@@ -11,9 +11,6 @@
 #include "../utilities/utilities.h"
 #include "scene.hpp"
 
-using namespace std;
-using namespace glm;
-
 namespace sceneCore {
 //====================================
 // Class Declarations
@@ -21,18 +18,18 @@ namespace sceneCore {
 
 class sceneloader {
 	public:
-		sceneloader(string filename);
+		sceneloader(std::string filename);
 		~sceneloader();
 
 		scene* getScene();
 		float getDensity();
-		vec3 getDimensions();
+		glm::vec3 getDimensions();
 
-		vec3 camera_rotate;
-		vec3 camera_translate;
+		glm::vec3 camera_rotate;
+		glm::vec3 camera_translate;
 		float camera_lookat;
-		vec2 camera_resolution;
-		vec2 camera_fov;
+		glm::vec2 camera_resolution;
+		glm::vec2 camera_fov;
 		
 	private:
 		void loadSettings(const Json::Value& jsonsettings);
@@ -43,13 +40,13 @@ class sceneloader {
 		void loadCamera(const Json::Value& jsoncamera);
 
 		scene* s;
-		vec3 dimensions;
+		glm::vec3 dimensions;
 		float density;
-		string relativePath;
-		string imagePath;
-		string meshPath;
-		string vdbPath;
-		string partioPath;
+		std::string relativePath;
+		std::string imagePath;
+		std::string meshPath;
+		std::string vdbPath;
+		std::string partioPath;
 		
 };
 }

@@ -4,13 +4,13 @@
 // File: scene.cpp
 // Implements scene.hpp
 
-#include "scene.hpp"
 #include <openvdb/openvdb.h>
 #include <openvdb/tools/Interpolation.h>
 #include <openvdb/tools/MeshToVolume.h>
 #include <openvdb/tools/LevelSetSphere.h>
 #include <openvdb/tools/Composite.h>
 #include <partio/Partio.h>
+#include "scene.hpp"
 
 using namespace sceneCore;
 
@@ -28,20 +28,20 @@ scene::~scene(){
 	delete liquidLevelSet;
 }
 
-void scene::setPaths(const string& imagePath, const string& meshPath, const string& vdbPath,
-					 const string& partioPath){
+void scene::setPaths(const std::string& imagePath, const std::string& meshPath, 
+					 const std::string& vdbPath, const std::string& partioPath){
 	this->imagePath = imagePath;
 	this->meshPath = meshPath;
 	this->vdbPath = vdbPath;
 	this->partioPath = partioPath;
 }
 
-void scene::exportParticles(vector<fluidCore::particle*> particles, const float& maxd, 
+void scene::exportParticles(std::vector<fluidCore::particle*> particles, const float& maxd,
 							const int& frame, const bool& VDB, const bool& OBJ, 
 							const bool& PARTIO){
 	int particlesCount = particles.size();
 
-	vector<fluidCore::particle*> sdfparticles;
+	std::vector<fluidCore::particle*> sdfparticles;
 	for(int i=0; i<particlesCount; i++){
 		if(particles[i]->type==FLUID && !particles[i]->invalid){
 			sdfparticles.push_back(particles[i]);
@@ -49,12 +49,12 @@ void scene::exportParticles(vector<fluidCore::particle*> particles, const float&
 	}
 	int sdfparticlesCount = sdfparticles.size();
 	
-	string frameString = utilityCore::padString(4, utilityCore::convertIntToString(frame));
+	std::string frameString = utilityCore::padString(4, utilityCore::convertIntToString(frame));
 
 	if(PARTIO){
-		string partiofilename = partioPath;
-		vector<string> tokens = utilityCore::tokenizeString(partiofilename, ".");
-		string ext = "." + tokens[tokens.size()-1];
+		std::string partiofilename = partioPath;
+		std::vector<std::string> tokens = utilityCore::tokenizeString(partiofilename, ".");
+		std::string ext = "." + tokens[tokens.size()-1];
 		if(strcmp(ext.c_str(), ".gz")==0){
 			ext = "." + tokens[tokens.size()-2] + ext;
 		}
@@ -86,10 +86,10 @@ void scene::exportParticles(vector<fluidCore::particle*> particles, const float&
 	}
 
 	if(VDB || OBJ){
-		string vdbfilename = vdbPath;
+		std::string vdbfilename = vdbPath;
 	    utilityCore::replaceString(vdbfilename, ".vdb", "."+frameString+".vdb");
 
-	    string objfilename = meshPath;
+	    std::string objfilename = meshPath;
 	    utilityCore::replaceString(objfilename, ".obj", "."+frameString+".obj");
 
 		fluidCore::levelset* fluidSDF = new fluidCore::levelset(sdfparticles, maxd);
@@ -109,7 +109,7 @@ void scene::exportParticles(vector<fluidCore::particle*> particles, const float&
 
 void scene::addSolidObject(objCore::objContainer* object, int startFrame, int endFrame){
 	solidObjects.push_back(object);
-	solidObjectFrameRanges.push_back(vec2(startFrame, endFrame));
+	solidObjectFrameRanges.push_back(glm::vec2(startFrame, endFrame));
 
 	if(startFrame<0 && endFrame<0){
 		if(permaSolidSDFActive==false){
@@ -126,7 +126,7 @@ void scene::addSolidObject(objCore::objContainer* object, int startFrame, int en
 
 void scene::addLiquidObject(objCore::objContainer* object, int startFrame, int endFrame){
 	liquidObjects.push_back(object);
-	liquidObjectFrameRanges.push_back(vec2(startFrame, endFrame));
+	liquidObjectFrameRanges.push_back(glm::vec2(startFrame, endFrame));
 	
 	if(startFrame<0 && endFrame<0){
 		if(permaLiquidSDFActive==false){
@@ -141,28 +141,28 @@ void scene::addLiquidObject(objCore::objContainer* object, int startFrame, int e
 	}
 }
 
-void scene::projectPointsToSolidSurface(vector<vec3>& points){
-	vector<vec3> p1(points);
+void scene::projectPointsToSolidSurface(std::vector<glm::vec3>& points){
+	std::vector<glm::vec3> p1(points);
 	solidLevelSet->projectPointsToSurface(p1);
-	vector<vec3> p2(points);
+	std::vector<glm::vec3> p2(points);
 	permaSolidLevelSet->projectPointsToSurface(p2);
 
 	int pointsCount = points.size();
 
 	for(int i=0; i<pointsCount; i++){
-		float l1 = length(p1[i] - points[i]);
-		float l2 = length(p2[i] - points[i]);
+		float l1 = glm::length(p1[i] - points[i]);
+		float l2 = glm::length(p2[i] - points[i]);
 		if(l1<l2){
 			points[i] = p1[i];
 		}
 	}
 }
 
-vector<objCore::objContainer*>& scene::getSolidObjects(){
+std::vector<objCore::objContainer*>& scene::getSolidObjects(){
 	return solidObjects;
 }
 
-vector<objCore::objContainer*>& scene::getLiquidObjects(){
+std::vector<objCore::objContainer*>& scene::getLiquidObjects(){
 	return liquidObjects;
 }
 
@@ -218,12 +218,12 @@ void scene::buildLevelSets(const int& frame){
 	// permaSolidLevelSet->writeVDBGridToFile("test.vdb");
 }
 
-// void scene::rebuildLiquidLevelSet(vector<fluidCore::particle*>& particles){
+// void scene::rebuildLiquidLevelSet(std::vector<fluidCore::particle*>& particles){
 // 	delete liquidLevelSet;
 // 	liquidLevelSet = new fluidCore::levelset(particles);
 // }
 
-void scene::generateParticles(vector<fluidCore::particle*>& particles, const vec3& dimensions, 
+void scene::generateParticles(std::vector<fluidCore::particle*>& particles, const glm::vec3& dimensions, 
 					   		  const float& density, fluidCore::particlegrid* pgrid, 
 					   		  const int& frame){
 
@@ -245,14 +245,14 @@ void scene::generateParticles(vector<fluidCore::particle*>& particles, const vec
 					if( x > thickness && x < 1.0-thickness &&
 						y > thickness && y < 1.0-thickness &&
 						z > thickness && z < 1.0-thickness ) {
-							addParticle(vec3(x,y,z), FLUID, 3.0f/maxdimension, maxdimension, 
+							addParticle(glm::vec3(x,y,z), FLUID, 3.0f/maxdimension, maxdimension, 
 										particles, frame);
 					}
 				}
 			}
 		}
 	}
-	// cout << "Fluid particles: " << particles.size() << endl;
+	// std::cout << "Fluid particles: " << particles.size() << std::endl;
 
 	if(solidObjects.size()>0){
 	    w = 1.0f/maxdimension;
@@ -262,23 +262,23 @@ void scene::generateParticles(vector<fluidCore::particle*>& particles, const vec
 	                float x = i*w+w/2.0f;
 	                float y = j*w+w/2.0f;
 	                float z = k*w+w/2.0f;
-	                addParticle(vec3(x,y,z), SOLID, 3.0f/maxdimension, maxdimension, particles,
-	                		    frame);
+	                addParticle(glm::vec3(x,y,z), SOLID, 3.0f/maxdimension, maxdimension, 
+	                			particles, frame);
 	            }
 	        }
 	    }
 	}
-    // cout << "Solid+Fluid particles: " << particles.size() << endl;
+    // std::cout << "Solid+Fluid particles: " << particles.size() << std::endl;
 }
 
-void scene::addParticle(const vec3& pos, const geomtype& type, const float& thickness, 
-						const float& scale, vector<fluidCore::particle*>& particles, 
+void scene::addParticle(const glm::vec3& pos, const geomtype& type, const float& thickness, 
+						const float& scale, std::vector<fluidCore::particle*>& particles, 
 						const int& frame){
 	bool inside = false;
 	bool temp = false; //used to flag frame-variante solid particles
 
 	if(type==FLUID){
-		vec3 worldpos = pos*scale;
+		glm::vec3 worldpos = pos*scale;
 		if(liquidLevelSet->getInterpolatedCell(worldpos)<0.0f /*thickness*/){ 
 			//TODO: figure out if we need this
 			inside = true;
@@ -294,7 +294,7 @@ void scene::addParticle(const vec3& pos, const geomtype& type, const float& thic
 		}
 
 	}else if(type==SOLID){
-		vec3 worldpos = pos*scale;
+		glm::vec3 worldpos = pos*scale;
 		if(solidLevelSet->getInterpolatedCell(worldpos)<0.0f /*thickness*/){
 			inside = true;
 			temp = true;
@@ -309,8 +309,8 @@ void scene::addParticle(const vec3& pos, const geomtype& type, const float& thic
 	if(inside){
 		fluidCore::particle* p = new fluidCore::particle;
 		p->p = pos;
-		p->u = vec3(0,0,0);
-		p->n = vec3(0,0,0);
+		p->u = glm::vec3(0,0,0);
+		p->n = glm::vec3(0,0,0);
 		p->density = 10.0f;
 		p->type = type;
 		p->mass = 1.0f;
@@ -328,10 +328,10 @@ fluidCore::levelset* scene::getLiquidLevelSet(){
 	return liquidLevelSet;
 }
 
-vec2 scene::getSolidFrameRange(const int& index){
+glm::vec2 scene::getSolidFrameRange(const int& index){
 	return solidObjectFrameRanges[index];
 }
 
-vec2 scene::getLiquidFrameRange(const int& index){
+glm::vec2 scene::getLiquidFrameRange(const int& index){
 	return liquidObjectFrameRanges[index];
 }

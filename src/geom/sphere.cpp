@@ -24,9 +24,9 @@ sphere::sphere(int subdivCount){
 sphere::~sphere(){
 }
 
-objCore::objContainer* sphere::tesselate(const vec3& center, const float& radius){
-	vec3 scale = vec3(radius*2.0f);
-	mat4 transform = utilityCore::buildTransformationMatrix(center, vec3(0,0,0), scale);
+objCore::objContainer* sphere::tesselate(const glm::vec3& center, const float& radius){
+	glm::vec3 scale = glm::vec3(radius*2.0f);
+	glm::mat4 transform = utilityCore::buildTransformationMatrix(center, glm::vec3(0,0,0), scale);
 
 	objCore::objContainer* o = tesselate();
 	unsigned int numberOfPoints = o->getObj()->numberOfVertices;
@@ -34,7 +34,8 @@ objCore::objContainer* sphere::tesselate(const vec3& center, const float& radius
 	tbb::parallel_for(tbb::blocked_range<unsigned int>(0,numberOfPoints),
 		[=](const tbb::blocked_range<unsigned int>& r){
 			for(unsigned int i=r.begin(); i!=r.end(); ++i){	
-				o->getObj()->vertices[i] = vec3(transform*vec4(o->getObj()->vertices[i], 1.0f));
+				o->getObj()->vertices[i] = glm::vec3(transform*glm::vec4(o->getObj()->vertices[i], 
+													 1.0f));
 			}
 		}
 	);
@@ -50,12 +51,12 @@ objCore::objContainer* sphere::tesselate(){
 	int h = std::max(subdivs, 3);
 	int vertCount = (a*(h-1))+2;
 	int faceCount = a*h;
-	vec3* vertices = new vec3[vertCount];
-	vec3* normals = new vec3[vertCount];
-	vec2* uvs = new vec2[vertCount+(3*h)];
-	vec4* polyVertexIndices = new vec4[faceCount];
-	vec4* polyNormalIndices = new vec4[faceCount];
-	vec4* polyUVIndices = new vec4[faceCount];
+	glm::vec3* vertices = new glm::vec3[vertCount];
+	glm::vec3* normals = new glm::vec3[vertCount];
+	glm::vec2* uvs = new glm::vec2[vertCount+(3*h)];
+	glm::vec4* polyVertexIndices = new glm::vec4[faceCount];
+	glm::vec4* polyNormalIndices = new glm::vec4[faceCount];
+	glm::vec4* polyUVIndices = new glm::vec4[faceCount];
 	//generate vertices and write into vertex array
 	for(int x=1; x<h; x++){
 		for(int y=0; y<a; y++){
@@ -65,13 +66,13 @@ objCore::objContainer* sphere::tesselate(){
 			vertices[i] = getPointOnSphereByAngles(angle1,angle2);
 		}
 	}
-	vertices[vertCount-2] = vec3(0,-.5,0);
-	vertices[vertCount-1] = vec3(0,.5,0);
+	vertices[vertCount-2] = glm::vec3(0,-.5,0);
+	vertices[vertCount-1] = glm::vec3(0,.5,0);
 	//generate normals and uvs on sides of sphere
 	float uvoffset = 0;
 	for(int i=0; i<vertCount; i++){
-		normals[i] = normalize(vertices[i]);
-		vec2 uv;
+		normals[i] = glm::normalize(vertices[i]);
+		glm::vec2 uv;
 		uv.x = 0.5 - (atan2(normals[i].z, normals[i].x)/TWO_PI) ;
 		uv.y = 0.5 - (2.0*(asin(normals[i].y)/TWO_PI));
 		if(i==int(a/2)){
@@ -85,7 +86,7 @@ objCore::objContainer* sphere::tesselate(){
 	}
 	//generate wraparound uvs
 	for(int i=0; i<h; i++){
-		vec2 uv;
+		glm::vec2 uv;
 		uv.x = 1;
 		uv.y = uvs[i*h-1].y;
 		uvs[vertCount+i] = uv;
@@ -102,7 +103,7 @@ objCore::objContainer* sphere::tesselate(){
 				i2 = ((x-1)*a) + (0);
 				i3 = ((x)*a) + (0);
 			}
-			vec4 indices = vec4(i1+1,i2+1,i3+1,i4+1);
+			glm::vec4 indices = glm::vec4(i1+1,i2+1,i3+1,i4+1);
 			polyVertexIndices[i1] = indices;
 			polyNormalIndices[i1] = indices;
 			//fix uvs at uv wraparound point
@@ -115,7 +116,7 @@ objCore::objContainer* sphere::tesselate(){
 	}
 	//generate faces and uvs for top pole
 	for(int x=0; x<h; x++){
-		vec4 indices = polyVertexIndices[x];
+		glm::vec4 indices = polyVertexIndices[x];
 		indices[3] = -1;
 		indices[2] = indices[0];
 		indices[0] = vertCount;
@@ -127,7 +128,7 @@ objCore::objContainer* sphere::tesselate(){
 		indices[0] = vertCount+h+x+1;
 		polyUVIndices[faceCount-(a*2)+x] = indices;
 		int uvindex = vertCount+h+x;
-		vec2 uv;
+		glm::vec2 uv;
 		uv.y=0;
 		uv.x=uvs[(int)indices[2]].x+(.5/h);
 		if(x==int(h/2)){
@@ -138,7 +139,7 @@ objCore::objContainer* sphere::tesselate(){
 	//generate faces and uvs for bottom pole
 	for(int x=0; x<h; x++){
 		int index = (h-1)*(a-2)-2+x;
-		vec4 indices = polyVertexIndices[index];
+		glm::vec4 indices = polyVertexIndices[index];
 		indices[1] = indices[2];
 		indices[0] = indices[3];
 		indices[3] = -1;
@@ -146,14 +147,14 @@ objCore::objContainer* sphere::tesselate(){
 		polyVertexIndices[faceCount-a+x] = indices;
 		polyNormalIndices[faceCount-a+x] = indices;
 		indices = polyUVIndices[vertCount-(h*2)-2+x];
-		vec4 i2;
+		glm::vec4 i2;
 		i2[0] = indices[3];
 		i2[1] = indices[2];
 		i2[2] = vertCount+(h*2)+x+1;
 		i2[3] = -1;
 		polyUVIndices[faceCount-a+x] = i2;
 		int uvindex = vertCount+(2*h)+x;
-		vec2 uv;
+		glm::vec2 uv;
 		uv.y=1;
 		uv.x=uvs[(int)indices[0]].x+(.5/h);
 		if(x==int(h/2)){
@@ -172,9 +173,9 @@ objCore::objContainer* sphere::tesselate(){
 	return o;
 }
 
-vec3 sphere::getPointOnSphereByAngles(float angle1, float angle2){
+glm::vec3 sphere::getPointOnSphereByAngles(float angle1, float angle2){
 	float x = sin(PI*angle1)*cos(TWO_PI*angle2);
 	float y = sin(PI*angle1)*sin(TWO_PI*angle2);
 	float z = cos(PI*angle1);
-	return normalize(vec3(x,z,y))/2.0f;
+	return glm::normalize(glm::vec3(x,z,y))/2.0f;
 }

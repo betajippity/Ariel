@@ -12,9 +12,6 @@
 #include "macgrid.inl"
 #include "gridutils.inl"
 
-using namespace std;
-using namespace glm;
-
 namespace fluidCore {
 //====================================
 // Class Declarations
@@ -23,16 +20,16 @@ namespace fluidCore {
 class particlegrid{
 	public:
 		//Initializers
-		particlegrid(const vec3& dimensions, const gridtype& type);
+		particlegrid(const glm::vec3& dimensions, const gridtype& type);
 		particlegrid(const int& x, const int& y, const int& z, const gridtype& type);
 		~particlegrid();
 
 		//Sorting tools
-		void sort(vector<particle*>& particles);
-		vector<particle*> getCellNeighbors(vec3 index, vec3 numberOfNeighbors);
-		vector<particle*> getWallNeighbors(vec3 index, vec3 numberOfNeighbors);
+		void sort(std::vector<particle*>& particles);
+		std::vector<particle*> getCellNeighbors(glm::vec3 index, glm::vec3 numberOfNeighbors);
+		std::vector<particle*> getWallNeighbors(glm::vec3 index, glm::vec3 numberOfNeighbors);
 
-		void markCellTypes(vector<particle*>& particles, intgrid* A, float density);
+		void markCellTypes(std::vector<particle*>& particles, intgrid* A, float density);
 		float cellSDF(int i, int j, int k, float density, geomtype type);
 
 		void buildSDF(macgrid& mgrid, float density);
@@ -40,9 +37,9 @@ class particlegrid{
 	private:
 		void init(const int& x, const int& y, const int& z, const gridtype& type);
 
-		vec3 dimensions;
+		glm::vec3 dimensions;
 		intgrid* grid;
-		vector< vector<particle*> > cells;
+		std::vector< std::vector<particle*> > cells;
 		
 };
 }

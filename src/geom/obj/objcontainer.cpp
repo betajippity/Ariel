@@ -10,7 +10,7 @@
 
 using namespace objCore;
 
-objContainer::objContainer(string filename){
+objContainer::objContainer(std::string filename){
     mesh = new obj;
     preload(filename);
     load(filename);
@@ -29,13 +29,13 @@ objContainer::~objContainer(){
     delete mesh;
 }
 
-void objContainer::load(string filename){
-    mesh->vertices = new vec3[mesh->numberOfVertices];
-    mesh->normals = new vec3[mesh->numberOfNormals];
-    mesh->uvs = new vec2[mesh->numberOfUVs];
-    mesh->polyVertexIndices = new vec4[mesh->numberOfPolys];
-    mesh->polyNormalIndices = new vec4[mesh->numberOfPolys];
-    mesh->polyUVIndices = new vec4[mesh->numberOfPolys];
+void objContainer::load(std::string filename){
+    mesh->vertices = new glm::vec3[mesh->numberOfVertices];
+    mesh->normals = new glm::vec3[mesh->numberOfNormals];
+    mesh->uvs = new glm::vec2[mesh->numberOfUVs];
+    mesh->polyVertexIndices = new glm::vec4[mesh->numberOfPolys];
+    mesh->polyNormalIndices = new glm::vec4[mesh->numberOfPolys];
+    mesh->polyUVIndices = new glm::vec4[mesh->numberOfPolys];
 
     int currentVertex = 0;
     int currentNormal = 0;
@@ -43,38 +43,38 @@ void objContainer::load(string filename){
     int currentFace = 0;
 
     //Load loop
-    ifstream fp_in;
+    std::ifstream fp_in;
     char* fname = (char*)filename.c_str();
     fp_in.open(fname);
     if(fp_in.is_open()){
         while(fp_in.good()){
-            string line;
+            std::string line;
             getline(fp_in, line);
             if(!line.empty()){
-                vector<string> tokens = utilityCore::tokenizeString(line, " ");
+                std::vector<std::string> tokens = utilityCore::tokenizeString(line, " ");
                 if(tokens.size()>1){
                     if(tokens[0].compare("v")==0){
-                        mesh->vertices[currentVertex] = vec3(atof(tokens[1].c_str()),
+                        mesh->vertices[currentVertex] = glm::vec3(atof(tokens[1].c_str()),
                                                              atof(tokens[2].c_str()),
                                                              atof(tokens[3].c_str()));
                         currentVertex++;
                     }else if(tokens[0].compare("vn")==0){
-                        mesh->normals[currentNormal] = vec3(atof(tokens[1].c_str()),
+                        mesh->normals[currentNormal] = glm::vec3(atof(tokens[1].c_str()),
                                                             atof(tokens[2].c_str()),
                                                             atof(tokens[3].c_str()));
                         currentNormal++;
                     }else if(tokens[0].compare("vt")==0){
-                        mesh->uvs[currentUV] = vec2(atof(tokens[1].c_str()), 
+                        mesh->uvs[currentUV] = glm::vec2(atof(tokens[1].c_str()), 
                                                     atof(tokens[2].c_str()));
                         currentUV++;
                     }else if(tokens[0].compare("f")==0){
-                        vec4 vertices(-1,-1,-1,-1);
-                        vec4 normals(-1,-1,-1,-1);
-                        vec4 uvs(-1,-1,-1,-1);
+                        glm::vec4 vertices(-1,-1,-1,-1);
+                        glm::vec4 normals(-1,-1,-1,-1);
+                        glm::vec4 uvs(-1,-1,-1,-1);
                         int loops = std::min(4, (int)tokens.size()-1)+1;
                         for(int i=1; i<loops; i++){
-                            vector<string> faceindices = utilityCore::tokenizeString(tokens[i], 
-                                                                                     "/");
+                            std::vector<std::string> faceindices = 
+                                                     utilityCore::tokenizeString(tokens[i], "/");
                             vertices[i-1] = atoi(faceindices[0].c_str());
                             if(faceindices.size()==2 && mesh->numberOfNormals>1){
                                 normals[i-1] = atoi(faceindices[1].c_str());
@@ -97,60 +97,60 @@ void objContainer::load(string filename){
     fp_in.close();
 
     if(mesh->numberOfUVs==0){
-        cout << "No UVs found, creating default UVs..." << endl;
+        std::cout << "No UVs found, creating default UVs..." << std::endl;
         delete [] mesh->uvs;
-        mesh->uvs = new vec2[4];
-        mesh->uvs[0] = vec2(0,0);
-        mesh->uvs[1] = vec2(0,1);
-        mesh->uvs[2] = vec2(1,1);
-        mesh->uvs[3] = vec2(1,0);
+        mesh->uvs = new glm::vec2[4];
+        mesh->uvs[0] = glm::vec2(0,0);
+        mesh->uvs[1] = glm::vec2(0,1);
+        mesh->uvs[2] = glm::vec2(1,1);
+        mesh->uvs[3] = glm::vec2(1,0);
         mesh->numberOfUVs = 4;
         for(int i=0; i<mesh->numberOfPolys; i++){
-            mesh->polyUVIndices[i] = vec4(1,2,3,4);
+            mesh->polyUVIndices[i] = glm::vec4(1,2,3,4);
         }
     }
 
     if(mesh->numberOfNormals==0){
-        cout << "No normals found, creating default normals..." << endl;
+        std::cout << "No normals found, creating default normals..." << std::endl;
         delete [] mesh->normals;
         mesh->numberOfNormals = mesh->numberOfPolys;
-        mesh->normals = new vec3[mesh->numberOfPolys];
+        mesh->normals = new glm::vec3[mesh->numberOfPolys];
         for(int i=0; i<mesh->numberOfPolys; i++){
-            vec4 vertexIndices = mesh->polyVertexIndices[i];
-            vec3 v0 = mesh->vertices[(int)vertexIndices[0]-1];
-            vec3 v1 = mesh->vertices[(int)vertexIndices[1]-1];
-            vec3 v2 = mesh->vertices[(int)vertexIndices[2]-1];
-            vec3 n0 = v0-v1;
-            vec3 n1 = v2-v1;
+            glm::vec4 vertexIndices = mesh->polyVertexIndices[i];
+            glm::vec3 v0 = mesh->vertices[(int)vertexIndices[0]-1];
+            glm::vec3 v1 = mesh->vertices[(int)vertexIndices[1]-1];
+            glm::vec3 v2 = mesh->vertices[(int)vertexIndices[2]-1];
+            glm::vec3 n0 = v0-v1;
+            glm::vec3 n1 = v2-v1;
             utilityCore::printVec3(n0);
-            mesh->normals[i] = normalize(cross(n1,n0));
-            mesh->polyNormalIndices[i] = vec4(i+1,i+1,i+1,i+1);
+            mesh->normals[i] = glm::normalize(glm::cross(n1,n0));
+            mesh->polyNormalIndices[i] = glm::vec4(i+1,i+1,i+1,i+1);
         }
     }
 }
 
-bool objContainer::writeObj(string filename){
-    ofstream outputFile(filename.c_str());
+bool objContainer::writeObj(std::string filename){
+    std::ofstream outputFile(filename.c_str());
     if(outputFile.is_open()){
         //write out vertices
         for(int i=0; i<mesh->numberOfVertices; i++){
-            vec3 v = mesh->vertices[i];
+            glm::vec3 v = mesh->vertices[i];
             outputFile << "v " << v.x << " " << v.y << " " << v.z << "\n";
         }
         //write out uvs
         for(int i=0; i<mesh->numberOfUVs; i++){
-            vec2 uv = mesh->uvs[i];
+            glm::vec2 uv = mesh->uvs[i];
             outputFile << "vt " << uv.x << " " << uv.y << "\n";
         }
         //write out normals
         for(int i=0; i<mesh->numberOfNormals; i++){
-            vec3 n = mesh->normals[i];
+            glm::vec3 n = mesh->normals[i];
             outputFile << "vn " << n.x << " " << n.y << " " << n.z << "\n";
         }
         //Write out faces
         if(mesh->numberOfUVs==0 && mesh->numberOfNormals==0){
             for(int i=0; i<mesh->numberOfPolys; i++){
-                vec4 fv = mesh->polyVertexIndices[i];
+                glm::vec4 fv = mesh->polyVertexIndices[i];
                 outputFile << "f ";
                 outputFile << (int)fv.x << " " << (int)fv.y << " " << (int)fv.z << " ";
                 if(fv.w>=0){
@@ -160,9 +160,9 @@ bool objContainer::writeObj(string filename){
             }   
         }else{
             for(int i=0; i<mesh->numberOfPolys; i++){
-                vec4 fv = mesh->polyVertexIndices[i];
-                vec4 fn = mesh->polyNormalIndices[i];
-                vec4 fuv = mesh->polyUVIndices[i];
+                glm::vec4 fv = mesh->polyVertexIndices[i];
+                glm::vec4 fn = mesh->polyNormalIndices[i];
+                glm::vec4 fuv = mesh->polyUVIndices[i];
                 outputFile << "f ";
                 outputFile << (int)fv.x << "/" << (int)fuv.x << "/" << (int)fn.x << " ";
                 outputFile << (int)fv.y << "/" << (int)fuv.y << "/" << (int)fn.y << " ";
@@ -174,26 +174,27 @@ bool objContainer::writeObj(string filename){
             }            
         }
         outputFile.close();
-        cout << "Wrote obj file to " << filename << endl;
+        std::cout << "Wrote obj file to " << filename << std::endl;
         return true;
     }else{
-        cout << "Error: Unable to write to " << filename << endl;
+        std::cout << "Error: Unable to write to " << filename << std::endl;
         return false;
     }
 }
 
-void objContainer::bakeTransform(mat4 transform){
+void objContainer::bakeTransform(glm::mat4 transform){
     tbb::parallel_for(tbb::blocked_range<unsigned int>(0,mesh->numberOfVertices),
         [=](const tbb::blocked_range<unsigned int>& r){
             for(unsigned int i=r.begin(); i!=r.end(); ++i){ 
-                mesh->vertices[i] = vec3(transform * vec4(mesh->vertices[i], 1.0f));
+                mesh->vertices[i] = glm::vec3(transform * glm::vec4(mesh->vertices[i], 1.0f));
             }
         }
     );
     tbb::parallel_for(tbb::blocked_range<unsigned int>(0,mesh->numberOfNormals),
         [=](const tbb::blocked_range<unsigned int>& r){
             for(unsigned int i=r.begin(); i!=r.end(); ++i){ 
-                mesh->normals[i] = normalize(vec3(transform * vec4(mesh->normals[i], 0.0f)));
+                mesh->normals[i] = glm::normalize(glm::vec3(transform * glm::vec4(mesh->normals[i], 
+                                                                                  0.0f)));
             }
         }
     );
@@ -203,8 +204,8 @@ void objContainer::keepObj(bool keep){
     this->keep = keep;
 }
 
-void objContainer::preload(string filename){
-	ifstream fp_in;
+void objContainer::preload(std::string filename){
+	std::ifstream fp_in;
 	int vertexCount = 0;
     int normalCount = 0;
     int uvCount = 0;
@@ -213,10 +214,10 @@ void objContainer::preload(string filename){
     fp_in.open(fname);
     if(fp_in.is_open()){
         while(fp_in.good()){
-            string line;
+            std::string line;
             getline(fp_in, line);
             if(!line.empty()){
-                string header = utilityCore::getFirstNCharactersOfString(line, 2);
+                std::string header = utilityCore::getFirstNCharactersOfString(line, 2);
                 if(header.compare("v ")==0){
                     vertexCount++;
                 }else if(header.compare("vt")==0){

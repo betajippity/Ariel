@@ -14,9 +14,6 @@
 #include "obj.inl"
 #include "../../utilities/utilities.h"
 
-using namespace std;
-using namespace glm;
-
 namespace objCore {
 //====================================
 // Class Declarations
@@ -26,23 +23,23 @@ namespace objCore {
 class objContainer {
   public:
     //Initializers
-    objContainer(string filename);
+    objContainer(std::string filename);
     objContainer(obj* o);
     ~objContainer();
 
-    void bakeTransform(mat4 transform);
+    void bakeTransform(glm::mat4 transform);
 
    	//Getters
    	obj* getObj();
-    bool writeObj(string filename); //returns true if successful, false otherwise
+    bool writeObj(std::string filename); //returns true if successful, false otherwise
     
     void keepObj(bool keep); //if keep is true, destructor won't clear obj
 
   private:
-    void preload(string filename);
-    void load(string filename); 
+    void preload(std::string filename);
+    void load(std::string filename); 
 
-    ifstream fp_in;
+    std::ifstream fp_in;
     obj* mesh;
     bool keep;
 };

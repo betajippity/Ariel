@@ -9,9 +9,6 @@
 
 #include "geom.hpp"
 
-using namespace std;
-using namespace glm;
-
 namespace geomCore {
 //====================================
 // Class Declarations
@@ -26,13 +23,13 @@ class sphere: public geom {
 
 		//Getters
 		objCore::objContainer* tesselate();
-		objCore::objContainer* tesselate(const vec3& center, const float& radius);
+		objCore::objContainer* tesselate(const glm::vec3& center, const float& radius);
 
 		//Data
 		int subdivs;
 
 	private:
-		vec3 getPointOnSphereByAngles(float angle1, float angle2);
+		glm::vec3 getPointOnSphereByAngles(float angle1, float angle2);
 };
 }
 

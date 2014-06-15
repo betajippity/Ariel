@@ -15,7 +15,7 @@ floatgrid::floatgrid(){
 	type = VDB;
 }
 
-floatgrid::floatgrid(const gridtype& type, const vec3& dimensions, const int& background){
+floatgrid::floatgrid(const gridtype& type, const glm::vec3& dimensions, const int& background){
 	this->type = type;
 	this->dimensions = dimensions;
 	this->background = background;
@@ -52,7 +52,7 @@ floatgrid::~floatgrid(){
 	}
 }
 
-float floatgrid::getCell(const vec3& index){
+float floatgrid::getCell(const glm::vec3& index){
 	return getCell((int)index.x, (int)index.y, (int)index.z);
 }
 
@@ -68,7 +68,7 @@ float floatgrid::getCell(const int& x, const int& y, const int& z){
 	return cell;
 }
 
-void floatgrid::setCell(const vec3& index, const float& value){
+void floatgrid::setCell(const glm::vec3& index, const float& value){
 	setCell((int)index.x, (int)index.y, (int)index.z, value);
 }
 
@@ -86,7 +86,7 @@ void floatgrid::setCell(const int& x, const int& y, const int& z, const float& v
 	}
 }
 
-float floatgrid::getInterpolatedCell(const vec3& index){
+float floatgrid::getInterpolatedCell(const glm::vec3& index){
 	return getInterpolatedCell(index.x, index.y, index.z);
 }
 
@@ -107,7 +107,7 @@ openvdb::FloatGrid::Ptr& floatgrid::getVDBGrid(){
 	return vdbgrid;
 }
 
-void floatgrid::writeVDBGridToFile(string filename){
+void floatgrid::writeVDBGridToFile(std::string filename){
 	openvdb::io::File file(filename);
 	openvdb::GridPtrVec grids;
     grids.push_back(vdbgrid);
