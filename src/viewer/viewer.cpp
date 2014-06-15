@@ -9,7 +9,7 @@
 #include "viewer.hpp"
 #include "../utilities/utilities.h"
 
-using namespace viewerCore;
+namespace viewerCore{
 
 viewer::viewer(){
     loaded = false;
@@ -557,3 +557,5 @@ void viewer::keyCallback(GLFWwindow* window, int key, int scancode, int action, 
         exit(EXIT_SUCCESS);
     }
 }
+}
+

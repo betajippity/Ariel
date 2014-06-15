@@ -10,8 +10,7 @@
 #include <openvdb/util/NullInterrupter.h>
 #include "levelset.hpp"
 
-using namespace fluidCore;
-using namespace utilityCore;
+namespace fluidCore{
 
 levelset::levelset(){
 	type = VDB;
@@ -145,4 +144,5 @@ void levelset::merge(levelset& ls){
 	
 void levelset::copy(levelset& ls){
 	vdbgrid = ls.getVDBGrid()->deepCopy();
+}
 }

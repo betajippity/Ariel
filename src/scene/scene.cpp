@@ -12,7 +12,7 @@
 #include <partio/Partio.h>
 #include "scene.hpp"
 
-using namespace sceneCore;
+namespace sceneCore{
 
 scene::scene(){
 	solidLevelSet = new fluidCore::levelset();
@@ -334,4 +334,5 @@ glm::vec2 scene::getSolidFrameRange(const int& index){
 
 glm::vec2 scene::getLiquidFrameRange(const int& index){
 	return liquidObjectFrameRanges[index];
+}
 }

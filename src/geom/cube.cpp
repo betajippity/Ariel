@@ -8,7 +8,7 @@
 #include "cube.hpp"
 #include "../utilities/utilities.h" 
 
-using namespace geomCore;
+namespace geomCore{
 
 //Default empty constructor defaults to 1 subdivs in axis and height
 cube::cube(){	
@@ -105,3 +105,5 @@ objCore::objContainer* cube::tesselate(const glm::vec3& lowerCorner, const glm::
 
 	return o;
 }
+}
+

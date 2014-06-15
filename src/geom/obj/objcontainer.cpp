@@ -8,7 +8,7 @@
 #include <vector>
 #include "objcontainer.hpp"
 
-using namespace objCore;
+namespace objCore{
 
 objContainer::objContainer(std::string filename){
     mesh = new obj;
@@ -239,4 +239,5 @@ void objContainer::preload(std::string filename){
 
 obj* objContainer::getObj(){
 	return mesh;
+}
 }

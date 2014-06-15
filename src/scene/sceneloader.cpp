@@ -6,7 +6,7 @@
 
 #include "sceneloader.hpp"
 
-using namespace sceneCore;
+namespace sceneCore{
 
 sceneloader::sceneloader(std::string filename){
 	std::cout << "Loading scene from " << filename << "..." << std::endl;
@@ -234,4 +234,5 @@ void sceneloader::loadObj(const Json::Value& jsonobj){
 	}else if(std::strcmp(jsonobj["type"].asString().c_str(), "liquid")==0){
 		s->addLiquidObject(objloader, startFrame, endFrame);
 	}
+}
 }

@@ -6,7 +6,7 @@
 
 #include "particlegrid.hpp"
 
-using namespace fluidCore;
+namespace fluidCore{
 
 particlegrid::particlegrid(const glm::vec3& dim, const gridtype& type){
 	init((int)dim.x, (int)dim.y, (int)dim.z, type);
@@ -170,4 +170,5 @@ void particlegrid::sort(std::vector<particle*>& particles){
 			cellscount++;
 		}
 	}
+}
 }

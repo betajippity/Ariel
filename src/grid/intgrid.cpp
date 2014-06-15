@@ -6,8 +6,7 @@
 
 #include "intgrid.hpp"
 
-using namespace fluidCore;
-using namespace utilityCore;
+namespace fluidCore{
 
 intgrid::intgrid(const gridtype& type, const glm::vec3& dimensions, const int& background){
 	this->type = type;
@@ -90,4 +89,5 @@ void intgrid::writeVDBGridToFile(std::string filename){
 
 gridtype intgrid::getGridType(){
 	return type;
+}
 }

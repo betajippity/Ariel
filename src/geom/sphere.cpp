@@ -8,7 +8,7 @@
 #include "sphere.hpp"
 #include "../utilities/utilities.h"
 
-using namespace geomCore;
+namespace geomCore{
 
 //Default empty constructor defaults to 20 subdivs in axis and height
 sphere::sphere(){	
@@ -178,4 +178,5 @@ glm::vec3 sphere::getPointOnSphereByAngles(float angle1, float angle2){
 	float y = sin(PI*angle1)*sin(TWO_PI*angle2);
 	float z = cos(PI*angle1);
 	return glm::normalize(glm::vec3(x,z,y))/2.0f;
+}
 }

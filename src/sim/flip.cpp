@@ -10,7 +10,7 @@
 #include "particleresampler.inl"
 #include "solver.inl"
 
-using namespace fluidCore;
+namespace fluidCore{
 
 flipsim::flipsim(const glm::vec3& maxres, sceneCore::scene* s, const float& density, 
 				 const gridtype& type, const bool& verbose){
@@ -743,4 +743,5 @@ fliptask::fliptask(flipsim* sim, bool dumpVDB, bool dumpOBJ, bool dumpPARTIO){
 tbb::task* fliptask::execute(){
 	m_sim->step(m_dumpVDB, m_dumpOBJ, m_dumpPARTIO);
 	return NULL;
+}
 }

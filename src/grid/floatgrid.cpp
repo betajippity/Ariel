@@ -6,8 +6,7 @@
 
 #include "floatgrid.hpp"
 
-using namespace fluidCore;
-using namespace utilityCore;
+namespace fluidCore{
 
 floatgrid::floatgrid(){
 	openvdb::initialize();
@@ -132,3 +131,5 @@ void floatgrid::clear(){
 		);	
 	}
 }
+}
+
