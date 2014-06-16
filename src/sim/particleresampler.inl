@@ -52,8 +52,8 @@ void resampleParticles(particlegrid* pgrid, std::vector<particle*>& particles, c
 					float z = glm::max(0.0f,glm::min((float)maxd,maxd*p->p.z));
 					std::vector<particle*> neighbors = pgrid->getCellNeighbors(glm::vec3(x,y,z),
 																			   glm::vec3(1));
-					unsigned int neighrborsCount;
-					for(unsigned int n1=0; n1<neighrborsCount; ++n1){
+					unsigned int neighborsCount = neighbors.size();
+					for(unsigned int n1=0; n1<neighborsCount; ++n1){
 						particle* np = neighbors[n1];
 						if(p!=np){
 							float dist = glm::length(p->p-np->p);
