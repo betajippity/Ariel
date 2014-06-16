@@ -20,7 +20,7 @@ namespace fluidCore {
 class flipsim{
 	public:
 		flipsim(const glm::vec3& maxres, sceneCore::scene* scene, const float& density, 
-				const gridtype& type, const bool& verbose);
+				const bool& verbose);
 		~flipsim();
 
 		void init();
@@ -60,7 +60,6 @@ class flipsim{
 
 		float stepsize;
 
-		gridtype type;
 		bool verbose;
 };
 

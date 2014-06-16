@@ -18,14 +18,13 @@ int main(int argc, char** argv){
 	cout << "" << endl;
 	cout << "===================================================" << endl;
 	cout << "Ariel: FLIP Fluid Simulator" << endl;
-	cout << "Version 0.1.14.24a" << endl;
+	cout << "Version 0.1.14.24b" << endl;
 	cout << "Copyright (C) Yining Karl Li. All rights reserved." << endl;
 	cout << "===================================================" << endl;
 	cout << "" << endl;
 
 	bool retina = false;
 	bool verbose = false;
-	gridtype type = RAW;
 	string scenefile = "";
 
 	for(int i=1; i<argc; i++){
@@ -40,17 +39,7 @@ int main(int argc, char** argv){
 			cout << "Verbose mode activated..." << endl;
 		}else if(strcmp(header.c_str(), "-scene")==0){
 			scenefile = data;
-		}else if(strcmp(header.c_str(), "-mode")==0){
-			if(strcmp(data.c_str(), "vdb")==0){
-				type = VDB;
-			}
 		}
-	}
-
-	if(type==VDB){
-		cout << "Running in VDB grid mode...\n" << endl;
-	}else if(type==RAW){
-		cout << "Running in RAW grid mode...\n" << endl;
 	}
 
 	if(strcmp(scenefile.c_str(), "")==0){
@@ -61,7 +50,7 @@ int main(int argc, char** argv){
 	sceneCore::sceneloader* sloader = new sceneCore::sceneloader(scenefile);
 
     fluidCore::flipsim* f = new fluidCore::flipsim(sloader->getDimensions(), sloader->getScene(), 
-    											   sloader->getDensity(), type, verbose);
+    											   sloader->getDensity(), verbose);
 
     viewerCore::viewer* glview = new viewerCore::viewer();
     glview->load(f, retina, sloader->camera_resolution, sloader->camera_rotate, 

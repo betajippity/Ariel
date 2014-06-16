@@ -25,14 +25,14 @@ extern inline void splatParticlesToMACGrid(particlegrid* sgrid, std::vector<part
 extern inline void splatMACGridToParticles(std::vector<particle*>& particles, macgrid* mgrid);
 extern inline void enforceBoundaryVelocity(macgrid* mgrid);
 extern inline glm::vec3 interpolateVelocity(glm::vec3 p, macgrid* mgrid);
-inline float checkWall(intgrid* A, const int& x, const int& y, const int& z);
-inline float interpolate(floatgrid* q, glm::vec3 p, glm::vec3 n);
+inline float checkWall(grid<int>* A, const int& x, const int& y, const int& z);
+inline float interpolate(grid<float>* q, glm::vec3 p, glm::vec3 n);
 	
 //====================================
 // Function Implementations
 //====================================
 
-float checkWall(intgrid* A, const int& x, const int& y, const int& z){
+float checkWall(grid<int>* A, const int& x, const int& y, const int& z){
 	if(A->getCell(x,y,z)==SOLID){ //inside wall
 		return 1.0f;
 	}else{
@@ -101,7 +101,7 @@ void enforceBoundaryVelocity(macgrid* mgrid){
 	);
 }
 
-float interpolate(floatgrid* q, glm::vec3 p, glm::vec3 n){
+float interpolate(grid<float>* q, glm::vec3 p, glm::vec3 n){
 	float x = glm::max(0.0f,glm::min(n.x,p.x));
 	float y = glm::max(0.0f,glm::min(n.y,p.y));
 	float z = glm::max(0.0f,glm::min(n.z,p.z));

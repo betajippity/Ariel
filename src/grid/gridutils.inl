@@ -27,8 +27,6 @@
 	  	for(int j = 0; j < y; j++) \
 	    	for(int k = 0; k < z+1; k++) 
 
-enum gridtype {RAW = 0, VDB = 1};
-
 template <class T> T *** createGrid(int x, int y, int z){
 	T *** field = new T **[x];
 	for(int i=0; i<x; i++){

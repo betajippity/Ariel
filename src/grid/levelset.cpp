@@ -13,15 +13,16 @@
 namespace fluidCore{
 
 levelset::levelset(){
-	type = VDB;
+	openvdb::initialize();
+	vdbgrid = openvdb::FloatGrid::create(0.0f);
 }
 
 levelset::~levelset(){
-
+	vdbgrid->clear();
+	vdbgrid.reset();
 }
 
 levelset::levelset(objCore::objContainer* mesh){
-	type = VDB;
 	openvdb::math::Transform::Ptr transform=openvdb::math::Transform::createLinearTransform(.25f);
 	//copy vertices into vdb format
 	std::vector<openvdb::Vec3s> vdbpoints;
@@ -50,7 +51,6 @@ levelset::levelset(objCore::objContainer* mesh){
 }
 
 levelset::levelset(std::vector<particle*>& particles, float maxdimension){
-	type = VDB;
 	vdbgrid = openvdb::createLevelSet<openvdb::FloatGrid>();
 	openvdb::tools::ParticlesToLevelSet<openvdb::FloatGrid> raster(*vdbgrid);
 	raster.setGrainSize(1);
@@ -134,6 +134,60 @@ void levelset::projectPointsToSurface(std::vector<glm::vec3>& points){
 	for(int i=0; i<pointsCount; i++){
 		points[i] = glm::vec3(vdbpoints[i][0], vdbpoints[i][1], vdbpoints[i][2]);
 	}
+}
+
+void levelset::writeVDBGridToFile(std::string filename){
+	openvdb::io::File file(filename);
+	openvdb::GridPtrVec grids;
+    grids.push_back(vdbgrid);
+    file.write(grids);
+    file.close();
+}
+
+float levelset::getInterpolatedCell(const glm::vec3& index){
+	return getInterpolatedCell(index.x, index.y, index.z);
+}
+
+float levelset::getInterpolatedCell(const float& x, const float& y, const float& z){
+	float value;
+	GetInterpolatedCellLock.lock();
+	{
+		openvdb::Vec3f p(x,y,z);
+		openvdb::tools::GridSampler<openvdb::FloatTree, openvdb::tools::BoxSampler> interpolator(
+													  vdbgrid->constTree(), vdbgrid->transform());
+		value = interpolator.wsSample(p);
+	}
+	GetInterpolatedCellLock.unlock();
+	return value;
+}
+
+float levelset::getCell(const glm::vec3& index){
+	return getCell((int)index.x, (int)index.y, (int)index.z);
+}
+
+float levelset::getCell(const int& x, const int& y, const int& z){
+	openvdb::Coord coord = openvdb::Coord(x,y,z);
+	openvdb::FloatGrid::Accessor accessor = vdbgrid->getAccessor();
+	float cell = accessor.getValue(coord);
+	return cell;
+}
+
+void levelset::setCell(const glm::vec3& index, const float& value){
+	setCell((int)index.x, (int)index.y, (int)index.z, value);
+}
+
+void levelset::setCell(const int& x, const int& y, const int& z, const float& value){
+	SetCellLock.lock();
+	{
+		openvdb::Coord coord = openvdb::Coord(x,y,z);
+		openvdb::FloatGrid::Accessor accessor = vdbgrid->getAccessor();
+		accessor.setValue(coord, value);
+	}
+	SetCellLock.unlock();
+}
+
+openvdb::FloatGrid::Ptr& levelset::getVDBGrid(){
+	return vdbgrid;
 }
 
 void levelset::merge(levelset& ls){

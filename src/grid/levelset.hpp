@@ -12,7 +12,6 @@
 #include <openvdb/tools/MeshToVolume.h>
 #include <openvdb/tools/LevelSetSphere.h>
 #include <openvdb/tools/Composite.h>
-#include "floatgrid.hpp"
 #include "macgrid.inl"
 #include "../geom/geom.inl"
 
@@ -69,7 +68,7 @@ class particleList{ //used for VDB particle to level set construction
 		float maxdimension;
 };
 
-class levelset: public floatgrid{
+class levelset{
 	public:
 		//Initializers
 		levelset();
@@ -78,12 +77,31 @@ class levelset: public floatgrid{
 		levelset(std::vector<particle*>& particles, float maxdimension);
 		~levelset();
 
+		//Cell accessors and setters and whatever
+		float getCell(const glm::vec3& index);
+		float getCell(const int& x, const int& y, const int& z);
+
+		void setCell(const glm::vec3& index, const float& value);
+		void setCell(const int& x, const int& y, const int& z, const float& value);
+
+		float getInterpolatedCell(const glm::vec3& index);
+		float getInterpolatedCell(const float& x, const float& y, const float& z);
+
+		openvdb::FloatGrid::Ptr& getVDBGrid();
+
 		void merge(levelset& ls);
 		void copy(levelset& ls);
 
 		void projectPointsToSurface(std::vector<glm::vec3>& points);
 
 		void writeObjToFile(std::string filename);
+		void writeVDBGridToFile(std::string filename);
+
+	protected:
+		openvdb::FloatGrid::Ptr vdbgrid;
+
+		tbb::mutex GetInterpolatedCellLock;
+		tbb::mutex SetCellLock;
 };
 }
 

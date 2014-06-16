@@ -13,11 +13,11 @@
 namespace fluidCore{
 
 flipsim::flipsim(const glm::vec3& maxres, sceneCore::scene* s, const float& density, 
-				 const gridtype& type, const bool& verbose){
+				 const bool& verbose){
 	dimensions = maxres;	
-	pgrid = new particlegrid(maxres, type);
-	mgrid = createMacgrid(maxres, type);
-	mgrid_previous = createMacgrid(maxres, type);
+	pgrid = new particlegrid(maxres);
+	mgrid = createMacgrid(maxres);
+	mgrid_previous = createMacgrid(maxres);
 	max_density = 0.0f;
 	this->density = density;
 	scene = s;
@@ -26,7 +26,6 @@ flipsim::flipsim(const glm::vec3& maxres, sceneCore::scene* s, const float& dens
 	subcell = 1;
 	picflipratio = .95f;
 	densitythreshold = 0.04f;
-	this->type = type;
 	this->verbose = verbose;
 }
 
@@ -437,11 +436,11 @@ void flipsim::extrapolateVelocity(){
 	unsigned int x = (unsigned int)dimensions.x; unsigned int y = (unsigned int)dimensions.y; 
 	unsigned int z = (unsigned int)dimensions.z;
 
-	intgrid** mark = new intgrid*[3];
-	intgrid** wallmark = new intgrid*[3];
+	grid<int>** mark = new grid<int>*[3];
+	grid<int>** wallmark = new grid<int>*[3];
 	for(unsigned int i=0; i<3; i++){
-		mark[i] = new intgrid(type, dimensions, 0);
-		wallmark[i] = new intgrid(type, dimensions, 0);
+		mark[i] = new grid<int>(dimensions, 0);
+		wallmark[i] = new grid<int>(dimensions, 0);
 	}
 
 	//initalize temp grids with values

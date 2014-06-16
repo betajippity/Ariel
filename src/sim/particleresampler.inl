@@ -24,7 +24,7 @@ extern inline void resampleParticles(particlegrid* pgrid, std::vector<particle*>
 									 const float& dt, const float& re, 
 									 const glm::vec3& dimensions);
 inline glm::vec3 resample(particlegrid* pgrid, const glm::vec3& p, const glm::vec3& u, float re, 
-					 const glm::vec3& dimensions);
+					 	  const glm::vec3& dimensions);
 
 
 //====================================
