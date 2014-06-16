@@ -162,11 +162,12 @@ float xRef(grid<int>* A, grid<float>* L, grid<float>* X, glm::vec3 f, glm::vec3 
 void op(grid<int>* A, grid<float>* X, grid<float>* Y, grid<float>* target, float alpha, 
 		glm::vec3 dimensions){
 	int x = (int)dimensions.x; int y = (int)dimensions.y; int z = (int)dimensions.z;
-	tbb::parallel_for(tbb::blocked_range<unsigned int>(0,x),
-		[=](const tbb::blocked_range<unsigned int>& r){
-			for(unsigned int i=r.begin(); i!=r.end(); ++i){
-				for(unsigned int j=0; j<y; ++j){
-					for(unsigned int k=0; k<z; ++k){
+	for(unsigned int j=0; j<y; ++j){
+		for(unsigned int k=0; k<z; ++k){
+			//this parallel loop has to be the inner loop or else MSVC will barf
+			tbb::parallel_for(tbb::blocked_range<unsigned int>(0,x),
+				[=](const tbb::blocked_range<unsigned int>& r){
+					for(unsigned int i=r.begin(); i!=r.end(); ++i){
 						if(A->getCell(i,j,k)==FLUID){
 							float targetval = X->getCell(i,j,k)+alpha*Y->getCell(i,j,k);
 							target->setCell(i,j,k,targetval);
@@ -175,9 +176,9 @@ void op(grid<int>* A, grid<float>* X, grid<float>* Y, grid<float>* target, float
 						}				
 					}
 				}
-			}
+			);
 		}
-	);
+	}
 }
 
 // ans = x^T * x
@@ -263,11 +264,12 @@ void applyPreconditioner(grid<float>* Z, grid<float>* R, grid<float>* P, grid<fl
 	);
 
 	// L^T Z = Q
-	tbb::parallel_for(tbb::blocked_range<int>(-1,x-1),
-		[=](const tbb::blocked_range<int>& r){
-			for(int i=r.end(); i!=r.begin(); i--){
-				for(int j=y-1; j>=0; j--){
-					for(int k=z-1; k>=0; k--){
+	for(int j=y-1; j>=0; j--){
+		for(int k=z-1; k>=0; k--){
+			//this parallel loop has to be the inner loop or else MSVC will barf
+			tbb::parallel_for(tbb::blocked_range<int>(-1,x-1),
+				[=](const tbb::blocked_range<int>& r){
+					for(int i=r.end(); i!=r.begin(); i--){
 						if(A->getCell(i,j,k) == FLUID){
 							float right = ARef(A,i,j,k,i+1,j,k,dimensions)*
 										  PRef(P,i,j,k,dimensions)*PRef(Z,i+1,j,k,dimensions);
@@ -282,9 +284,9 @@ void applyPreconditioner(grid<float>* Z, grid<float>* R, grid<float>* P, grid<fl
 						}
 					}
 				}
-			}
+			);
 		}
-	);
+	}
 	delete Q;
 }
 
@@ -307,17 +309,20 @@ void solveConjugateGradient(macgrid& mgrid, grid<float>* PC, int subcell, const 
 	applyPreconditioner(Z, R, PC, mgrid.L, mgrid.A, mgrid.dimensions);	
 
 	//s = z. TODO: replace with VDB deep copy?
-	tbb::parallel_for(tbb::blocked_range<unsigned int>(0,x),
-		[=](const tbb::blocked_range<unsigned int>& r){
-			for(unsigned int i=r.begin(); i!=r.end(); ++i){
-				for(unsigned int j=0; j<y; ++j ){
-					for(unsigned int k=0; k<z; ++k ){
+
+	for(unsigned int j=0; j<y; ++j ){
+		for(unsigned int k=0; k<z; ++k ){
+			//this parallel loop has to be the inner loop or else MSVC will barf
+			tbb::parallel_for(tbb::blocked_range<unsigned int>(0,x),
+				[=](const tbb::blocked_range<unsigned int>& r){
+					for(unsigned int i=r.begin(); i!=r.end(); ++i){
 						S->setCell(i,j,k,Z->getCell(i,j,k));
 					}
 				}
-			}
+			);	
 		}
-	);
+	}
+
 
 	float eps = 1.0e-2f * (x*y*z);
 	float a = product(mgrid.A, Z, R, mgrid.dimensions);					// a = product(z,r)
