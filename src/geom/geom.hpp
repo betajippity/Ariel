@@ -15,14 +15,14 @@ namespace geomCore {
 // Class Declarations
 //====================================
 
-class geom{
+class Geom{
 	public:
 		//Initializers
-		geom(){};
-		virtual ~geom(){};
+		Geom(){};
+		virtual ~Geom(){};
 
 		//Interactions
-		virtual objCore::objContainer* tesselate() = 0;
+		virtual objCore::objContainer* Tesselate() = 0;
 };
 }
 

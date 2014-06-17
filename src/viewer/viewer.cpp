@@ -11,85 +11,85 @@
 
 namespace viewerCore{
 
-viewer::viewer(){
-    loaded = false;
+Viewer::Viewer(){
+    m_loaded = false;
 }
 
-viewer::~viewer(){
+Viewer::~Viewer(){
 
 }
 
-void viewer::load(fluidCore::flipsim* sim, bool retina){
-    load(sim, retina, glm::vec2(1024), glm::vec3(0), glm::vec3(0,0,30), glm::vec2(45.0f), 30.0f);
+void Viewer::Load(fluidCore::flipsim* sim, bool retina){
+    Load(sim, retina, glm::vec2(1024), glm::vec3(0), glm::vec3(0,0,30), glm::vec2(45.0f), 30.0f);
 }
 
-void viewer::load(fluidCore::flipsim* sim, bool retina, glm::vec2 resolution, 
+void Viewer::Load(fluidCore::flipsim* sim, bool retina, glm::vec2 resolution, 
                   glm::vec3 camrotate, glm::vec3 camtranslate, glm::vec2 camfov, float camlookat){
-    this->resolution = resolution;
+    m_resolution = resolution;
 
-    cam.zoomSpeed = 0.1f;
-    cam.panSpeed = 0.1f;
-    cam.translate = camtranslate;
-    cam.rotate = camrotate;
-    cam.lookat = camlookat;
-    cam.fov = camfov;
+    m_cam.m_zoomSpeed = 0.1f;
+    m_cam.m_panSpeed = 0.1f;
+    m_cam.m_translate = camtranslate;
+    m_cam.m_rotate = camrotate;
+    m_cam.m_lookat = camlookat;
+    m_cam.m_fov = camfov;
 
-    loaded = true;
+    m_loaded = true;
 
-    this->sim = sim;
-    siminitialized = false;
+    m_sim = sim;
+    m_siminitialized = false;
 
-    drawobjects = true;
-    drawInvalid = false;
+    m_drawobjects = true;
+    m_drawInvalid = false;
 
-    dumpFramebuffer = false;
-    dumpReady = false;
+    m_dumpFramebuffer = false;
+    m_dumpReady = false;
 
-    dumpVDB = false;
-    dumpOBJ = false;
+    m_dumpVDB = false;
+    m_dumpOBJ = false;
 
     if(retina){
-        framebufferScale = 2;
+        m_framebufferScale = 2;
     }else{
-        framebufferScale = 1;
+        m_framebufferScale = 1;
     }
 
-    bitmapData = new unsigned char[3 * (int)resolution.x*framebufferScale * 
-                                       (int)resolution.y*framebufferScale];
+    m_bitmapData = new unsigned char[3 * (int)resolution.x*m_framebufferScale * 
+                                       (int)resolution.y*m_framebufferScale];
 
-    pause = false;
+    m_pause = false;
 }
 
-void viewer::simLoopThread(){
-    if(sim->frame==0){
-        sim->init();
-        particles = sim->getParticles();
-        siminitialized = true;
+void Viewer::SimLoopThread(){
+    if(m_sim->frame==0){
+        m_sim->init();
+        m_particles = m_sim->getParticles();
+        m_siminitialized = true;
     }
     while(1){
-        if(!pause){
-            sim->step(dumpVDB, dumpOBJ, dumpPARTIO);
-            particles = sim->getParticles();
-            if(dumpFramebuffer && dumpReady){
-                framebufferWriteLock.lock();
+        if(!m_pause){
+            m_sim->step(m_dumpVDB, m_dumpOBJ, m_dumpPARTIO);
+            m_particles = m_sim->getParticles();
+            if(m_dumpFramebuffer && m_dumpReady){
+                m_framebufferWriteLock.lock();
                 {
-                    saveFrame();
+                    SaveFrame();
                 }
-                framebufferWriteLock.unlock();
+                m_framebufferWriteLock.unlock();
             }
         }
-        siminitialized = true;
+        m_siminitialized = true;
     }
 }
 
 //returns true if viewer launches and closes successfully, otherwise, returns false
-bool viewer::launch(){
-    if(loaded==true){
-        if(init()==true){
+bool Viewer::Launch(){
+    if(m_loaded==true){
+        if(Init()==true){
             std::thread simThread([=](){
-                simLoopThread();
+                SimLoopThread();
             });
-            mainLoop();
+            MainLoop();
             return true;
         }else{
             std::cout << "Error: GL initialization failed.\n" << std::endl;
@@ -101,46 +101,46 @@ bool viewer::launch(){
     } 
 }
 
-void viewer::saveFrame(){
-    std::string filename = sim->getScene()->imagePath;
+void Viewer::SaveFrame(){
+    std::string filename = m_sim->getScene()->imagePath;
     std::string frameString = utilityCore::padString(4, 
-                                                     utilityCore::convertIntToString(sim->frame));
+                                                     utilityCore::convertIntToString(m_sim->frame));
     utilityCore::replaceString(filename, ".png", "."+frameString+".png");
 
     char anim_filename[2048];
     sprintf(anim_filename, "%s", (char*)filename.c_str());
-    stbi_write_png(anim_filename, (int)resolution.x*framebufferScale, 
-                                  (int)resolution.y*framebufferScale, 3, bitmapData, 
-                                  (int)resolution.x*framebufferScale * 3);
+    stbi_write_png(anim_filename, (int)m_resolution.x*m_framebufferScale, 
+                                  (int)m_resolution.y*m_framebufferScale, 3, m_bitmapData, 
+                                  (int)m_resolution.x*m_framebufferScale * 3);
 }
 
 //====================================
 // Draw/Interaction Loop
 //====================================
 
-void viewer::mainLoop(){
-    while (!glfwWindowShouldClose(window)){
+void Viewer::MainLoop(){
+    while (!glfwWindowShouldClose(m_window)){
 
-        if(siminitialized){
-            vboData data = vbos[vbokeys["fluid"]];
+        if(m_siminitialized){
+            VboData data = m_vbos[m_vbokeys["fluid"]];
             std::vector<glm::vec3> vertexData;
             std::vector<glm::vec4> colorData;
-            int psize = particles->size();
+            int psize = m_particles->size();
 
-            glm::vec3 gridSize = sim->getDimensions();
+            glm::vec3 gridSize = m_sim->getDimensions();
             vertexData.reserve(psize);
             colorData.reserve(psize);
             float maxd = glm::max(glm::max(gridSize.x, gridSize.z), gridSize.y);
 
             for(int j=0; j<psize; j++){
-                if(particles->operator[](j)->type==FLUID){
-                    if(!particles->operator[](j)->invalid || 
-                       (particles->operator[](j)->invalid && drawInvalid)){
-                        vertexData.push_back(particles->operator[](j)->p*maxd);
-                        float c = glm::length(particles->operator[](j)->u)/3.0f;
+                if(m_particles->operator[](j)->type==FLUID){
+                    if(!m_particles->operator[](j)->invalid || 
+                       (m_particles->operator[](j)->invalid && m_drawInvalid)){
+                        vertexData.push_back(m_particles->operator[](j)->p*maxd);
+                        float c = glm::length(m_particles->operator[](j)->u)/3.0f;
                         c = glm::max(c, 
-                                     1.0f*glm::max((.7f-particles->operator[](j)->density),0.0f));
-                        bool invalid = particles->operator[](j)->invalid;
+                                     1.0f*glm::max((.7f-m_particles->operator[](j)->density),0.0f));
+                        bool invalid = m_particles->operator[](j)->invalid;
                         if(invalid){
                             colorData.push_back(glm::vec4(1,0,0,0));
                         }else{
@@ -149,14 +149,14 @@ void viewer::mainLoop(){
                     }
                 }
             }
-            glDeleteBuffers(1, &data.vboID);
-            glDeleteBuffers(1, &data.cboID);
+            glDeleteBuffers(1, &data.m_vboID);
+            glDeleteBuffers(1, &data.m_cboID);
             std::string key = "fluid";
-            data = createVBO(data, (float*)&vertexData[0], vertexData.size()*3, 
+            data = CreateVBO(data, (float*)&vertexData[0], vertexData.size()*3, 
                              (float*)&colorData[0], colorData.size()*4, GL_POINTS, key);
             vertexData.clear();
             colorData.clear();
-            vbos[vbokeys["fluid"]] = data;
+            m_vbos[m_vbokeys["fluid"]] = data;
         }
 
         glClearColor(0.325, 0.325, 0.325, 1.0);
@@ -169,50 +169,50 @@ void viewer::mainLoop(){
 
         glPushMatrix();
             // apply the current rotation
-            glRotatef(-cam.rotate.x, 1, 0, 0);
-            glRotatef(-cam.rotate.y, 0, 1, 0);
-            glRotatef(-cam.rotate.z, 0, 0, 1);
-            glTranslatef(-cam.translate.x, -cam.translate.y, -cam.translate.z);
+            glRotatef(-m_cam.m_rotate.x, 1, 0, 0);
+            glRotatef(-m_cam.m_rotate.y, 0, 1, 0);
+            glRotatef(-m_cam.m_rotate.z, 0, 0, 1);
+            glTranslatef(-m_cam.m_translate.x, -m_cam.m_translate.y, -m_cam.m_translate.z);
             
-            for(int i=0; i<vbos.size(); i++){
+            for(int i=0; i<m_vbos.size(); i++){
                 glPushMatrix();
-                glBindBuffer(GL_ARRAY_BUFFER, vbos[i].vboID);
+                glBindBuffer(GL_ARRAY_BUFFER, m_vbos[i].m_vboID);
                 glVertexPointer(3, GL_FLOAT, 0, NULL);
-                glBindBuffer(GL_ARRAY_BUFFER, vbos[i].cboID);
+                glBindBuffer(GL_ARRAY_BUFFER, m_vbos[i].m_cboID);
                 glColorPointer(4, GL_FLOAT, 0, NULL);
                 glEnableClientState(GL_VERTEX_ARRAY);
                 glEnableClientState(GL_COLOR_ARRAY);
                 glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-                glm::vec3 res = sim->getDimensions();
+                glm::vec3 res = m_sim->getDimensions();
                 glTranslatef(-res.x/2, 0, -res.y/2);
 
-                if(i==vbokeys["boundingbox"]){
+                if(i==m_vbokeys["boundingbox"]){
                     glLineWidth(2.0f);
                 }
 
                 bool skipDraw = false;
-                if(vbos[i].type==GL_QUADS || vbos[i].type==GL_TRIANGLES){
-                    glm::vec2 frame = frameranges[vbos[i].key];
-                    if(!((frame[0]<0 && frame[1]<0) || (frame[0]<=sim->frame 
-                        && sim->frame<=frame[1]))){
+                if(m_vbos[i].m_type==GL_QUADS || m_vbos[i].m_type==GL_TRIANGLES){
+                    glm::vec2 frame = m_frameranges[m_vbos[i].m_key];
+                    if(!((frame[0]<0 && frame[1]<0) || (frame[0]<=m_sim->frame 
+                        && m_sim->frame<=frame[1]))){
                         skipDraw = true;
                     }
                 }
 
-                if(vbos[i].type==GL_QUADS){
-                    if(!(i!=vbokeys["boundingbox"] && drawobjects==false) && skipDraw==false){
-                        glDrawArrays(GL_QUADS, 0, vbos[i].size/3);
+                if(m_vbos[i].m_type==GL_QUADS){
+                    if(!(i!=m_vbokeys["boundingbox"] && m_drawobjects==false) && skipDraw==false){
+                        glDrawArrays(GL_QUADS, 0, m_vbos[i].m_size/3);
                     }
-                }else if(vbos[i].type==GL_TRIANGLES){
-                    if(!(i!=vbokeys["boundingbox"] && drawobjects==false) && skipDraw==false){
-                        glDrawArrays(GL_TRIANGLES, 0, vbos[i].size/3);
+                }else if(m_vbos[i].m_type==GL_TRIANGLES){
+                    if(!(i!=m_vbokeys["boundingbox"] && m_drawobjects==false) && skipDraw==false){
+                        glDrawArrays(GL_TRIANGLES, 0, m_vbos[i].m_size/3);
                     }
-                }else if(vbos[i].type==GL_LINES){
-                    glDrawArrays(GL_LINES, 0, vbos[i].size/3);
-                }else if(vbos[i].type==GL_POINTS){
+                }else if(m_vbos[i].m_type==GL_LINES){
+                    glDrawArrays(GL_LINES, 0, m_vbos[i].m_size/3);
+                }else if(m_vbos[i].m_type==GL_POINTS){
                     glPointSize(5.0f);
-                    glDrawArrays(GL_POINTS, 0, vbos[i].size/3);
+                    glDrawArrays(GL_POINTS, 0, m_vbos[i].m_size/3);
                 }
                 glDisableClientState(GL_VERTEX_ARRAY);
                 glDisableClientState(GL_COLOR_ARRAY);
@@ -236,152 +236,152 @@ void viewer::mainLoop(){
 
         glPopMatrix();
 
-        glfwSwapBuffers(window);
+        glfwSwapBuffers(m_window);
         glfwPollEvents();
-        updateInputs();
+        UpdateInputs();
 
-        if(dumpFramebuffer==true){
-            framebufferWriteLock.lock();
+        if(m_dumpFramebuffer==true){
+            m_framebufferWriteLock.lock();
             {
-                for (unsigned int i=0; i<resolution.y*framebufferScale; ++i){
-                    glReadPixels(0,i,(int)resolution.x*framebufferScale, 1, GL_RGB, 
+                for (unsigned int i=0; i<m_resolution.y*m_framebufferScale; ++i){
+                    glReadPixels(0,i,(int)m_resolution.x*m_framebufferScale, 1, GL_RGB, 
                                  GL_UNSIGNED_BYTE, 
-                                 bitmapData + ((int)resolution.x*framebufferScale * 3 * 
-                                 (((int)resolution.y*framebufferScale-1)-i)));
+                                 m_bitmapData + ((int)m_resolution.x*m_framebufferScale * 3 * 
+                                 (((int)m_resolution.y*m_framebufferScale-1)-i)));
                 }
             }
-            framebufferWriteLock.unlock();
-            dumpReady = true; 
+            m_framebufferWriteLock.unlock();
+            m_dumpReady = true; 
         }
     }
-    glfwDestroyWindow(window);
+    glfwDestroyWindow(m_window);
     glfwTerminate();
 }
 
-void viewer::updateInputs(){
+void Viewer::UpdateInputs(){
     double x; double y;
-    glfwGetCursorPos(window, &x, &y);
+    glfwGetCursorPos(m_window, &x, &y);
     glm::vec2 d;
-    d.x = float(x-cam.mouseOld.x);
-    d.y = float(y-cam.mouseOld.y);
-    cam.mouseOld.x = x;
-    cam.mouseOld.y = y;
-    if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == 1 || 
-        glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == 1 ||
-        glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE) == 1){
+    d.x = float(x-m_cam.m_mouseOld.x);
+    d.y = float(y-m_cam.m_mouseOld.y);
+    m_cam.m_mouseOld.x = x;
+    m_cam.m_mouseOld.y = y;
+    if(glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_LEFT) == 1 || 
+        glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_RIGHT) == 1 ||
+        glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_MIDDLE) == 1){
 
         bool doCamera = false;
 
-        if(glfwGetKey(window, GLFW_KEY_RIGHT_ALT) == GLFW_PRESS || 
-           glfwGetKey(window, GLFW_KEY_LEFT_ALT) == GLFW_PRESS){
+        if(glfwGetKey(m_window, GLFW_KEY_RIGHT_ALT) == GLFW_PRESS || 
+           glfwGetKey(m_window, GLFW_KEY_LEFT_ALT) == GLFW_PRESS){
             doCamera = true;
         }
         if(doCamera==true){
-            if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == 1){
-                glm::mat4 m = utilityCore::buildTransformationMatrix(glm::vec3(0), cam.rotate, 
+            if(glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_LEFT) == 1){
+                glm::mat4 m = utilityCore::buildTransformationMatrix(glm::vec3(0), m_cam.m_rotate, 
                                                                      glm::vec3(1,1,1));
                 glm::vec3 view = glm::normalize(glm::vec3(m*glm::vec4(0,0,-1,0)));
-                glm::vec3 lookatPoint = cam.translate + view*cam.lookat;
+                glm::vec3 lookatPoint = m_cam.m_translate + view*m_cam.m_lookat;
 
-                cam.rotate.x += -d.y * cam.rotateSpeed;
-                cam.rotate.y += -d.x * cam.rotateSpeed;
+                m_cam.m_rotate.x += -d.y * m_cam.m_rotateSpeed;
+                m_cam.m_rotate.y += -d.x * m_cam.m_rotateSpeed;
 
-                m = utilityCore::buildTransformationMatrix(glm::vec3(0), cam.rotate, 
+                m = utilityCore::buildTransformationMatrix(glm::vec3(0), m_cam.m_rotate, 
                                                            glm::vec3(1,1,1));
                 view = glm::normalize(glm::vec3(m*glm::vec4(0,0,1,0)));
 
-                cam.translate = lookatPoint +  view*cam.lookat;
+                m_cam.m_translate = lookatPoint +  view*m_cam.m_lookat;
             }
-            if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == 1){
-                glm::mat4 m = utilityCore::buildTransformationMatrix(glm::vec3(0), cam.rotate, 
+            if(glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_RIGHT) == 1){
+                glm::mat4 m = utilityCore::buildTransformationMatrix(glm::vec3(0), m_cam.m_rotate, 
                                                                      glm::vec3(1,1,1));
                 glm::vec3 view = glm::normalize(glm::vec3(m*glm::vec4(0,0,-1,0)));
 
-                glm::vec3 lookatPoint = cam.translate + view*cam.lookat;
-                cam.translate = cam.translate + (d.y * view * cam.zoomSpeed);
-                cam.lookat = glm::length(cam.translate-lookatPoint);
+                glm::vec3 lookatPoint = m_cam.m_translate + view*m_cam.m_lookat;
+                m_cam.m_translate = m_cam.m_translate + (d.y * view * m_cam.m_zoomSpeed);
+                m_cam.m_lookat = glm::length(m_cam.m_translate-lookatPoint);
             }
-            if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE) == 1){
-                glm::mat4 m = utilityCore::buildTransformationMatrix(glm::vec3(0), cam.rotate, 
+            if(glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_MIDDLE) == 1){
+                glm::mat4 m = utilityCore::buildTransformationMatrix(glm::vec3(0), m_cam.m_rotate, 
                                                                      glm::vec3(1,1,1));
                 glm::vec3 up = glm::normalize(glm::vec3(m*glm::vec4(0,1,0,0)));
                 glm::vec3 right = glm::normalize(glm::vec3(m*glm::vec4(-1,0,0,0)));
 
-                cam.translate = cam.translate + (d.x * right * cam.panSpeed);
-                cam.translate = cam.translate + (d.y * up * cam.panSpeed);
+                m_cam.m_translate = m_cam.m_translate + (d.x * right * m_cam.m_panSpeed);
+                m_cam.m_translate = m_cam.m_translate + (d.y * up * m_cam.m_panSpeed);
             } 
         }else{
-            if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == 1){
+            if(glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_LEFT) == 1){
                 //mouseclick event goes here
             }
         }
     }
-    if(glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS){
-        if(cam.currentKey!=GLFW_KEY_Q){
-            drawobjects = !drawobjects;
-            cam.currentKey = GLFW_KEY_Q;
+    if(glfwGetKey(m_window, GLFW_KEY_Q) == GLFW_PRESS){
+        if(m_cam.m_currentKey!=GLFW_KEY_Q){
+            m_drawobjects = !m_drawobjects;
+            m_cam.m_currentKey = GLFW_KEY_Q;
         }
-    }else if(glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS){
-        if(cam.currentKey!=GLFW_KEY_R){
-            dumpFramebuffer = !dumpFramebuffer;
-            dumpReady = false;
-            cam.currentKey = GLFW_KEY_R;
-            if(dumpFramebuffer){
+    }else if(glfwGetKey(m_window, GLFW_KEY_R) == GLFW_PRESS){
+        if(m_cam.m_currentKey!=GLFW_KEY_R){
+            m_dumpFramebuffer = !m_dumpFramebuffer;
+            m_dumpReady = false;
+            m_cam.m_currentKey = GLFW_KEY_R;
+            if(m_dumpFramebuffer){
                 std::cout << "\nFramebuffer recording ON.\n" << std::endl;
             }else{
                 std::cout << "\nFramebuffer recording OFF.\n" << std::endl;
             }
         }
-    }else if(glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS){
-        if(cam.currentKey!=GLFW_KEY_P){
-            pause = !pause;
-            cam.currentKey = GLFW_KEY_P;
-            if(pause){
+    }else if(glfwGetKey(m_window, GLFW_KEY_P) == GLFW_PRESS){
+        if(m_cam.m_currentKey!=GLFW_KEY_P){
+            m_pause = !m_pause;
+            m_cam.m_currentKey = GLFW_KEY_P;
+            if(m_pause){
                 std::cout << "\nSimulation paused.\n" << std::endl; 
             }
         }
-    }else if(glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS){
-        if(cam.currentKey!=GLFW_KEY_V){
-            dumpVDB = !dumpVDB;
-            cam.currentKey = GLFW_KEY_V;
-            if(dumpVDB){
+    }else if(glfwGetKey(m_window, GLFW_KEY_V) == GLFW_PRESS){
+        if(m_cam.m_currentKey!=GLFW_KEY_V){
+            m_dumpVDB = !m_dumpVDB;
+            m_cam.m_currentKey = GLFW_KEY_V;
+            if(m_dumpVDB){
                 std::cout << "\nVDB Export ON.\n" << std::endl;
             }else{
                 std::cout << "\nVDB Export OFF.\n" << std::endl;
             }
         }
-    }else if(glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS){
-        if(cam.currentKey!=GLFW_KEY_O){
-            dumpOBJ = !dumpOBJ;
-            cam.currentKey = GLFW_KEY_O;
-            if(dumpOBJ){
+    }else if(glfwGetKey(m_window, GLFW_KEY_O) == GLFW_PRESS){
+        if(m_cam.m_currentKey!=GLFW_KEY_O){
+            m_dumpOBJ = !m_dumpOBJ;
+            m_cam.m_currentKey = GLFW_KEY_O;
+            if(m_dumpOBJ){
                 std::cout << "\nOBJ Export ON.\n" << std::endl;
             }else{
                 std::cout << "\nOBJ Export OFF.\n" << std::endl;
             }
         }
-    }else if(glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS){
-        if(cam.currentKey!=GLFW_KEY_G){
-            dumpPARTIO = !dumpPARTIO;
-            cam.currentKey = GLFW_KEY_G;
-            if(dumpPARTIO){
+    }else if(glfwGetKey(m_window, GLFW_KEY_G) == GLFW_PRESS){
+        if(m_cam.m_currentKey!=GLFW_KEY_G){
+            m_dumpPARTIO = !m_dumpPARTIO;
+            m_cam.m_currentKey = GLFW_KEY_G;
+            if(m_dumpPARTIO){
                 std::cout << "\nPARTIO Export ON.\n" << std::endl;
             }else{
                 std::cout << "\nPARTIO Export OFF.\n" << std::endl;
             }
         }
-    }else if(glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS){
-        if(cam.currentKey!=GLFW_KEY_I){
-            drawInvalid = !drawInvalid;
-            cam.currentKey = GLFW_KEY_I;
-            if(drawInvalid){
+    }else if(glfwGetKey(m_window, GLFW_KEY_I) == GLFW_PRESS){
+        if(m_cam.m_currentKey!=GLFW_KEY_I){
+            m_drawInvalid = !m_drawInvalid;
+            m_cam.m_currentKey = GLFW_KEY_I;
+            if(m_drawInvalid){
                 std::cout << "\nDraw out of bound particles ON.\n" << std::endl;
             }else{
                 std::cout << "\nDraw out of bound particles OFF.\n" << std::endl;
             }
         }
     }else{
-        cam.currentKey = 0;
+        m_cam.m_currentKey = 0;
     }
 }
 
@@ -389,24 +389,24 @@ void viewer::updateInputs(){
 // Init Stuff
 //====================================
 
-bool viewer::init(){
+bool Viewer::Init(){
     //Camera setup stuff
-    glm::vec2 fov = cam.fov;
+    glm::vec2 fov = m_cam.m_fov;
 
     //Window setup stuff
-    glfwSetErrorCallback(errorCallback);
+    glfwSetErrorCallback(ErrorCallback);
     if (!glfwInit()){
         return false;
     }
 
-    window = glfwCreateWindow(resolution.x, resolution.y, "Ariel: now with 100% more FLIP!", 
+    m_window = glfwCreateWindow(m_resolution.x, m_resolution.y, "Ariel: now with 100% more FLIP!", 
                               NULL, NULL);
-    if (!window){
+    if (!m_window){
         glfwTerminate();
         return false;
     }
-    glfwMakeContextCurrent(window);
-    glfwSetKeyCallback(window, keyCallback);   
+    glfwMakeContextCurrent(m_window);
+    glfwSetKeyCallback(m_window, KeyCallback);   
     glewExperimental = GL_TRUE;
     if(glewInit()!=GLEW_OK){
         return false;   
@@ -417,78 +417,78 @@ bool viewer::init(){
     glLoadIdentity();
     glm::vec2 xBounds;
     glm::vec2 yBounds;
-    utilityCore::fovToPerspective(fov.x, (float)resolution.x/resolution.y, 1, xBounds, yBounds); 
+    utilityCore::fovToPerspective(fov.x, (float)m_resolution.x/m_resolution.y, 1, xBounds, yBounds); 
     glFrustum(xBounds[0], xBounds[1], yBounds[0], yBounds[1], 1, 10000000);
     glEnable(GL_DEPTH_TEST);
 
     glMatrixMode(GL_MODELVIEW);
 
     //dummy buffer for particles
-    vboData data;
+    VboData data;
     std::vector<glm::vec3> vertexData;
     vertexData.push_back(glm::vec3(0,0,0));
     std::vector<glm::vec4> colorData;
     colorData.push_back(glm::vec4(0,0,0,0));
     std::string key = "fluid";
-    data = createVBO(data, (float*)&vertexData[0], vertexData.size()*3, (float*)&colorData[0], 
+    data = CreateVBO(data, (float*)&vertexData[0], vertexData.size()*3, (float*)&colorData[0], 
                      colorData.size()*4, GL_POINTS, key);
     vertexData.clear();
-    vbos.push_back(data);
-    vbokeys["fluid"] = vbos.size()-1;
+    m_vbos.push_back(data);
+    m_vbokeys["fluid"] = m_vbos.size()-1;
 
     //buffer for sim bounding box
     key = "boundingbox";
-    glm::vec3 res = sim->getDimensions();
+    glm::vec3 res = m_sim->getDimensions();
     geomCore::cube cubebuilder;
-    data = createVBOFromObj(cubebuilder.tesselate(glm::vec3(0), res), glm::vec4(.2,.2,.2,0), key);
-    vbos.push_back(data);
-    vbokeys["boundingbox"] = vbos.size()-1;
+    data = CreateVBOFromObj(cubebuilder.tesselate(glm::vec3(0), res), glm::vec4(.2,.2,.2,0), key);
+    m_vbos.push_back(data);
+    m_vbokeys["boundingbox"] = m_vbos.size()-1;
 
-    int numberOfSolidObjects = sim->getScene()->getSolidObjects().size();
-    std::vector<objCore::objContainer*> solids = sim->getScene()->getSolidObjects();
+    int numberOfSolidObjects = m_sim->getScene()->getSolidObjects().size();
+    std::vector<objCore::objContainer*> solids = m_sim->getScene()->getSolidObjects();
     for(int i=0; i<numberOfSolidObjects; i++){
-        vboData objectdata;
+        VboData objectdata;
         key = "solid"+utilityCore::convertIntToString(i);
-        objectdata = createVBOFromObj(solids[i], glm::vec4(1,0,0,.75), key);
-        vbos.push_back(objectdata);
-        vbokeys[key] = vbos.size()-1;
-        frameranges[key] = sim->getScene()->getSolidFrameRange(i);
+        objectdata = CreateVBOFromObj(solids[i], glm::vec4(1,0,0,.75), key);
+        m_vbos.push_back(objectdata);
+        m_vbokeys[key] = m_vbos.size()-1;
+        m_frameranges[key] = m_sim->getScene()->getSolidFrameRange(i);
     }
 
-    int numberOfLiquidObjects = sim->getScene()->getLiquidObjects().size();
-    std::vector<objCore::objContainer*> liquids = sim->getScene()->getLiquidObjects();
+    int numberOfLiquidObjects = m_sim->getScene()->getLiquidObjects().size();
+    std::vector<objCore::objContainer*> liquids = m_sim->getScene()->getLiquidObjects();
     for(int i=0; i<numberOfLiquidObjects; i++){
-        vboData objectdata;
+        VboData objectdata;
         key = "liquid"+utilityCore::convertIntToString(i);
-        objectdata = createVBOFromObj(liquids[i], glm::vec4(0,0,1,.75), key);
-        vbos.push_back(objectdata);
-        vbokeys[key] = vbos.size()-1;
-        frameranges[key] = sim->getScene()->getLiquidFrameRange(i);
+        objectdata = CreateVBOFromObj(liquids[i], glm::vec4(0,0,1,.75), key);
+        m_vbos.push_back(objectdata);
+        m_vbokeys[key] = m_vbos.size()-1;
+        m_frameranges[key] = m_sim->getScene()->getLiquidFrameRange(i);
     }
 
     return true;
 }
 
-vboData viewer::createVBO(vboData data, float* vertices, int vertexcount, float* colors,
+VboData Viewer::CreateVBO(VboData data, float* vertices, int vertexcount, float* colors,
                           int colorcount, GLenum type, std::string key){
-    data.size = vertexcount;
-    glGenBuffers(1, &data.vboID);
-    glGenBuffers(1, &data.cboID);
+    data.m_size = vertexcount;
+    glGenBuffers(1, &data.m_vboID);
+    glGenBuffers(1, &data.m_cboID);
     //bind vbo
-    glBindBuffer(GL_ARRAY_BUFFER, data.vboID);
-    glBufferData(GL_ARRAY_BUFFER, data.size*sizeof(float), vertices, GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, data.m_vboID);
+    glBufferData(GL_ARRAY_BUFFER, data.m_size*sizeof(float), vertices, GL_STATIC_DRAW);
     //bind cbo
-    glBindBuffer(GL_ARRAY_BUFFER, data.cboID);
+    glBindBuffer(GL_ARRAY_BUFFER, data.m_cboID);
     glBufferData(GL_ARRAY_BUFFER, colorcount*sizeof(float), colors, GL_STATIC_DRAW);
 
-    data.type = type;
-    data.key = key;
+    data.m_type = type;
+    data.m_key = key;
     return data;
 }
 
-vboData viewer::createVBOFromObj(objCore::objContainer* o, glm::vec4 color, std::string key){
+VboData Viewer::CreateVBOFromObj(objCore::objContainer* o, glm::vec4 color, std::string key){
     objCore::obj* oData = o->getObj();
-    vboData data;
+    VboData data;
     std::vector<glm::vec3> vertexData;
     std::vector<glm::vec4> colorData;
 
@@ -512,7 +512,7 @@ vboData viewer::createVBOFromObj(objCore::objContainer* o, glm::vec4 color, std:
         for(int i=0; i<vcount; i++){
             colorData.push_back(color);
         }
-        data = createVBO(data, (float*)&vertexData[0], vertexData.size()*3, (float*)&colorData[0],
+        data = CreateVBO(data, (float*)&vertexData[0], vertexData.size()*3, (float*)&colorData[0],
                          colorData.size()*4, GL_QUADS, key);
         colorData.clear();
     }else{
@@ -535,7 +535,7 @@ vboData viewer::createVBOFromObj(objCore::objContainer* o, glm::vec4 color, std:
         for(int i=0; i<vcount; i++){
             colorData.push_back(color);
         }
-        data = createVBO(data, (float*)&vertexData[0], vertexData.size()*3, (float*)&colorData[0],
+        data = CreateVBO(data, (float*)&vertexData[0], vertexData.size()*3, (float*)&colorData[0],
                          colorData.size()*4, GL_TRIANGLES, key); 
         colorData.clear();
     }
@@ -547,11 +547,11 @@ vboData viewer::createVBOFromObj(objCore::objContainer* o, glm::vec4 color, std:
 // Interaction Callbacks
 //====================================
 
-void viewer::errorCallback(int error, const char* description){
+void Viewer::ErrorCallback(int error, const char* description){
     fputs(description, stderr);
 }
 
-void viewer::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods){
+void Viewer::KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods){
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS){
         glfwSetWindowShouldClose(window, GL_TRUE);
         exit(EXIT_SUCCESS);

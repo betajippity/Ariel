@@ -52,9 +52,9 @@ int main(int argc, char** argv){
     fluidCore::flipsim* f = new fluidCore::flipsim(sloader->getDimensions(), sloader->getScene(), 
     											   sloader->getDensity(), verbose);
 
-    viewerCore::viewer* glview = new viewerCore::viewer();
-    glview->load(f, retina, sloader->camera_resolution, sloader->camera_rotate, 
+    viewerCore::Viewer* glview = new viewerCore::Viewer();
+    glview->Load(f, retina, sloader->camera_resolution, sloader->camera_rotate, 
     			 sloader->camera_translate, sloader->camera_fov, sloader->camera_lookat);
-    glview->launch();
+    glview->Launch();
 
 }

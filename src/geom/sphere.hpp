@@ -14,22 +14,22 @@ namespace geomCore {
 // Class Declarations
 //====================================
 	
-class sphere: public geom {
+class Sphere: public Geom {
 	public:
 		//Initializers
-		sphere();
-		sphere(int subdivCount);
-		~sphere();
+		Sphere();
+		Sphere(int subdivCount);
+		~Sphere();
 
 		//Getters
-		objCore::objContainer* tesselate();
-		objCore::objContainer* tesselate(const glm::vec3& center, const float& radius);
+		objCore::objContainer* Tesselate();
+		objCore::objContainer* Tesselate(const glm::vec3& center, const float& radius);
 
 		//Data
-		int subdivs;
+		int m_subdivs;
 
 	private:
-		glm::vec3 getPointOnSphereByAngles(float angle1, float angle2);
+		glm::vec3 GetPointOnSphereByAngles(float angle1, float angle2);
 };
 }
 

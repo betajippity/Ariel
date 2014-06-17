@@ -11,24 +11,24 @@
 namespace geomCore{
 
 //Default empty constructor defaults to 20 subdivs in axis and height
-sphere::sphere(){	
-	subdivs = 20;
+Sphere::Sphere(){	
+	m_subdivs = 20;
 }
 
 //Constructor with options for presets
-sphere::sphere(int subdivCount){
-	subdivs = subdivCount;
+Sphere::Sphere(int subdivCount){
+	m_subdivs = subdivCount;
 }
 
 //Boring empty destructor is boring
-sphere::~sphere(){
+Sphere::~Sphere(){
 }
 
-objCore::objContainer* sphere::tesselate(const glm::vec3& center, const float& radius){
+objCore::objContainer* Sphere::Tesselate(const glm::vec3& center, const float& radius){
 	glm::vec3 scale = glm::vec3(radius*2.0f);
 	glm::mat4 transform = utilityCore::buildTransformationMatrix(center, glm::vec3(0,0,0), scale);
 
-	objCore::objContainer* o = tesselate();
+	objCore::objContainer* o = Tesselate();
 	unsigned int numberOfPoints = o->getObj()->numberOfVertices;
 
 	tbb::parallel_for(tbb::blocked_range<unsigned int>(0,numberOfPoints),
@@ -46,9 +46,9 @@ objCore::objContainer* sphere::tesselate(const glm::vec3& center, const float& r
 Axis and height must have a minimum of 3 subdivs and 
 tesselate() will default to 3 if subdiv count is below 3.*/
 //Yes, this function is total spaghetti and hacked together in many places. Will fix later. Maybe.
-objCore::objContainer* sphere::tesselate(){
-	int a = std::max(subdivs, 3);
-	int h = std::max(subdivs, 3);
+objCore::objContainer* Sphere::Tesselate(){
+	int a = std::max(m_subdivs, 3);
+	int h = std::max(m_subdivs, 3);
 	int vertCount = (a*(h-1))+2;
 	int faceCount = a*h;
 	glm::vec3* vertices = new glm::vec3[vertCount];
@@ -63,7 +63,7 @@ objCore::objContainer* sphere::tesselate(){
 			float angle1 = float(x)*float(1.0/a);
 			float angle2 = float(y)*float(1.0/h);
 			int i = ((x-1)*a) + y;
-			vertices[i] = getPointOnSphereByAngles(angle1,angle2);
+			vertices[i] = GetPointOnSphereByAngles(angle1,angle2);
 		}
 	}
 	vertices[vertCount-2] = glm::vec3(0,-.5,0);
@@ -173,7 +173,7 @@ objCore::objContainer* sphere::tesselate(){
 	return o;
 }
 
-glm::vec3 sphere::getPointOnSphereByAngles(float angle1, float angle2){
+glm::vec3 Sphere::GetPointOnSphereByAngles(float angle1, float angle2){
 	float x = sin(PI*angle1)*cos(TWO_PI*angle2);
 	float y = sin(PI*angle1)*sin(TWO_PI*angle2);
 	float z = cos(PI*angle1);

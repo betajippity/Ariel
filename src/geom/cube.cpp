@@ -11,15 +11,15 @@
 namespace geomCore{
 
 //Default empty constructor defaults to 1 subdivs in axis and height
-cube::cube(){	
+Cube::Cube(){	
 }
 
 //Boring empty destructor is boring
-cube::~cube(){
+Cube::~Cube(){
 }
 
 //Literally just embed an obj because that's how we roll. Stupid but it works.
-objCore::objContainer* cube::tesselate(){
+objCore::objContainer* Cube::Tesselate(){
 	glm::vec3* vertices = new glm::vec3[8];
 	vertices[0] = glm::vec3(-0.5, -0.5,  0.5);
 	vertices[1] = glm::vec3( 0.5, -0.5,  0.5);
@@ -86,12 +86,12 @@ objCore::objContainer* cube::tesselate(){
 	return o;
 }
 
-objCore::objContainer* cube::tesselate(const glm::vec3& lowerCorner, const glm::vec3& upperCorner){
+objCore::objContainer* Cube::Tesselate(const glm::vec3& lowerCorner, const glm::vec3& upperCorner){
 	glm::vec3 scale = upperCorner-lowerCorner;
 	glm::vec3 center = (upperCorner+lowerCorner)/2.0f;
 	glm::mat4 transform = utilityCore::buildTransformationMatrix(center, glm::vec3(0,0,0), scale);
 
-	objCore::objContainer* o = tesselate();
+	objCore::objContainer* o = Tesselate();
 	unsigned int numberOfPoints = o->getObj()->numberOfVertices;
 
 	tbb::parallel_for(tbb::blocked_range<unsigned int>(0,numberOfPoints),

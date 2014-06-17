@@ -148,7 +148,7 @@ void sceneloader::loadSim(const Json::Value& jsonsim){
 }
 
 void sceneloader::loadBox(const Json::Value& jsoncube){
-	geomCore::cube cubebuilder;
+	geomCore::Cube cubebuilder;
 	glm::vec3 point0;
 	point0.x = jsoncube["point0_x"].asFloat();
 	point0.y = jsoncube["point0_y"].asFloat();
@@ -168,9 +168,9 @@ void sceneloader::loadBox(const Json::Value& jsoncube){
 	}
 
 	if(std::strcmp(jsoncube["type"].asString().c_str(), "solid")==0){
-		s->addSolidObject(cubebuilder.tesselate(point0, point1), startFrame, endFrame);
+		s->addSolidObject(cubebuilder.Tesselate(point0, point1), startFrame, endFrame);
 	}else if(std::strcmp(jsoncube["type"].asString().c_str(), "liquid")==0){
-		s->addLiquidObject(cubebuilder.tesselate(point0, point1), startFrame, endFrame);
+		s->addLiquidObject(cubebuilder.Tesselate(point0, point1), startFrame, endFrame);
 	}
 }
 
