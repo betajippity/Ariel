@@ -19,12 +19,13 @@ Viewer::~Viewer(){
 
 }
 
-void Viewer::Load(fluidCore::flipsim* sim, bool retina){
+void Viewer::Load(fluidCore::flipsim* sim, const bool& retina){
     Load(sim, retina, glm::vec2(1024), glm::vec3(0), glm::vec3(0,0,30), glm::vec2(45.0f), 30.0f);
 }
 
-void Viewer::Load(fluidCore::flipsim* sim, bool retina, glm::vec2 resolution, 
-                  glm::vec3 camrotate, glm::vec3 camtranslate, glm::vec2 camfov, float camlookat){
+void Viewer::Load(fluidCore::flipsim* sim, const bool& retina, const glm::vec2& resolution, 
+                  const glm::vec3& camrotate, const glm::vec3& camtranslate, 
+				  const glm::vec2& camfov, const float& camlookat){
     m_resolution = resolution;
 
     m_cam.m_zoomSpeed = 0.1f;
@@ -102,7 +103,7 @@ bool Viewer::Launch(){
 }
 
 void Viewer::SaveFrame(){
-    std::string filename = m_sim->getScene()->imagePath;
+    std::string filename = m_sim->getScene()->m_imagePath;
     std::string frameString = utilityCore::padString(4, 
                                                      utilityCore::convertIntToString(m_sim->frame));
     utilityCore::replaceString(filename, ".png", "."+frameString+".png");
@@ -444,33 +445,34 @@ bool Viewer::Init(){
     m_vbos.push_back(data);
     m_vbokeys["boundingbox"] = m_vbos.size()-1;
 
-    unsigned int numberOfSolidObjects = m_sim->getScene()->getSolidObjects().size();
-    std::vector<objCore::Obj*> solids = m_sim->getScene()->getSolidObjects();
+    unsigned int numberOfSolidObjects = m_sim->getScene()->GetSolidObjects().size();
+    std::vector<objCore::Obj*> solids = m_sim->getScene()->GetSolidObjects();
     for(unsigned int i=0; i<numberOfSolidObjects; i++){
         VboData objectdata;
         key = "solid"+utilityCore::convertIntToString(i);
         objectdata = CreateVBOFromObj(solids[i], glm::vec4(1,0,0,.75), key);
         m_vbos.push_back(objectdata);
         m_vbokeys[key] = m_vbos.size()-1;
-        m_frameranges[key] = m_sim->getScene()->getSolidFrameRange(i);
+        m_frameranges[key] = m_sim->getScene()->GetSolidFrameRange(i);
     }
 
-    unsigned int numberOfLiquidObjects = m_sim->getScene()->getLiquidObjects().size();
-    std::vector<objCore::Obj*> liquids = m_sim->getScene()->getLiquidObjects();
+    unsigned int numberOfLiquidObjects = m_sim->getScene()->GetLiquidObjects().size();
+    std::vector<objCore::Obj*> liquids = m_sim->getScene()->GetLiquidObjects();
     for(unsigned int i=0; i<numberOfLiquidObjects; i++){
         VboData objectdata;
         key = "liquid"+utilityCore::convertIntToString(i);
         objectdata = CreateVBOFromObj(liquids[i], glm::vec4(0,0,1,.75), key);
         m_vbos.push_back(objectdata);
         m_vbokeys[key] = m_vbos.size()-1;
-        m_frameranges[key] = m_sim->getScene()->getLiquidFrameRange(i);
+        m_frameranges[key] = m_sim->getScene()->GetLiquidFrameRange(i);
     }
 
     return true;
 }
 
-VboData Viewer::CreateVBO(VboData data, float* vertices, unsigned int vertexcount, float* colors,
-                          unsigned int colorcount, GLenum type, std::string key){
+VboData Viewer::CreateVBO(VboData& data, float* vertices, const unsigned int& vertexcount, 
+						  float* colors, const unsigned int& colorcount, const GLenum& type, 
+						  const std::string& key){
     data.m_size = vertexcount;
     glGenBuffers(1, &data.m_vboID);
     glGenBuffers(1, &data.m_cboID);
@@ -486,7 +488,7 @@ VboData Viewer::CreateVBO(VboData data, float* vertices, unsigned int vertexcoun
     return data;
 }
 
-VboData Viewer::CreateVBOFromObj(objCore::Obj* o, glm::vec4 color, std::string key){
+VboData Viewer::CreateVBOFromObj(objCore::Obj* o, const glm::vec4& color, const std::string& key){
     VboData data;
     std::vector<glm::vec3> vertexData;
     std::vector<glm::vec4> colorData;

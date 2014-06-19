@@ -22,15 +22,15 @@ struct macgrid{
 	glm::vec3 dimensions;
 
 	//face velocities
-	grid<float>* u_x;
-	grid<float>* u_y;
-	grid<float>* u_z; 
+	Grid<float>* u_x;
+	Grid<float>* u_y;
+	Grid<float>* u_z; 
 	//technically this is the part that is an actual MAC grid, the rest is other useful stuff
 
-	grid<float>* D; //divergence 
-	grid<float>* P; //pressure
-	grid<int>* A; //cell type
-	grid<float>* L; //internal lightweight SDF for project step
+	Grid<float>* D; //divergence 
+	Grid<float>* P; //pressure
+	Grid<int>* A; //cell type
+	Grid<float>* L; //internal lightweight SDF for project step
 };
 
 struct particle{
@@ -70,13 +70,13 @@ macgrid createMacgrid(const glm::vec3& dimensions){
 	int x = (int)dimensions.x; int y = (int)dimensions.y; int z = (int)dimensions.z;
 	macgrid m;
 	m.dimensions = dimensions;
-	m.u_x = new grid<float>(glm::vec3(x+1,y,z), 0.0f);
-	m.u_y = new grid<float>(glm::vec3(x,y+1,z), 0.0f);
-	m.u_z = new grid<float>(glm::vec3(x,y,z+1), 0.0f);
-	m.D = new grid<float>(glm::vec3(x,y,z), 0.0f);
-	m.P = new grid<float>(glm::vec3(x,y,z), 0.0f);
-	m.A = new grid<int>(glm::vec3(x,y,z), 0);
-	m.L = new grid<float>(glm::vec3(x,y,z), 1.6f);
+	m.u_x = new Grid<float>(glm::vec3(x+1,y,z), 0.0f);
+	m.u_y = new Grid<float>(glm::vec3(x,y+1,z), 0.0f);
+	m.u_z = new Grid<float>(glm::vec3(x,y,z+1), 0.0f);
+	m.D = new Grid<float>(glm::vec3(x,y,z), 0.0f);
+	m.P = new Grid<float>(glm::vec3(x,y,z), 0.0f);
+	m.A = new Grid<int>(glm::vec3(x,y,z), 0);
+	m.L = new Grid<float>(glm::vec3(x,y,z), 1.6f);
 	return m;
 }
 

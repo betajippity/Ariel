@@ -2,7 +2,7 @@
 // Written by Yining Karl Li
 //
 // File: sphere.hpp
-// Defines the unit sphere geometry class, inherits from the generic geom class 
+// Defines the unit sphere geometry class, inherits from the generic geom class
 
 #ifndef SPHERE_HPP
 #define SPHERE_HPP
@@ -18,7 +18,7 @@ class Sphere: public Geom {
 	public:
 		//Initializers
 		Sphere();
-		Sphere(int subdivCount);
+		Sphere(const unsigned int& subdivCount);
 		~Sphere();
 
 		//Getters
@@ -29,7 +29,7 @@ class Sphere: public Geom {
 		int m_subdivs;
 
 	private:
-		glm::vec3 GetPointOnSphereByAngles(float angle1, float angle2);
+		glm::vec3 GetPointOnSphereByAngles(const float& angle1, const float& angle2);
 };
 }
 

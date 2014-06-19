@@ -20,20 +20,20 @@ namespace fluidCore {
 //====================================
 
 //Forward declarations for externed inlineable methods
-extern inline void splatParticlesToMACGrid(particlegrid* sgrid, std::vector<particle*>& particles,
+extern inline void splatParticlesToMACGrid(ParticleGrid* sgrid, std::vector<particle*>& particles,
 										   macgrid* mgrid);
 extern inline void splatMACGridToParticles(std::vector<particle*>& particles, macgrid* mgrid);
 extern inline void enforceBoundaryVelocity(macgrid* mgrid);
 extern inline glm::vec3 interpolateVelocity(glm::vec3 p, macgrid* mgrid);
-inline float checkWall(grid<int>* A, const int& x, const int& y, const int& z);
-inline float interpolate(grid<float>* q, glm::vec3 p, glm::vec3 n);
+inline float checkWall(Grid<int>* A, const int& x, const int& y, const int& z);
+inline float interpolate(Grid<float>* q, glm::vec3 p, glm::vec3 n);
 	
 //====================================
 // Function Implementations
 //====================================
 
-float checkWall(grid<int>* A, const int& x, const int& y, const int& z){
-	if(A->getCell(x,y,z)==SOLID){ //inside wall
+float checkWall(Grid<int>* A, const int& x, const int& y, const int& z){
+	if(A->GetCell(x,y,z)==SOLID){ //inside wall
 		return 1.0f;
 	}else{
 		return -1.0f;
@@ -52,11 +52,11 @@ void enforceBoundaryVelocity(macgrid* mgrid){
 			  	for(unsigned int j = 0; j < y; ++j){ 
 			    	for(unsigned int k = 0; k < z; ++k){
 			    		if(i==0 || i==x){
-			    			mgrid->u_x->setCell(i,j,k, 0.0f);
+			    			mgrid->u_x->SetCell(i,j,k, 0.0f);
 			    		}
 						if( i<x && i>0 && checkWall(mgrid->A, i, j, k)*
 							checkWall(mgrid->A, i-1, j, k) < 0 ) {
-							mgrid->u_x->setCell(i,j,k, 0.0f);
+							mgrid->u_x->SetCell(i,j,k, 0.0f);
 						}
 			    	}
 			   	}
@@ -70,11 +70,11 @@ void enforceBoundaryVelocity(macgrid* mgrid){
 			  	for(unsigned int j = 0; j < y+1; ++j){ 
 			    	for(unsigned int k = 0; k < z; ++k){
 			    		if(j==0 || j==y){
-			    			mgrid->u_y->setCell(i,j,k, 0.0f);
+			    			mgrid->u_y->SetCell(i,j,k, 0.0f);
 			    		}
 						if( j<y && j>0 && checkWall(mgrid->A, i, j, k)*
 										  checkWall(mgrid->A, i, j-1, k) < 0 ) {
-							mgrid->u_y->setCell(i,j,k, 0.0f);
+							mgrid->u_y->SetCell(i,j,k, 0.0f);
 						}
 			    	}
 			   	}
@@ -88,11 +88,11 @@ void enforceBoundaryVelocity(macgrid* mgrid){
 			  	for(unsigned int j = 0; j < y; ++j){ 
 			    	for(unsigned int k = 0; k < z+1; ++k){
 			    		if(k==0 || k==z){
-			    			mgrid->u_z->setCell(i,j,k, 0.0f);
+			    			mgrid->u_z->SetCell(i,j,k, 0.0f);
 			    		}
 						if( k<z && k>0 && checkWall(mgrid->A, i, j, k)*
 										  checkWall(mgrid->A, i, j, k-1) < 0 ) {
-							mgrid->u_z->setCell(i,j,k, 0.0f);
+							mgrid->u_z->SetCell(i,j,k, 0.0f);
 						}
 			    	}
 			   	}
@@ -101,17 +101,17 @@ void enforceBoundaryVelocity(macgrid* mgrid){
 	);
 }
 
-float interpolate(grid<float>* q, glm::vec3 p, glm::vec3 n){
+float interpolate(Grid<float>* q, glm::vec3 p, glm::vec3 n){
 	float x = glm::max(0.0f,glm::min(n.x,p.x));
 	float y = glm::max(0.0f,glm::min(n.y,p.y));
 	float z = glm::max(0.0f,glm::min(n.z,p.z));
 	int i = glm::min(x,n.x-2);
 	int j = glm::min(y,n.y-2);
 	int k = glm::min(z,n.z-2);
-	float term1 = ((i+1-x)*q->getCell(i,j,k)+(x-i)*q->getCell(i+1,j,k))*(j+1-y);
-	float term2 = ((i+1-x)*q->getCell(i,j+1,k)+(x-i)*q->getCell(i+1,j+1,k))*(y-j);
-	float term3 = ((i+1-x)*q->getCell(i,j,k+1)+(x-i)*q->getCell(i+1,j,k+1))*(j+1-y);
-	float term4 = ((i+1-x)*q->getCell(i,j+1,k+1)+(x-i)*q->getCell(i+1,j+1,k+1))*(y-j);
+	float term1 = ((i+1-x)*q->GetCell(i,j,k)+(x-i)*q->GetCell(i+1,j,k))*(j+1-y);
+	float term2 = ((i+1-x)*q->GetCell(i,j+1,k)+(x-i)*q->GetCell(i+1,j+1,k))*(y-j);
+	float term3 = ((i+1-x)*q->GetCell(i,j,k+1)+(x-i)*q->GetCell(i+1,j,k+1))*(j+1-y);
+	float term4 = ((i+1-x)*q->GetCell(i,j+1,k+1)+(x-i)*q->GetCell(i+1,j+1,k+1))*(y-j);
 	return (k+1-z)*(term1 + term2) + (z-k)*(term3 + term4);
 }
 
@@ -138,7 +138,7 @@ void splatMACGridToParticles(std::vector<particle*>& particles, macgrid* mgrid){
 	);
 }
 
-void splatParticlesToMACGrid(particlegrid* sgrid, std::vector<particle*>& particles, 
+void splatParticlesToMACGrid(ParticleGrid* sgrid, std::vector<particle*>& particles, 
 							 macgrid* mgrid){
 	
 	float RE = 1.4f; //sharpen kernel weight
@@ -158,7 +158,7 @@ void splatParticlesToMACGrid(particlegrid* sgrid, std::vector<particle*>& partic
 							glm::vec3 px = glm::vec3(i, j+0.5f, k+0.5f);
 							float sumw = 0.0f;
 							float sumx = 0.0f;
-							neighbors = sgrid->getWallNeighbors(glm::vec3(i,j,k), 
+							neighbors = sgrid->GetWallNeighbors(glm::vec3(i,j,k), 
 																glm::vec3(1,2,2));
 							for(unsigned int n=0; n<neighbors.size(); n++){
 								particle* p = neighbors[n];
@@ -177,7 +177,7 @@ void splatParticlesToMACGrid(particlegrid* sgrid, std::vector<particle*>& partic
 							if(sumw>0){ 
 								uxsum = sumx/sumw;
 							}
-							mgrid->u_x->setCell(i,j,k,uxsum);
+							mgrid->u_x->SetCell(i,j,k,uxsum);
 						}
 						neighbors.clear();
 
@@ -186,7 +186,7 @@ void splatParticlesToMACGrid(particlegrid* sgrid, std::vector<particle*>& partic
 							glm::vec3 py = glm::vec3(i+0.5f, j, k+0.5f);
 							float sumw = 0.0f;
 							float sumy = 0.0f;
-							neighbors = sgrid->getWallNeighbors(glm::vec3(i,j,k), 
+							neighbors = sgrid->GetWallNeighbors(glm::vec3(i,j,k), 
 																glm::vec3(2,1,2));
 							for(unsigned int n=0; n<neighbors.size(); n++){
 								particle* p = neighbors[n];
@@ -205,7 +205,7 @@ void splatParticlesToMACGrid(particlegrid* sgrid, std::vector<particle*>& partic
 							if(sumw>0){
 								uysum = sumy/sumw;
 							}
-							mgrid->u_y->setCell(i,j,k,uysum);
+							mgrid->u_y->SetCell(i,j,k,uysum);
 						}
 						neighbors.clear();
 
@@ -214,7 +214,7 @@ void splatParticlesToMACGrid(particlegrid* sgrid, std::vector<particle*>& partic
 							glm::vec3 pz = glm::vec3(i+0.5f, j+0.5f, k);
 							float sumw = 0.0f;
 							float sumz = 0.0f;
-							neighbors = sgrid->getWallNeighbors(glm::vec3(i,j,k), 
+							neighbors = sgrid->GetWallNeighbors(glm::vec3(i,j,k), 
 																glm::vec3(2,2,1));
 							for(unsigned int n=0; n<neighbors.size(); n++){
 								particle* p = neighbors[n];
@@ -233,7 +233,7 @@ void splatParticlesToMACGrid(particlegrid* sgrid, std::vector<particle*>& partic
 							if(sumw>0){
 								uzsum = sumz/sumw;
 							}
-							mgrid->u_z->setCell(i,j,k,uzsum);
+							mgrid->u_z->SetCell(i,j,k,uzsum);
 						}
 						neighbors.clear();
 					}

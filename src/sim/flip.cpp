@@ -12,10 +12,10 @@
 
 namespace fluidCore{
 
-flipsim::flipsim(const glm::vec3& maxres, sceneCore::scene* s, const float& density, 
+flipsim::flipsim(const glm::vec3& maxres, sceneCore::Scene* s, const float& density, 
 				 const bool& verbose){
 	dimensions = maxres;	
-	pgrid = new particlegrid(maxres);
+	pgrid = new ParticleGrid(maxres);
 	mgrid = createMacgrid(maxres);
 	mgrid_previous = createMacgrid(maxres);
 	max_density = 0.0f;
@@ -57,7 +57,7 @@ void flipsim::init(){
 			}
 		}
 	}
-	pgrid->sort(particles);
+	pgrid->Sort(particles);
 	max_density = 1.0f;
 	computeDensity(); 
 	max_density = 0.0f;
@@ -69,12 +69,12 @@ void flipsim::init(){
 	}
 	particles.clear();
 
-	scene->buildLevelSets(frame);
+	scene->BuildLevelSets(frame);
 
 	//Generate particles and sort
-	scene->generateParticles(particles, dimensions, density, pgrid, 0);
-	pgrid->sort(particles);
-	pgrid->markCellTypes(particles, mgrid.A, density);
+	scene->GenerateParticles(particles, dimensions, density, pgrid, 0);
+	pgrid->Sort(particles);
+	pgrid->MarkCellTypes(particles, mgrid.A, density);
 
 	//Remove fluid particles that are stuck in walls
 	for(std::vector<particle *>::iterator iter=particles.begin(); 
@@ -87,7 +87,7 @@ void flipsim::init(){
 		unsigned int i = glm::min(maxd-1,p.p.x*maxd);
 		unsigned int j = glm::min(maxd-1,p.p.y*maxd);
 		unsigned int k = glm::min(maxd-1,p.p.z*maxd);
-		if( mgrid.A->getCell(i,j,k) == SOLID ) {
+		if( mgrid.A->GetCell(i,j,k) == SOLID ) {
 			delete *iter;
 			iter = particles.erase(iter);
 		} else {
@@ -100,14 +100,14 @@ void flipsim::step(bool saveVDB, bool saveOBJ, bool savePARTIO){
 	frame++;	
 	std::cout << "Simulating Step: " << frame << "..." << std::endl;
 	
-	scene->buildLevelSets(frame);
-	scene->generateParticles(particles, dimensions, density, pgrid, frame);
+	scene->BuildLevelSets(frame);
+	scene->GenerateParticles(particles, dimensions, density, pgrid, frame);
 
-	pgrid->sort(particles);
+	pgrid->Sort(particles);
 	computeDensity();
 	applyExternalForces(); 
 	splatParticlesToMACGrid(pgrid, particles, &mgrid);
-	pgrid->markCellTypes(particles, mgrid.A, density);
+	pgrid->MarkCellTypes(particles, mgrid.A, density);
 	storePreviousGrid();
 	enforceBoundaryVelocity(&mgrid);
 	project();
@@ -135,7 +135,7 @@ void flipsim::step(bool saveVDB, bool saveOBJ, bool savePARTIO){
 				if(t.x<0 || t.y<0 || t.z<0){
 					particles[p]->invalid = true;
 				}
-				if(mgrid.A->getCell(t)==SOLID){
+				if(mgrid.A->GetCell(t)==SOLID){
 					particles[p]->invalid = true;
 				}
 			}
@@ -165,7 +165,7 @@ void flipsim::step(bool saveVDB, bool saveOBJ, bool savePARTIO){
 		}
 	}
 
-	scene->projectPointsToSolidSurface(stuckPositions);
+	scene->ProjectPointsToSolidSurface(stuckPositions);
 
 	particlecount = stuckPositions.size();
 	for(unsigned int p=0; p<particlecount; p++){
@@ -178,7 +178,7 @@ void flipsim::step(bool saveVDB, bool saveOBJ, bool savePARTIO){
 	}
 
 	if(saveVDB || saveOBJ || savePARTIO){
-		scene->exportParticles(particles, maxd, frame, saveVDB, saveOBJ, savePARTIO);
+		scene->ExportParticles(particles, maxd, frame, saveVDB, saveOBJ, savePARTIO);
 	}
 }
 
@@ -199,7 +199,7 @@ void flipsim::advectParticles(){
 			}
 		}
 	);
-	pgrid->sort(particles); //sort
+	pgrid->Sort(particles); //sort
 
 	//apply constraints for outer walls of sim
 	tbb::parallel_for(tbb::blocked_range<unsigned int>(0,particleCount),
@@ -216,7 +216,7 @@ void flipsim::advectParticles(){
 					unsigned int i = glm::min(x-1.0f,p->p.x*maxd);
 					unsigned int j = glm::min(y-1.0f,p->p.y*maxd);
 					unsigned int k = glm::min(z-1.0f,p->p.z*maxd);			
-					std::vector<particle*> neighbors = pgrid->getCellNeighbors(glm::vec3(i,j,k), 
+					std::vector<particle*> neighbors = pgrid->GetCellNeighbors(glm::vec3(i,j,k), 
 																			   glm::vec3(1));
 					for(int p1=0; p1<neighbors.size(); p1++){
 						particle* np = neighbors[p1];
@@ -313,7 +313,7 @@ void flipsim::storePreviousGrid(){
 			for(unsigned int i=r.begin(); i!=r.end(); ++i){	
 			  	for(unsigned int j = 0; j < y; ++j){ 
 			    	for(unsigned int k = 0; k < z; ++k){
-			    		mgrid_previous.u_x->setCell(i,j,k,mgrid.u_x->getCell(i,j,k));
+			    		mgrid_previous.u_x->SetCell(i,j,k,mgrid.u_x->GetCell(i,j,k));
 			    	}
 			    }
 			}
@@ -325,7 +325,7 @@ void flipsim::storePreviousGrid(){
 			for(unsigned int i=r.begin(); i!=r.end(); ++i){	
 			  	for(unsigned int j = 0; j < y+1; ++j){ 
 			    	for(unsigned int k = 0; k < z; ++k){
-			    		mgrid_previous.u_y->setCell(i,j,k,mgrid.u_y->getCell(i,j,k));
+			    		mgrid_previous.u_y->SetCell(i,j,k,mgrid.u_y->GetCell(i,j,k));
 			    	}
 			    }
 			}
@@ -337,7 +337,7 @@ void flipsim::storePreviousGrid(){
 			for(unsigned int i=r.begin(); i!=r.end(); ++i){	
 			  	for(unsigned int j = 0; j < y; ++j){ 
 			    	for(unsigned int k = 0; k < z+1; ++k){
-			    		mgrid_previous.u_z->setCell(i,j,k,mgrid.u_z->getCell(i,j,k));
+			    		mgrid_previous.u_z->SetCell(i,j,k,mgrid.u_z->GetCell(i,j,k));
 			    	}
 			    }
 			}
@@ -354,9 +354,9 @@ void flipsim::subtractPreviousGrid(){
 			for(unsigned int i=r.begin(); i!=r.end(); ++i){	
 			  	for(unsigned int j = 0; j < y; ++j){ 
 			    	for(unsigned int k = 0; k < z; ++k){
-			    		float subx = mgrid.u_x->getCell(i,j,k) - 
-			    					 mgrid_previous.u_x->getCell(i,j,k);
-			    		mgrid_previous.u_x->setCell(i,j,k,subx);
+			    		float subx = mgrid.u_x->GetCell(i,j,k) - 
+			    					 mgrid_previous.u_x->GetCell(i,j,k);
+			    		mgrid_previous.u_x->SetCell(i,j,k,subx);
 			    	}
 			    }
 			}
@@ -368,9 +368,9 @@ void flipsim::subtractPreviousGrid(){
 			for(unsigned int i=r.begin(); i!=r.end(); ++i){	
 			  	for(unsigned int j = 0; j < y+1; ++j){ 
 			    	for(unsigned int k = 0; k < z; ++k){
-			    		float suby = mgrid.u_y->getCell(i,j,k) - 
-			    					 mgrid_previous.u_y->getCell(i,j,k);
-			    		mgrid_previous.u_y->setCell(i,j,k,suby);
+			    		float suby = mgrid.u_y->GetCell(i,j,k) - 
+			    					 mgrid_previous.u_y->GetCell(i,j,k);
+			    		mgrid_previous.u_y->SetCell(i,j,k,suby);
 			    	}
 			    }
 			}
@@ -382,9 +382,9 @@ void flipsim::subtractPreviousGrid(){
 			for(unsigned int i=r.begin(); i!=r.end(); ++i){		
 			  	for(unsigned int j = 0; j < y; ++j){ 
 			    	for(unsigned int k = 0; k < z+1; ++k){
-			    		float subz = mgrid.u_z->getCell(i,j,k) - 
-			    					 mgrid_previous.u_z->getCell(i,j,k);
-			    		mgrid_previous.u_z->setCell(i,j,k,subz);
+			    		float subz = mgrid.u_z->GetCell(i,j,k) - 
+			    					 mgrid_previous.u_z->GetCell(i,j,k);
+			    		mgrid_previous.u_z->SetCell(i,j,k,subz);
 			    	}
 			    }
 			}
@@ -405,14 +405,14 @@ void flipsim::project(){
 			for(unsigned int i=r.begin(); i!=r.end(); ++i){		
 				for(unsigned int j = 0; j < y; ++j){
 					for(unsigned int k = 0; k < z; ++k){
-						float divergence = (mgrid.u_x->getCell(i+1, j, k) - 
-											mgrid.u_x->getCell(i, j, k) + 
-										    mgrid.u_y->getCell(i, j+1, k) - 
-										    mgrid.u_y->getCell(i, j, k) +
-										    mgrid.u_z->getCell(i, j, k+1) - 
-										    mgrid.u_z->getCell(i, j, k)
+						float divergence = (mgrid.u_x->GetCell(i+1, j, k) - 
+											mgrid.u_x->GetCell(i, j, k) + 
+										    mgrid.u_y->GetCell(i, j+1, k) - 
+										    mgrid.u_y->GetCell(i, j, k) +
+										    mgrid.u_z->GetCell(i, j, k+1) - 
+										    mgrid.u_z->GetCell(i, j, k)
 										    ) / h;
-						mgrid.D->setCell(i,j,k,divergence);
+						mgrid.D->SetCell(i,j,k,divergence);
 					}
 				}
 			}
@@ -420,9 +420,9 @@ void flipsim::project(){
 	);
 
 	//compute internal level set for liquid surface
-	pgrid->buildSDF(mgrid, density);
+	pgrid->BuildSDF(mgrid, density);
 	
-	solve(mgrid, subcell, verbose);
+	Solve(mgrid, subcell, verbose);
 
 	if(verbose){
 		std::cout << " " << std::endl; //TODO: no more stupid formatting hacks like this to std::out
@@ -436,11 +436,11 @@ void flipsim::extrapolateVelocity(){
 	unsigned int x = (unsigned int)dimensions.x; unsigned int y = (unsigned int)dimensions.y; 
 	unsigned int z = (unsigned int)dimensions.z;
 
-	grid<int>** mark = new grid<int>*[3];
-	grid<int>** wallmark = new grid<int>*[3];
+	Grid<int>** mark = new Grid<int>*[3];
+	Grid<int>** wallmark = new Grid<int>*[3];
 	for(unsigned int i=0; i<3; i++){
-		mark[i] = new grid<int>(dimensions, 0);
-		wallmark[i] = new grid<int>(dimensions, 0);
+		mark[i] = new Grid<int>(dimensions, 0);
+		wallmark[i] = new Grid<int>(dimensions, 0);
 	}
 
 	//initalize temp grids with values
@@ -450,10 +450,10 @@ void flipsim::extrapolateVelocity(){
 			for(unsigned int i=r.begin(); i!=r.end(); ++i){	
 			  	for(unsigned int j = 0; j < y; ++j){ 
 			    	for(unsigned int k = 0; k < z; ++k){
-						mark[0]->setCell(i,j,k, (i>0 && mgrid.A->getCell(i-1,j,k)==FLUID) || 
-											    (i<x && mgrid.A->getCell(i,j,k)==FLUID));
-						wallmark[0]->setCell(i,j,k, (i<=0 || mgrid.A->getCell(i-1,j,k)==SOLID) && 
-												    (i>=x || mgrid.A->getCell(i,j,k)==SOLID));
+						mark[0]->SetCell(i,j,k, (i>0 && mgrid.A->GetCell(i-1,j,k)==FLUID) || 
+											    (i<x && mgrid.A->GetCell(i,j,k)==FLUID));
+						wallmark[0]->SetCell(i,j,k, (i<=0 || mgrid.A->GetCell(i-1,j,k)==SOLID) && 
+												    (i>=x || mgrid.A->GetCell(i,j,k)==SOLID));
 			    	}
 			    }
 			}
@@ -465,10 +465,10 @@ void flipsim::extrapolateVelocity(){
 			for(unsigned int i=r.begin(); i!=r.end(); ++i){		
 			  	for(unsigned int j = 0; j < y+1; ++j){ 
 			    	for(unsigned int k = 0; k < z; ++k){
-						mark[1]->setCell(i,j,k, (j>0 && mgrid.A->getCell(i,j-1,k)==FLUID) || 
-											    (j<y && mgrid.A->getCell(i,j,k)==FLUID));
-						wallmark[1]->setCell(i,j,k, (j<=0 || mgrid.A->getCell(i,j-1,k)==SOLID) && 
-												    (j>=y || mgrid.A->getCell(i,j,k)==SOLID));
+						mark[1]->SetCell(i,j,k, (j>0 && mgrid.A->GetCell(i,j-1,k)==FLUID) || 
+											    (j<y && mgrid.A->GetCell(i,j,k)==FLUID));
+						wallmark[1]->SetCell(i,j,k, (j<=0 || mgrid.A->GetCell(i,j-1,k)==SOLID) && 
+												    (j>=y || mgrid.A->GetCell(i,j,k)==SOLID));
 			    	}
 			    }
 			}
@@ -480,10 +480,10 @@ void flipsim::extrapolateVelocity(){
 			for(unsigned int i=r.begin(); i!=r.end(); ++i){		
 			  	for(unsigned int j = 0; j < y; ++j){ 
 			    	for(unsigned int k = 0; k < z+1; ++k){
-						mark[2]->setCell(i,j,k, (k>0 && mgrid.A->getCell(i,j,k-1)==FLUID) || 
-											    (k<z && mgrid.A->getCell(i,j,k)==FLUID));
-						wallmark[2]->setCell(i,j,k, (k<=0 || mgrid.A->getCell(i,j,k-1)==SOLID) && 
-												    (k>=z || mgrid.A->getCell(i,j,k)==SOLID));
+						mark[2]->SetCell(i,j,k, (k>0 && mgrid.A->GetCell(i,j,k-1)==FLUID) || 
+											    (k<z && mgrid.A->GetCell(i,j,k)==FLUID));
+						wallmark[2]->SetCell(i,j,k, (k<=0 || mgrid.A->GetCell(i,j,k-1)==SOLID) && 
+												    (k>=z || mgrid.A->GetCell(i,j,k)==SOLID));
 			    	}
 			    }
 			}
@@ -500,7 +500,7 @@ void flipsim::extrapolateVelocity(){
 							if(n!=0 && i>x-1){ continue; };
 							if(n!=1 && j>y-1){ continue; };
 							if(n!=2 && k>z-1){ continue; };
-							if(!mark[n]->getCell(i,j,k) && wallmark[n]->getCell(i,j,k)){
+							if(!mark[n]->GetCell(i,j,k) && wallmark[n]->GetCell(i,j,k)){
 								unsigned int wsum = 0;
 								float sum = 0.0f;
 								glm::vec3 q[6] = { glm::vec3(i-1,j,k), glm::vec3(i+1,j,k), 
@@ -509,16 +509,16 @@ void flipsim::extrapolateVelocity(){
 								for(unsigned int qk=0; qk<6; ++qk){
 									if(q[qk][0]>=0 && q[qk][0]<x+(n==0) && q[qk][1]>=0 && 
 									   q[qk][1]<y+(n==1) && q[qk][2]>=0 && q[qk][2]<z+(n==2) ) {
-										if(mark[n]->getCell(q[qk][0],q[qk][1],q[qk][2])){
+										if(mark[n]->GetCell(q[qk][0],q[qk][1],q[qk][2])){
 											wsum ++;
 											if(n==0){
-												sum += mgrid.u_x->getCell(q[qk][0],q[qk][1],
+												sum += mgrid.u_x->GetCell(q[qk][0],q[qk][1],
 																		  q[qk][2]);
 											}else if(n==1){
-												sum += mgrid.u_y->getCell(q[qk][0],q[qk][1],
+												sum += mgrid.u_y->GetCell(q[qk][0],q[qk][1],
 																		  q[qk][2]);
 											}else if(n==2){
-												sum += mgrid.u_z->getCell(q[qk][0],q[qk][1],
+												sum += mgrid.u_z->GetCell(q[qk][0],q[qk][1],
 																		  q[qk][2]);
 											}
 										}
@@ -526,11 +526,11 @@ void flipsim::extrapolateVelocity(){
 								}
 								if(wsum){
 									if(n==0){
-										mgrid.u_x->setCell(i,j,k,sum/wsum);
+										mgrid.u_x->SetCell(i,j,k,sum/wsum);
 									}else if(n==1){
-										mgrid.u_y->setCell(i,j,k,sum/wsum);
+										mgrid.u_y->SetCell(i,j,k,sum/wsum);
 									}else if(n==2){
-										mgrid.u_z->setCell(i,j,k,sum/wsum);
+										mgrid.u_z->SetCell(i,j,k,sum/wsum);
 									}
 								}
 							}
@@ -562,28 +562,28 @@ void flipsim::subtractPressureGradient(){
 			  	for(unsigned int j = 0; j < y; ++j){ 
 			    	for(unsigned int k = 0; k < z; ++k){
 			    		if(i>0 && i<x){
-							float pf = mgrid.P->getCell(i,j,k);
-							float pb = mgrid.P->getCell(i-1,j,k);
-							if(subcell && mgrid.L->getCell(i,j,k) * 
-							   mgrid.L->getCell(i-1,j,k) < 0.0f){
-								if(mgrid.L->getCell(i,j,k)<0.0f){
-									pf = mgrid.P->getCell(i,j,k);
+							float pf = mgrid.P->GetCell(i,j,k);
+							float pb = mgrid.P->GetCell(i-1,j,k);
+							if(subcell && mgrid.L->GetCell(i,j,k) * 
+							   mgrid.L->GetCell(i-1,j,k) < 0.0f){
+								if(mgrid.L->GetCell(i,j,k)<0.0f){
+									pf = mgrid.P->GetCell(i,j,k);
 								}else{
-									pf = mgrid.L->getCell(i,j,k)/
-										 glm::min(1.0e-3f,mgrid.L->getCell(i-1,j,k))*
-										 		  mgrid.P->getCell(i-1,j,k);
+									pf = mgrid.L->GetCell(i,j,k)/
+										 glm::min(1.0e-3f,mgrid.L->GetCell(i-1,j,k))*
+										 		  mgrid.P->GetCell(i-1,j,k);
 								}
-								if(mgrid.L->getCell(i-1,j,k)<0.0f){
-									pb = mgrid.P->getCell(i-1,j,k);
+								if(mgrid.L->GetCell(i-1,j,k)<0.0f){
+									pb = mgrid.P->GetCell(i-1,j,k);
 								}else{
-									pb = mgrid.L->getCell(i-1,j,k)/
-										 glm::min(1.0e-6f,mgrid.L->getCell(i,j,k))*
-										 		  mgrid.P->getCell(i,j,k);
+									pb = mgrid.L->GetCell(i-1,j,k)/
+										 glm::min(1.0e-6f,mgrid.L->GetCell(i,j,k))*
+										 		  mgrid.P->GetCell(i,j,k);
 								}				
 							}
-							float xval = mgrid.u_x->getCell(i,j,k);
+							float xval = mgrid.u_x->GetCell(i,j,k);
 							xval -= (pf-pb)/h;
-							mgrid.u_x->setCell(i,j,k,xval);
+							mgrid.u_x->SetCell(i,j,k,xval);
 						}
 			    	}
 			    }
@@ -597,28 +597,28 @@ void flipsim::subtractPressureGradient(){
 			  	for(unsigned int j = 0; j < y+1; ++j){
 			    	for(unsigned int k = 0; k < z; ++k){
 			    		if(j>0 && j<y){
-							float pf = mgrid.P->getCell(i,j,k);
-							float pb = mgrid.P->getCell(i,j-1,k);   
-							if(subcell && mgrid.L->getCell(i,j,k) * 
-							   mgrid.L->getCell(i,j-1,k) < 0.0f){
-								if(mgrid.L->getCell(i,j,k)<0.0f){
-									pf = mgrid.P->getCell(i,j,k);
+							float pf = mgrid.P->GetCell(i,j,k);
+							float pb = mgrid.P->GetCell(i,j-1,k);   
+							if(subcell && mgrid.L->GetCell(i,j,k) * 
+							   mgrid.L->GetCell(i,j-1,k) < 0.0f){
+								if(mgrid.L->GetCell(i,j,k)<0.0f){
+									pf = mgrid.P->GetCell(i,j,k);
 								}else{
-									pf = mgrid.L->getCell(i,j,k)/
-										 glm::min(1.0e-3f,mgrid.L->getCell(i,j-1,k))*
-										 		  mgrid.P->getCell(i,j-1,k);
+									pf = mgrid.L->GetCell(i,j,k)/
+										 glm::min(1.0e-3f,mgrid.L->GetCell(i,j-1,k))*
+										 		  mgrid.P->GetCell(i,j-1,k);
 								}
-								if(mgrid.L->getCell(i,j-1,k)<0.0f){
-									pb = mgrid.P->getCell(i,j-1,k);
+								if(mgrid.L->GetCell(i,j-1,k)<0.0f){
+									pb = mgrid.P->GetCell(i,j-1,k);
 								}else{
-									pb = mgrid.L->getCell(i,j-1,k)/
-										 glm::min(1.0e-6f,mgrid.L->getCell(i,j,k))*
-										 		  mgrid.P->getCell(i,j,k);
+									pb = mgrid.L->GetCell(i,j-1,k)/
+										 glm::min(1.0e-6f,mgrid.L->GetCell(i,j,k))*
+										 		  mgrid.P->GetCell(i,j,k);
 								}	
 							}
-							float yval = mgrid.u_y->getCell(i,j,k);
+							float yval = mgrid.u_y->GetCell(i,j,k);
 							yval -= (pf-pb)/h;
-							mgrid.u_y->setCell(i,j,k,yval);
+							mgrid.u_y->SetCell(i,j,k,yval);
 			    		} 		
 			    	} 
 			    }
@@ -632,28 +632,28 @@ void flipsim::subtractPressureGradient(){
 			  	for(unsigned int j = 0; j < y; ++j){
 			    	for(unsigned int k = 0; k < z+1; ++k){
 			    		if(k>0 && k<z){
-							float pf = mgrid.P->getCell(i,j,k);
-							float pb = mgrid.P->getCell(i,j,k-1);
-							if(subcell && mgrid.L->getCell(i,j,k) * 
-							   mgrid.L->getCell(i,j,k-1) < 0.0f){
-								if(mgrid.L->getCell(i,j,k)<0.0f){
-									pf = mgrid.P->getCell(i,j,k);
+							float pf = mgrid.P->GetCell(i,j,k);
+							float pb = mgrid.P->GetCell(i,j,k-1);
+							if(subcell && mgrid.L->GetCell(i,j,k) * 
+							   mgrid.L->GetCell(i,j,k-1) < 0.0f){
+								if(mgrid.L->GetCell(i,j,k)<0.0f){
+									pf = mgrid.P->GetCell(i,j,k);
 								}else{
-									pf = mgrid.L->getCell(i,j,k)/
-										 glm::min(1.0e-3f,mgrid.L->getCell(i,j,k-1))*
-										 		  mgrid.P->getCell(i,j,k-1);
+									pf = mgrid.L->GetCell(i,j,k)/
+										 glm::min(1.0e-3f,mgrid.L->GetCell(i,j,k-1))*
+										 		  mgrid.P->GetCell(i,j,k-1);
 								}
-								if(mgrid.L->getCell(i,j,k-1)<0.0f){
-									pb = mgrid.P->getCell(i,j,k-1);
+								if(mgrid.L->GetCell(i,j,k-1)<0.0f){
+									pb = mgrid.P->GetCell(i,j,k-1);
 								}else{
-									pb = mgrid.L->getCell(i,j,k-1)/
-										 glm::min(1.0e-6f,mgrid.L->getCell(i,j,k))*
-										 		  mgrid.P->getCell(i,j,k);
+									pb = mgrid.L->GetCell(i,j,k-1)/
+										 glm::min(1.0e-6f,mgrid.L->GetCell(i,j,k))*
+										 		  mgrid.P->GetCell(i,j,k);
 								}	
 							}
-							float zval = mgrid.u_z->getCell(i,j,k);
+							float zval = mgrid.u_z->GetCell(i,j,k);
 							zval -= (pf-pb)/h;
-							mgrid.u_z->setCell(i,j,k,zval);
+							mgrid.u_z->SetCell(i,j,k,zval);
 			    		} 		
 			    	} 
 			    }
@@ -692,7 +692,7 @@ void flipsim::computeDensity(){
 					position.y = (int)glm::max(0.0f,glm::min((int)maxd-1.0f,(int)maxd*position.y));
 					position.z = (int)glm::max(0.0f,glm::min((int)maxd-1.0f,(int)maxd*position.z));
 					std::vector<particle *> neighbors;
-					neighbors = pgrid->getCellNeighbors(position, glm::vec3(1));
+					neighbors = pgrid->GetCellNeighbors(position, glm::vec3(1));
 					float weightsum = 0.0f;
 					unsigned int neighborscount = neighbors.size();
 					for(unsigned int m=0; m<neighborscount; m++){
@@ -712,8 +712,8 @@ void flipsim::computeDensity(){
 }
 
 bool flipsim::isCellFluid(const int& x, const int& y, const int& z){
-	if(scene->getLiquidLevelSet()->getCell(x,y,z)<0.0f &&
-	   scene->getSolidLevelSet()->getCell(x,y,z)>=0.0f){
+	if(scene->GetLiquidLevelSet()->getCell(x,y,z)<0.0f &&
+	   scene->GetSolidLevelSet()->getCell(x,y,z)>=0.0f){
 		return true;
 	}else{
 		return false;
@@ -728,7 +728,7 @@ glm::vec3 flipsim::getDimensions(){
 	return dimensions;
 }
 
-sceneCore::scene* flipsim::getScene(){
+sceneCore::Scene* flipsim::getScene(){
 	return scene;	
 }
 

@@ -15,26 +15,26 @@ namespace fluidCore {
 // Class Declarations
 //====================================
 
-template <typename T> class grid{
+template <typename T> class Grid{
 	public:
 		//Initializers
-		grid(const glm::vec3& dimensions, const T& background);
-		~grid();
+		Grid(const glm::vec3& dimensions, const T& background);
+		~Grid();
 
 		//Cell accessors and setters and whatever
-		T getCell(const glm::vec3& index);
-		T getCell(const int& x, const int& y, const int& z);
+		T GetCell(const glm::vec3& index);
+		T GetCell(const int& x, const int& y, const int& z);
 
-		void setCell(const glm::vec3& index, const T& value);
-		void setCell(const int& x, const int& y, const int& z, const T& value);
+		void SetCell(const glm::vec3& index, const T& value);
+		void SetCell(const int& x, const int& y, const int& z, const T& value);
 
-		void clear();
+		void Clear();
 
 	protected:
-		T*** rawgrid;
-		T background;
+		T***		m_rawgrid;
+		T			m_background;
 
-		glm::vec3 dimensions;
+		glm::vec3	m_dimensions;
 };
 }
 

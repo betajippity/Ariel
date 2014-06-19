@@ -19,7 +19,7 @@ namespace fluidCore {
 
 class flipsim{
 	public:
-		flipsim(const glm::vec3& maxres, sceneCore::scene* scene, const float& density, 
+		flipsim(const glm::vec3& maxres, sceneCore::Scene* scene, const float& density, 
 				const bool& verbose);
 		~flipsim();
 
@@ -28,7 +28,7 @@ class flipsim{
 
 		std::vector<particle*>* getParticles();
 		glm::vec3 getDimensions();
-		sceneCore::scene* getScene();
+		sceneCore::Scene* getScene();
 
 		int frame;
 
@@ -48,7 +48,7 @@ class flipsim{
 		std::vector<particle*> particles;
 		macgrid mgrid;
 		macgrid mgrid_previous;
-		particlegrid* pgrid;
+		ParticleGrid* pgrid;
 
 		int subcell;
 		float density;
@@ -56,7 +56,7 @@ class flipsim{
 		float densitythreshold;
 		float picflipratio;
 
-		sceneCore::scene* scene;
+		sceneCore::Scene* scene;
 
 		float stepsize;
 

@@ -19,60 +19,60 @@ namespace sceneCore {
 // Class Declarations
 //====================================
 
-class scene {
+class Scene {
 	public:
-		scene();
-		~scene();
+		Scene();
+		~Scene();
 
-		void addSolidObject(objCore::Obj* object, int startFrame, int endFrame);
-		void addLiquidObject(objCore::Obj* object, int startFrame, int endFrame);
-		void generateParticles(std::vector<fluidCore::particle*>& particles, 
+		void AddSolidObject(objCore::Obj* object, const int& startFrame, const int& endFrame);
+		void AddLiquidObject(objCore::Obj* object, const int& startFrame, const int& endFrame);
+		void GenerateParticles(std::vector<fluidCore::particle*>& particles, 
 							   const glm::vec3& dimensions, const float& density, 
-							   fluidCore::particlegrid* pgrid, const int& frame);
+							   fluidCore::ParticleGrid* pgrid, const int& frame);
 
-		std::vector<objCore::Obj*>& getSolidObjects();
-		std::vector<objCore::Obj*>& getLiquidObjects();
+		std::vector<objCore::Obj*>& GetSolidObjects();
+		std::vector<objCore::Obj*>& GetLiquidObjects();
 
-		fluidCore::levelset* getSolidLevelSet();
-		fluidCore::levelset* getLiquidLevelSet();
+		fluidCore::levelset* GetSolidLevelSet();
+		fluidCore::levelset* GetLiquidLevelSet();
 
-		void buildLevelSets(const int& frame);
-		void setPaths(const std::string& imagePath, const std::string& meshPath, 
+		void BuildLevelSets(const int& frame);
+		void SetPaths(const std::string& imagePath, const std::string& meshPath, 
 					  const std::string& vdbPath, const std::string& partioPath);
 
-		glm::vec2 getSolidFrameRange(const int& index);
-		glm::vec2 getLiquidFrameRange(const int& index);
+		glm::vec2 GetSolidFrameRange(const int& index);
+		glm::vec2 GetLiquidFrameRange(const int& index);
 
-		void projectPointsToSolidSurface(std::vector<glm::vec3>& points);
+		void ProjectPointsToSolidSurface(std::vector<glm::vec3>& points);
 
-		void exportParticles(std::vector<fluidCore::particle*> particles, const float& maxd, 
+		void ExportParticles(std::vector<fluidCore::particle*> particles, const float& maxd, 
 							 const int& frame, const bool& VDB, const bool& OBJ, 
 							 const bool& PARTIO);
 
-		std::string imagePath;
-		std::string meshPath;
-		std::string vdbPath;
-		std::string partioPath;
+		std::string						m_imagePath;
+		std::string						m_meshPath;
+		std::string						m_vdbPath;
+		std::string						m_partioPath;
 
 	private:
-		void addParticle(const glm::vec3& pos, const geomtype& type, const float& thickness, 
+		void AddParticle(const glm::vec3& pos, const geomtype& type, const float& thickness, 
 						 const float& scale, std::vector<fluidCore::particle*>& particles, 
 						 const int& frame);
 
-		std::vector<objCore::Obj*> solidObjects;
-		std::vector<objCore::Obj*> liquidObjects;
+		std::vector<objCore::Obj*>		m_solidObjects;
+		std::vector<objCore::Obj*>		m_liquidObjects;
 
-		fluidCore::levelset* solidLevelSet;
-		fluidCore::levelset* liquidLevelSet;
+		fluidCore::levelset*			m_solidLevelSet;
+		fluidCore::levelset*			m_liquidLevelSet;
 
-		fluidCore::levelset* permaSolidLevelSet;
-		fluidCore::levelset* permaLiquidLevelSet;
+		fluidCore::levelset*			m_permaSolidLevelSet;
+		fluidCore::levelset*			m_permaLiquidLevelSet;
 
-		bool permaLiquidSDFActive;
-		bool permaSolidSDFActive;
+		bool							m_permaLiquidSDFActive;
+		bool							m_permaSolidSDFActive;
 
-		std::vector<glm::vec2> solidObjectFrameRanges;
-		std::vector<glm::vec2> liquidObjectFrameRanges;
+		std::vector<glm::vec2>			m_solidObjectFrameRanges;
+		std::vector<glm::vec2>			m_liquidObjectFrameRanges;
 };
 }
 

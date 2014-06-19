@@ -17,29 +17,32 @@ namespace fluidCore {
 // Class Declarations
 //====================================
 
-class particlegrid{
+class ParticleGrid{
 	public:
 		//Initializers
-		particlegrid(const glm::vec3& dimensions);
-		particlegrid(const int& x, const int& y, const int& z);
-		~particlegrid();
+		ParticleGrid(const glm::vec3& dimensions);
+		ParticleGrid(const int& x, const int& y, const int& z);
+		~ParticleGrid();
 
 		//Sorting tools
-		void sort(std::vector<particle*>& particles);
-		std::vector<particle*> getCellNeighbors(glm::vec3 index, glm::vec3 numberOfNeighbors);
-		std::vector<particle*> getWallNeighbors(glm::vec3 index, glm::vec3 numberOfNeighbors);
+		void Sort(std::vector<particle*>& particles);
+		std::vector<particle*> GetCellNeighbors(const glm::vec3& index, 
+												const glm::vec3& numberOfNeighbors);
+		std::vector<particle*> GetWallNeighbors(const glm::vec3& index, 
+												const glm::vec3& numberOfNeighbors);
 
-		void markCellTypes(std::vector<particle*>& particles, grid<int>* A, float density);
-		float cellSDF(int i, int j, int k, float density, geomtype type);
+		void MarkCellTypes(std::vector<particle*>& particles, Grid<int>* A, const float& density);
+		float CellSDF(const int& i, const int& j, const int& k, const float& density, 
+					  const geomtype& type);
 
-		void buildSDF(macgrid& mgrid, float density);
+		void BuildSDF(macgrid& mgrid, const float& density);
 
 	private:
-		void init(const int& x, const int& y, const int& z);
+		void Init(const int& x, const int& y, const int& z);
 
-		glm::vec3 m_dimensions;
-		grid<int>* m_grid;
-		std::vector< std::vector<particle*> > m_cells;
+		glm::vec3									m_dimensions;
+		Grid<int>*									m_grid;
+		std::vector< std::vector<particle*> >		m_cells;
 		
 };
 }

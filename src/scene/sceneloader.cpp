@@ -8,27 +8,27 @@
 
 namespace sceneCore{
 
-sceneloader::sceneloader(std::string filename){
+SceneLoader::SceneLoader(const std::string& filename){
 	std::cout << "Loading scene from " << filename << "..." << std::endl;
 
-	camera_rotate = glm::vec3(0);
-	camera_translate = glm::vec3(0);
-	camera_lookat = 0.0f;
-	camera_resolution = glm::vec2(1024);
-	camera_fov = glm::vec2(45.0f);
+	m_cameraRotate = glm::vec3(0);
+	m_cameraTranslate = glm::vec3(0);
+	m_cameraLookat = 0.0f;
+	m_cameraResolution = glm::vec2(1024);
+	m_cameraFov = glm::vec2(45.0f);
 
 	//grab relative path
 	std::vector<std::string> pathTokens = utilityCore::tokenizeString(filename, "/");
     if(std::strcmp(filename.substr(0,1).c_str(), "/")==0){
-        relativePath = "/";
+        m_relativePath = "/";
     }else{
-        relativePath = "";
+        m_relativePath = "";
     }
     for(int i=0; i<pathTokens.size()-1; i++){
-        relativePath = relativePath + pathTokens[i] + "/";
+        m_relativePath = m_relativePath + pathTokens[i] + "/";
     }
 
-	s = new scene();
+	m_s = new Scene();
 
 	//do json stuff
 	std::string jsonInput = utilityCore::readFileAsString(filename);
@@ -41,113 +41,113 @@ sceneloader::sceneloader(std::string filename){
 		std::cout << "Error: Failed to parse JSON" << std::endl 
 				  << reader.getFormatedErrorMessages() << std::endl;
 	}else{
-		loadSettings(root["settings"][0]);
-		loadSim(root["sim"]);
+		LoadSettings(root["settings"][0]);
+		LoadSim(root["sim"]);
 		if(root.isMember("camera")){
-			loadCamera(root["camera"][0]);
+			LoadCamera(root["camera"][0]);
 		}
 	}
 
-	s->setPaths(imagePath, meshPath, vdbPath, partioPath);
+	m_s->SetPaths(m_imagePath, m_meshPath, m_vdbPath, m_partioPath);
 
 	std::cout << "Loaded scene from " << filename << ".\n" << std::endl;
 }
 
-sceneloader::~sceneloader(){
+SceneLoader::~SceneLoader(){
 
 }
 
-scene* sceneloader::getScene(){
-	return s;
+Scene* SceneLoader::GetScene(){
+	return m_s;
 }
 
-float sceneloader::getDensity(){
-	return density;
+float SceneLoader::GetDensity(){
+	return m_density;
 }
 
-glm::vec3 sceneloader::getDimensions(){
-	return dimensions;
+glm::vec3 SceneLoader::GetDimensions(){
+	return m_dimensions;
 }
 
-void sceneloader::loadSettings(const Json::Value& jsonsettings){
-	density = .5f;
-	dimensions = glm::vec3(32);
-	imagePath = relativePath;
-	meshPath = relativePath;
-	vdbPath = relativePath;
+void SceneLoader::LoadSettings(const Json::Value& jsonsettings){
+	m_density = .5f;
+	m_dimensions = glm::vec3(32);
+	m_imagePath = m_relativePath;
+	m_meshPath = m_relativePath;
+	m_vdbPath = m_relativePath;
 
 	if(jsonsettings.isMember("density")){
-		density = jsonsettings["density"].asFloat();
+		m_density = jsonsettings["density"].asFloat();
 	}
 	if(jsonsettings.isMember("dim_x")){
-		dimensions.x = jsonsettings["dim_x"].asInt();
+		m_dimensions.x = jsonsettings["dim_x"].asInt();
 	}
 	if(jsonsettings.isMember("dim_y")){
-		dimensions.y = jsonsettings["dim_y"].asInt();
+		m_dimensions.y = jsonsettings["dim_y"].asInt();
 	}
 	if(jsonsettings.isMember("dim_z")){
-		dimensions.z = jsonsettings["dim_z"].asInt();
+		m_dimensions.z = jsonsettings["dim_z"].asInt();
 	}
 	if(jsonsettings.isMember("image_output")){
-		imagePath = jsonsettings["image_output"].asString();
+		m_imagePath = jsonsettings["image_output"].asString();
 	}
 	if(jsonsettings.isMember("mesh_output")){
-		meshPath = jsonsettings["mesh_output"].asString();
+		m_meshPath = jsonsettings["mesh_output"].asString();
 	}
 	if(jsonsettings.isMember("vdb_output")){
-		vdbPath = jsonsettings["vdb_output"].asString();
+		m_vdbPath = jsonsettings["vdb_output"].asString();
 	}
 	if(jsonsettings.isMember("partio_output")){
-		partioPath = jsonsettings["partio_output"].asString();
+		m_partioPath = jsonsettings["partio_output"].asString();
 	}
 }
 
-void sceneloader::loadCamera(const Json::Value& jsoncamera){
+void SceneLoader::LoadCamera(const Json::Value& jsoncamera){
 	//load camera rotation
 	if(jsoncamera.isMember("rotation")){
-		camera_rotate[0] = jsoncamera["rotation"]["x"].asFloat();
-		camera_rotate[1] = jsoncamera["rotation"]["y"].asFloat();
-		camera_rotate[2] = jsoncamera["rotation"]["z"].asFloat();
+		m_cameraRotate[0] = jsoncamera["rotation"]["x"].asFloat();
+		m_cameraRotate[1] = jsoncamera["rotation"]["y"].asFloat();
+		m_cameraRotate[2] = jsoncamera["rotation"]["z"].asFloat();
 	}
 	//load camera translation
 	if(jsoncamera.isMember("translation")){
-		camera_translate[0] = jsoncamera["translation"]["x"].asFloat();
-		camera_translate[1] = jsoncamera["translation"]["y"].asFloat();
-		camera_translate[2] = jsoncamera["translation"]["z"].asFloat();
+		m_cameraTranslate[0] = jsoncamera["translation"]["x"].asFloat();
+		m_cameraTranslate[1] = jsoncamera["translation"]["y"].asFloat();
+		m_cameraTranslate[2] = jsoncamera["translation"]["z"].asFloat();
 	}
 	//load camera resolution
 	if(jsoncamera.isMember("resolution")){
-		camera_resolution[0] = jsoncamera["resolution"]["x"].asInt();
-		camera_resolution[1] = jsoncamera["resolution"]["y"].asInt();	
+		m_cameraResolution[0] = jsoncamera["resolution"]["x"].asInt();
+		m_cameraResolution[1] = jsoncamera["resolution"]["y"].asInt();	
 	}
 	//load camera lookat
 	if(jsoncamera.isMember("lookat")){
-		camera_lookat = jsoncamera["lookat"].asFloat();
+		m_cameraLookat = jsoncamera["lookat"].asFloat();
 	}
 	//load camera fov
 	if(jsoncamera.isMember("fovx")){
-		camera_fov[0] = jsoncamera["fovx"].asFloat()/2.0f;
-		float xscaled = tan(camera_fov.x*(PI/180));
-	    float yscaled = (xscaled * camera_resolution.y)/camera_resolution.x;
-	    camera_fov.y = (atan(xscaled)*180)/PI;
+		m_cameraFov[0] = jsoncamera["fovx"].asFloat()/2.0f;
+		float xscaled = tan(m_cameraFov.x*(PI/180));
+	    float yscaled = (xscaled * m_cameraResolution.y)/m_cameraResolution.x;
+	    m_cameraFov.y = (atan(xscaled)*180)/PI;
 	}
 }
 
-void sceneloader::loadSim(const Json::Value& jsonsim){
+void SceneLoader::LoadSim(const Json::Value& jsonsim){
 	int jsoncount = jsonsim.size();
 	for(int i=0; i<jsoncount; i++){
 		Json::Value object = jsonsim[i];
 		if(std::strcmp(object["shape"].asString().c_str(), "box")==0){
-			loadBox(object);
+			LoadBox(object);
 		}else if(std::strcmp(object["shape"].asString().c_str(), "sphere")==0){
-			loadSphere(object);
+			LoadSphere(object);
 		}else if(std::strcmp(object["shape"].asString().c_str(), "obj")==0){
-			loadObj(object);
+			LoadObj(object);
 		}
 	}
 }
 
-void sceneloader::loadBox(const Json::Value& jsoncube){
+void SceneLoader::LoadBox(const Json::Value& jsoncube){
 	geomCore::Cube cubebuilder;
 	glm::vec3 point0;
 	point0.x = jsoncube["point0_x"].asFloat();
@@ -168,13 +168,13 @@ void sceneloader::loadBox(const Json::Value& jsoncube){
 	}
 
 	if(std::strcmp(jsoncube["type"].asString().c_str(), "solid")==0){
-		s->addSolidObject(cubebuilder.Tesselate(point0, point1), startFrame, endFrame);
+		m_s->AddSolidObject(cubebuilder.Tesselate(point0, point1), startFrame, endFrame);
 	}else if(std::strcmp(jsoncube["type"].asString().c_str(), "liquid")==0){
-		s->addLiquidObject(cubebuilder.Tesselate(point0, point1), startFrame, endFrame);
+		m_s->AddLiquidObject(cubebuilder.Tesselate(point0, point1), startFrame, endFrame);
 	}
 }
 
-void sceneloader::loadSphere(const Json::Value& jsonsphere){
+void SceneLoader::LoadSphere(const Json::Value& jsonsphere){
 	geomCore::Sphere spherebuilder;
 	glm::vec3 center;
 	center.x = jsonsphere["center_x"].asFloat();
@@ -193,14 +193,14 @@ void sceneloader::loadSphere(const Json::Value& jsonsphere){
 	}
 
 	if(std::strcmp(jsonsphere["type"].asString().c_str(), "solid")==0){
-		s->addSolidObject(spherebuilder.Tesselate(center, radius), startFrame, endFrame);
+		m_s->AddSolidObject(spherebuilder.Tesselate(center, radius), startFrame, endFrame);
 	}else if(std::strcmp(jsonsphere["type"].asString().c_str(), "liquid")==0){
-		s->addLiquidObject(spherebuilder.Tesselate(center, radius), startFrame, endFrame);
+		m_s->AddLiquidObject(spherebuilder.Tesselate(center, radius), startFrame, endFrame);
 	}
 }
 
-void sceneloader::loadObj(const Json::Value& jsonobj){
-	std::string objpath = relativePath + jsonobj["file"].asString();
+void SceneLoader::LoadObj(const Json::Value& jsonobj){
+	std::string objpath = m_relativePath + jsonobj["file"].asString();
 	objCore::Obj* obj = new objCore::Obj(objpath);
 
 	glm::vec3 scale(1.0f,1.0f,1.0f);
@@ -230,9 +230,9 @@ void sceneloader::loadObj(const Json::Value& jsonobj){
 	}
 
 	if(std::strcmp(jsonobj["type"].asString().c_str(), "solid")==0){
-		s->addSolidObject(obj, startFrame, endFrame);
+		m_s->AddSolidObject(obj, startFrame, endFrame);
 	}else if(std::strcmp(jsonobj["type"].asString().c_str(), "liquid")==0){
-		s->addLiquidObject(obj, startFrame, endFrame);
+		m_s->AddLiquidObject(obj, startFrame, endFrame);
 	}
 }
 }

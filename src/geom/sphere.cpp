@@ -16,7 +16,7 @@ Sphere::Sphere(){
 }
 
 //Constructor with options for presets
-Sphere::Sphere(int subdivCount){
+Sphere::Sphere(const unsigned int& subdivCount){
 	m_subdivs = subdivCount;
 }
 
@@ -179,7 +179,7 @@ objCore::Obj* Sphere::Tesselate(){
 	return mesh;
 }
 
-glm::vec3 Sphere::GetPointOnSphereByAngles(float angle1, float angle2){
+glm::vec3 Sphere::GetPointOnSphereByAngles(const float& angle1, const float& angle2){
 	float x = sin(PI*angle1)*cos(TWO_PI*angle2);
 	float y = sin(PI*angle1)*sin(TWO_PI*angle2);
 	float z = cos(PI*angle1);

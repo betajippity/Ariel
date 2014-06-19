@@ -68,9 +68,10 @@ class Viewer{
 		~Viewer();
 
 		bool Launch();
-		void Load(fluidCore::flipsim* sim, bool retina);
-		void Load(fluidCore::flipsim* sim, bool retina, glm::vec2 resolution, glm::vec3 camrotate, 
-				  glm::vec3 camtranslate, glm::vec2 camfov, float camlookat);
+		void Load(fluidCore::flipsim* sim, const bool& retina);
+		void Load(fluidCore::flipsim* sim, const bool& retina, const glm::vec2& resolution, 
+				  const glm::vec3& camrotate, const glm::vec3& camtranslate, 
+				  const glm::vec2& camfov, const float& camlookat);
 	private:
 		//Initialize stuff
 		bool Init();
@@ -83,9 +84,10 @@ class Viewer{
 		void UpdateInputs();
 
 		//VBO stuff
-		VboData CreateVBO(VboData data, float* vertices, unsigned int vertexcount, float* colors,
-                          unsigned int colorcount, GLenum type, std::string key);
-		VboData CreateVBOFromObj(objCore::Obj* o, glm::vec4 color, std::string key);
+		VboData CreateVBO(VboData& data, float* vertices, const unsigned int& vertexcount, 
+						  float* colors, const unsigned int& colorcount, const GLenum& type, 
+						  const std::string& key);
+		VboData CreateVBOFromObj(objCore::Obj* o, const glm::vec4& color, const std::string& key);
 
 		void SaveFrame();
 

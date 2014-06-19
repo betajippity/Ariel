@@ -47,14 +47,14 @@ int main(int argc, char** argv){
 		exit(EXIT_FAILURE);
 	} 
 
-	sceneCore::sceneloader* sloader = new sceneCore::sceneloader(scenefile);
+	sceneCore::SceneLoader* sloader = new sceneCore::SceneLoader(scenefile);
 
-    fluidCore::flipsim* f = new fluidCore::flipsim(sloader->getDimensions(), sloader->getScene(), 
-    											   sloader->getDensity(), verbose);
+    fluidCore::flipsim* f = new fluidCore::flipsim(sloader->GetDimensions(), sloader->GetScene(), 
+    											   sloader->GetDensity(), verbose);
 
     viewerCore::Viewer* glview = new viewerCore::Viewer();
-    glview->Load(f, retina, sloader->camera_resolution, sloader->camera_rotate, 
-    			 sloader->camera_translate, sloader->camera_fov, sloader->camera_lookat);
+    glview->Load(f, retina, sloader->m_cameraResolution, sloader->m_cameraRotate, 
+    			 sloader->m_cameraTranslate, sloader->m_cameraFov, sloader->m_cameraLookat);
     glview->Launch();
 
 }

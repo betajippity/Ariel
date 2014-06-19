@@ -27,7 +27,7 @@
 	  	for(int j = 0; j < y; j++) \
 	    	for(int k = 0; k < z+1; k++) 
 
-template <class T> T *** createGrid(int x, int y, int z){
+template <class T> T *** CreateGrid(unsigned int x, unsigned int y, unsigned int z){
 	T *** field = new T **[x];
 	for(int i=0; i<x; i++){
 		field[i] = new T*[y];
@@ -38,7 +38,7 @@ template <class T> T *** createGrid(int x, int y, int z){
 	return field;
 }
 
-template <class T> void deleteGrid(T ***ptr, int x, int y, int z){
+template <class T> void DeleteGrid(T ***ptr, unsigned int x, unsigned int y, unsigned int z){
 	for(int i=0; i<x; i++){
 		for(int j=0; j<y; j++){
 			delete [] ptr[i][j];
