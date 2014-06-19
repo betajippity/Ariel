@@ -21,8 +21,8 @@ class Cube: public Geom {
 		~Cube();
 
 		//Getters
-		objCore::objContainer* Tesselate();
-		objCore::objContainer* Tesselate(const glm::vec3& lowerCorner, const glm::vec3& upperCorner);
+		objCore::Obj* Tesselate();
+		objCore::Obj* Tesselate(const glm::vec3& lowerCorner, const glm::vec3& upperCorner);
 };
 }
 

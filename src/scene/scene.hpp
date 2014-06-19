@@ -24,14 +24,14 @@ class scene {
 		scene();
 		~scene();
 
-		void addSolidObject(objCore::objContainer* object, int startFrame, int endFrame);
-		void addLiquidObject(objCore::objContainer* object, int startFrame, int endFrame);
+		void addSolidObject(objCore::Obj* object, int startFrame, int endFrame);
+		void addLiquidObject(objCore::Obj* object, int startFrame, int endFrame);
 		void generateParticles(std::vector<fluidCore::particle*>& particles, 
 							   const glm::vec3& dimensions, const float& density, 
 							   fluidCore::particlegrid* pgrid, const int& frame);
 
-		std::vector<objCore::objContainer*>& getSolidObjects();
-		std::vector<objCore::objContainer*>& getLiquidObjects();
+		std::vector<objCore::Obj*>& getSolidObjects();
+		std::vector<objCore::Obj*>& getLiquidObjects();
 
 		fluidCore::levelset* getSolidLevelSet();
 		fluidCore::levelset* getLiquidLevelSet();
@@ -59,8 +59,8 @@ class scene {
 						 const float& scale, std::vector<fluidCore::particle*>& particles, 
 						 const int& frame);
 
-		std::vector<objCore::objContainer*> solidObjects;
-		std::vector<objCore::objContainer*> liquidObjects;
+		std::vector<objCore::Obj*> solidObjects;
+		std::vector<objCore::Obj*> liquidObjects;
 
 		fluidCore::levelset* solidLevelSet;
 		fluidCore::levelset* liquidLevelSet;

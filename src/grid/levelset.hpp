@@ -73,7 +73,7 @@ class levelset{
 		//Initializers
 		levelset();
 		// levelset(openvdb::FloatGrid::Ptr grid);
-		levelset(objCore::objContainer* mesh);
+		levelset(objCore::Obj* mesh);
 		levelset(std::vector<particle*>& particles, float maxdimension);
 		~levelset();
 

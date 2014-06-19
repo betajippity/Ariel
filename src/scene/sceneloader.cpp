@@ -175,7 +175,7 @@ void sceneloader::loadBox(const Json::Value& jsoncube){
 }
 
 void sceneloader::loadSphere(const Json::Value& jsonsphere){
-	geomCore::sphere spherebuilder;
+	geomCore::Sphere spherebuilder;
 	glm::vec3 center;
 	center.x = jsonsphere["center_x"].asFloat();
 	center.y = jsonsphere["center_y"].asFloat();
@@ -193,15 +193,15 @@ void sceneloader::loadSphere(const Json::Value& jsonsphere){
 	}
 
 	if(std::strcmp(jsonsphere["type"].asString().c_str(), "solid")==0){
-		s->addSolidObject(spherebuilder.tesselate(center, radius), startFrame, endFrame);
+		s->addSolidObject(spherebuilder.Tesselate(center, radius), startFrame, endFrame);
 	}else if(std::strcmp(jsonsphere["type"].asString().c_str(), "liquid")==0){
-		s->addLiquidObject(spherebuilder.tesselate(center, radius), startFrame, endFrame);
+		s->addLiquidObject(spherebuilder.Tesselate(center, radius), startFrame, endFrame);
 	}
 }
 
 void sceneloader::loadObj(const Json::Value& jsonobj){
 	std::string objpath = relativePath + jsonobj["file"].asString();
-	objCore::objContainer* objloader = new objCore::objContainer(objpath);
+	objCore::Obj* obj = new objCore::Obj(objpath);
 
 	glm::vec3 scale(1.0f,1.0f,1.0f);
 	glm::vec3 rotate(0.0f,0.0f,0.0f);
@@ -217,7 +217,7 @@ void sceneloader::loadObj(const Json::Value& jsonobj){
 	if(jsonobj.isMember("trans_z")){ translate.z = jsonobj["trans_z"].asFloat(); }
 
 	glm::mat4 transform = utilityCore::buildTransformationMatrix(translate, rotate, scale);
-	objloader->bakeTransform(transform);
+	obj->BakeTransform(transform);
 
 	int startFrame = -1;
 	int endFrame = -1;
@@ -230,9 +230,9 @@ void sceneloader::loadObj(const Json::Value& jsonobj){
 	}
 
 	if(std::strcmp(jsonobj["type"].asString().c_str(), "solid")==0){
-		s->addSolidObject(objloader, startFrame, endFrame);
+		s->addSolidObject(obj, startFrame, endFrame);
 	}else if(std::strcmp(jsonobj["type"].asString().c_str(), "liquid")==0){
-		s->addLiquidObject(objloader, startFrame, endFrame);
+		s->addLiquidObject(obj, startFrame, endFrame);
 	}
 }
 }

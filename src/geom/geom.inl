@@ -9,6 +9,6 @@
 
 #include "sphere.hpp"
 #include "cube.hpp"
-#include "obj/objcontainer.hpp"
+#include "obj/obj.hpp"
 
 #endif

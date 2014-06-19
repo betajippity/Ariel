@@ -107,7 +107,7 @@ void scene::exportParticles(std::vector<fluidCore::particle*> particles, const f
 	
 }
 
-void scene::addSolidObject(objCore::objContainer* object, int startFrame, int endFrame){
+void scene::addSolidObject(objCore::Obj* object, int startFrame, int endFrame){
 	solidObjects.push_back(object);
 	solidObjectFrameRanges.push_back(glm::vec2(startFrame, endFrame));
 
@@ -124,7 +124,7 @@ void scene::addSolidObject(objCore::objContainer* object, int startFrame, int en
 	}
 }
 
-void scene::addLiquidObject(objCore::objContainer* object, int startFrame, int endFrame){
+void scene::addLiquidObject(objCore::Obj* object, int startFrame, int endFrame){
 	liquidObjects.push_back(object);
 	liquidObjectFrameRanges.push_back(glm::vec2(startFrame, endFrame));
 	
@@ -158,11 +158,11 @@ void scene::projectPointsToSolidSurface(std::vector<glm::vec3>& points){
 	}
 }
 
-std::vector<objCore::objContainer*>& scene::getSolidObjects(){
+std::vector<objCore::Obj*>& scene::getSolidObjects(){
 	return solidObjects;
 }
 
-std::vector<objCore::objContainer*>& scene::getLiquidObjects(){
+std::vector<objCore::Obj*>& scene::getLiquidObjects(){
 	return liquidObjects;
 }
 

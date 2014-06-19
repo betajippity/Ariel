@@ -8,7 +8,7 @@
 #define GEOM_HPP
 
 #include <glm/glm.hpp>
-#include "obj/objcontainer.hpp"
+#include "obj/obj.hpp"
 
 namespace geomCore {
 //====================================
@@ -22,7 +22,7 @@ class Geom{
 		virtual ~Geom(){};
 
 		//Interactions
-		virtual objCore::objContainer* Tesselate() = 0;
+		virtual objCore::Obj* Tesselate() = 0;
 };
 }
 

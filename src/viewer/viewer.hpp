@@ -83,9 +83,9 @@ class Viewer{
 		void UpdateInputs();
 
 		//VBO stuff
-		VboData CreateVBO(VboData data, float* vertices, int vertexcount, float* colors,
-                          int colorcount, GLenum type, std::string key);
-		VboData CreateVBOFromObj(objCore::objContainer* o, glm::vec4 color, std::string key);
+		VboData CreateVBO(VboData data, float* vertices, unsigned int vertexcount, float* colors,
+                          unsigned int colorcount, GLenum type, std::string key);
+		VboData CreateVBOFromObj(objCore::Obj* o, glm::vec4 color, std::string key);
 
 		void SaveFrame();
 

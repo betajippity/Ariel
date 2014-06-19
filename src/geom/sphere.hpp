@@ -22,8 +22,8 @@ class Sphere: public Geom {
 		~Sphere();
 
 		//Getters
-		objCore::objContainer* Tesselate();
-		objCore::objContainer* Tesselate(const glm::vec3& center, const float& radius);
+		objCore::Obj* Tesselate();
+		objCore::Obj* Tesselate(const glm::vec3& center, const float& radius);
 
 		//Data
 		int m_subdivs;

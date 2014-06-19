@@ -125,14 +125,14 @@ void Viewer::MainLoop(){
             VboData data = m_vbos[m_vbokeys["fluid"]];
             std::vector<glm::vec3> vertexData;
             std::vector<glm::vec4> colorData;
-            int psize = m_particles->size();
+            unsigned int psize = m_particles->size();
 
             glm::vec3 gridSize = m_sim->getDimensions();
             vertexData.reserve(psize);
             colorData.reserve(psize);
             float maxd = glm::max(glm::max(gridSize.x, gridSize.z), gridSize.y);
 
-            for(int j=0; j<psize; j++){
+            for(unsigned int j=0; j<psize; j++){
                 if(m_particles->operator[](j)->type==FLUID){
                     if(!m_particles->operator[](j)->invalid || 
                        (m_particles->operator[](j)->invalid && m_drawInvalid)){
@@ -174,7 +174,7 @@ void Viewer::MainLoop(){
             glRotatef(-m_cam.m_rotate.z, 0, 0, 1);
             glTranslatef(-m_cam.m_translate.x, -m_cam.m_translate.y, -m_cam.m_translate.z);
             
-            for(int i=0; i<m_vbos.size(); i++){
+            for(unsigned int i=0; i<m_vbos.size(); i++){
                 glPushMatrix();
                 glBindBuffer(GL_ARRAY_BUFFER, m_vbos[i].m_vboID);
                 glVertexPointer(3, GL_FLOAT, 0, NULL);
@@ -243,7 +243,7 @@ void Viewer::MainLoop(){
         if(m_dumpFramebuffer==true){
             m_framebufferWriteLock.lock();
             {
-                for (unsigned int i=0; i<m_resolution.y*m_framebufferScale; ++i){
+                for(unsigned int i=0; i<m_resolution.y*m_framebufferScale; ++i){
                     glReadPixels(0,i,(int)m_resolution.x*m_framebufferScale, 1, GL_RGB, 
                                  GL_UNSIGNED_BYTE, 
                                  m_bitmapData + ((int)m_resolution.x*m_framebufferScale * 3 * 
@@ -395,13 +395,13 @@ bool Viewer::Init(){
 
     //Window setup stuff
     glfwSetErrorCallback(ErrorCallback);
-    if (!glfwInit()){
+    if(!glfwInit()){
         return false;
     }
 
     m_window = glfwCreateWindow(m_resolution.x, m_resolution.y, "Ariel: now with 100% more FLIP!", 
                               NULL, NULL);
-    if (!m_window){
+    if(!m_window){
         glfwTerminate();
         return false;
     }
@@ -439,14 +439,14 @@ bool Viewer::Init(){
     //buffer for sim bounding box
     key = "boundingbox";
     glm::vec3 res = m_sim->getDimensions();
-    geomCore::cube cubebuilder;
-    data = CreateVBOFromObj(cubebuilder.tesselate(glm::vec3(0), res), glm::vec4(.2,.2,.2,0), key);
+    geomCore::Cube cubebuilder;
+    data = CreateVBOFromObj(cubebuilder.Tesselate(glm::vec3(0), res), glm::vec4(.2,.2,.2,0), key);
     m_vbos.push_back(data);
     m_vbokeys["boundingbox"] = m_vbos.size()-1;
 
-    int numberOfSolidObjects = m_sim->getScene()->getSolidObjects().size();
-    std::vector<objCore::objContainer*> solids = m_sim->getScene()->getSolidObjects();
-    for(int i=0; i<numberOfSolidObjects; i++){
+    unsigned int numberOfSolidObjects = m_sim->getScene()->getSolidObjects().size();
+    std::vector<objCore::Obj*> solids = m_sim->getScene()->getSolidObjects();
+    for(unsigned int i=0; i<numberOfSolidObjects; i++){
         VboData objectdata;
         key = "solid"+utilityCore::convertIntToString(i);
         objectdata = CreateVBOFromObj(solids[i], glm::vec4(1,0,0,.75), key);
@@ -455,9 +455,9 @@ bool Viewer::Init(){
         m_frameranges[key] = m_sim->getScene()->getSolidFrameRange(i);
     }
 
-    int numberOfLiquidObjects = m_sim->getScene()->getLiquidObjects().size();
-    std::vector<objCore::objContainer*> liquids = m_sim->getScene()->getLiquidObjects();
-    for(int i=0; i<numberOfLiquidObjects; i++){
+    unsigned int numberOfLiquidObjects = m_sim->getScene()->getLiquidObjects().size();
+    std::vector<objCore::Obj*> liquids = m_sim->getScene()->getLiquidObjects();
+    for(unsigned int i=0; i<numberOfLiquidObjects; i++){
         VboData objectdata;
         key = "liquid"+utilityCore::convertIntToString(i);
         objectdata = CreateVBOFromObj(liquids[i], glm::vec4(0,0,1,.75), key);
@@ -469,8 +469,8 @@ bool Viewer::Init(){
     return true;
 }
 
-VboData Viewer::CreateVBO(VboData data, float* vertices, int vertexcount, float* colors,
-                          int colorcount, GLenum type, std::string key){
+VboData Viewer::CreateVBO(VboData data, float* vertices, unsigned int vertexcount, float* colors,
+                          unsigned int colorcount, GLenum type, std::string key){
     data.m_size = vertexcount;
     glGenBuffers(1, &data.m_vboID);
     glGenBuffers(1, &data.m_cboID);
@@ -486,21 +486,20 @@ VboData Viewer::CreateVBO(VboData data, float* vertices, int vertexcount, float*
     return data;
 }
 
-VboData Viewer::CreateVBOFromObj(objCore::objContainer* o, glm::vec4 color, std::string key){
-    objCore::obj* oData = o->getObj();
+VboData Viewer::CreateVBOFromObj(objCore::Obj* o, glm::vec4 color, std::string key){
     VboData data;
     std::vector<glm::vec3> vertexData;
     std::vector<glm::vec4> colorData;
 
-    glm::vec4 fcheck = oData->polyVertexIndices[0];
-    if(int(fcheck[3])-1>0){
-        for(int i=0; i<oData->numberOfPolys; i++){
-            glm::vec4 f = oData->polyVertexIndices[i];
-            glm::vec3 p0 = oData->vertices[int(f[0])-1];
-            glm::vec3 p1 = oData->vertices[int(f[1])-1];
-            glm::vec3 p2 = oData->vertices[int(f[2])-1];
-            glm::vec3 p3 = oData->vertices[int(f[3])-1];
-            if(int(f[3])-1<0){
+    glm::uvec4 fcheck = o->m_polyVertexIndices[0];
+    if(fcheck[3]-1>0){
+        for(unsigned int i=0; i<o->m_numberOfPolys; i++){
+            glm::uvec4 f = o->m_polyVertexIndices[i];
+            glm::vec3 p0 = o->m_vertices[f[0]-1];
+            glm::vec3 p1 = o->m_vertices[f[1]-1];
+            glm::vec3 p2 = o->m_vertices[f[2]-1];
+            glm::vec3 p3 = o->m_vertices[f[3]-1];
+            if(f[3]-1<0){
                 p3 = p0;
             }
             vertexData.push_back(p0);
@@ -508,31 +507,31 @@ VboData Viewer::CreateVBOFromObj(objCore::objContainer* o, glm::vec4 color, std:
             vertexData.push_back(p2);
             vertexData.push_back(p3);      
         }
-        int vcount = vertexData.size();
-        for(int i=0; i<vcount; i++){
+        unsigned int vcount = vertexData.size();
+        for(unsigned int i=0; i<vcount; i++){
             colorData.push_back(color);
         }
         data = CreateVBO(data, (float*)&vertexData[0], vertexData.size()*3, (float*)&colorData[0],
                          colorData.size()*4, GL_QUADS, key);
         colorData.clear();
     }else{
-        for(int i=0; i<oData->numberOfPolys; i++){
-            glm::vec4 f = oData->polyVertexIndices[i];
-            glm::vec3 p0 = oData->vertices[int(f[0])-1];
-            glm::vec3 p1 = oData->vertices[int(f[1])-1];
-            glm::vec3 p2 = oData->vertices[int(f[2])-1];
+        for(unsigned int i=0; i<o->m_numberOfPolys; i++){
+            glm::uvec4 f = o->m_polyVertexIndices[i];
+            glm::vec3 p0 = o->m_vertices[f[0]-1];
+            glm::vec3 p1 = o->m_vertices[f[1]-1];
+            glm::vec3 p2 = o->m_vertices[f[2]-1];
             vertexData.push_back(p0);
             vertexData.push_back(p1);
             vertexData.push_back(p2);  
-            if(int(f[3])-1>=0){
-                glm::vec3 p3 = oData->vertices[int(f[3])-1];
+            if(f[3]-1>=0){
+                glm::vec3 p3 = o->m_vertices[f[3]-1];
                 vertexData.push_back(p3);
                 vertexData.push_back(p1);
                 vertexData.push_back(p2); 
             }    
         }
-        int vcount = vertexData.size();
-        for(int i=0; i<vcount; i++){
+        unsigned int vcount = vertexData.size();
+        for(unsigned int i=0; i<vcount; i++){
             colorData.push_back(color);
         }
         data = CreateVBO(data, (float*)&vertexData[0], vertexData.size()*3, (float*)&colorData[0],
