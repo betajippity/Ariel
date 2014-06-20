@@ -25,24 +25,24 @@ class ParticleGrid{
 		~ParticleGrid();
 
 		//Sorting tools
-		void Sort(std::vector<particle*>& particles);
-		std::vector<particle*> GetCellNeighbors(const glm::vec3& index, 
+		void Sort(std::vector<Particle*>& particles);
+		std::vector<Particle*> GetCellNeighbors(const glm::vec3& index, 
 												const glm::vec3& numberOfNeighbors);
-		std::vector<particle*> GetWallNeighbors(const glm::vec3& index, 
+		std::vector<Particle*> GetWallNeighbors(const glm::vec3& index, 
 												const glm::vec3& numberOfNeighbors);
 
-		void MarkCellTypes(std::vector<particle*>& particles, Grid<int>* A, const float& density);
+		void MarkCellTypes(std::vector<Particle*>& particles, Grid<int>* A, const float& density);
 		float CellSDF(const int& i, const int& j, const int& k, const float& density, 
 					  const geomtype& type);
 
-		void BuildSDF(macgrid& mgrid, const float& density);
+		void BuildSDF(MacGrid& mgrid, const float& density);
 
 	private:
 		void Init(const int& x, const int& y, const int& z);
 
 		glm::vec3									m_dimensions;
 		Grid<int>*									m_grid;
-		std::vector< std::vector<particle*> >		m_cells;
+		std::vector< std::vector<Particle*> >		m_cells;
 		
 };
 }

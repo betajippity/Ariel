@@ -49,7 +49,7 @@ int main(int argc, char** argv){
 
 	sceneCore::SceneLoader* sloader = new sceneCore::SceneLoader(scenefile);
 
-    fluidCore::flipsim* f = new fluidCore::flipsim(sloader->GetDimensions(), sloader->GetScene(), 
+    fluidCore::FlipSim* f = new fluidCore::FlipSim(sloader->GetDimensions(), sloader->GetScene(), 
     											   sloader->GetDensity(), verbose);
 
     viewerCore::Viewer* glview = new viewerCore::Viewer();

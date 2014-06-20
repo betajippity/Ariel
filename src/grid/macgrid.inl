@@ -18,74 +18,74 @@ namespace fluidCore {
 //====================================
 
 //A macgrid in this simulator is built up entirely out of VDB volumes
-struct macgrid{
-	glm::vec3 dimensions;
+struct MacGrid{
+	glm::vec3		m_dimensions;
 
 	//face velocities
-	Grid<float>* u_x;
-	Grid<float>* u_y;
-	Grid<float>* u_z; 
+	Grid<float>*	m_u_x;
+	Grid<float>*	m_u_y;
+	Grid<float>*	m_u_z; 
 	//technically this is the part that is an actual MAC grid, the rest is other useful stuff
 
-	Grid<float>* D; //divergence 
-	Grid<float>* P; //pressure
-	Grid<int>* A; //cell type
-	Grid<float>* L; //internal lightweight SDF for project step
+	Grid<float>*	m_D; //divergence 
+	Grid<float>*	m_P; //pressure
+	Grid<int>*		m_A; //cell type
+	Grid<float>*	m_L; //internal lightweight SDF for project step
 };
 
-struct particle{
-	glm::vec3 p; //position
-	glm::vec3 u; //velocity
-	glm::vec3 n; //normal
-	float density;
-	float mass;
-	int type;
-	glm::vec3 t;
-	glm::vec3 t2;
-	bool invalid;
-	bool temp;
+struct Particle{
+	glm::vec3		m_p; //position
+	glm::vec3		m_u; //velocity
+	glm::vec3		m_n; //normal
+	float			m_density;
+	float			m_mass;
+	int				m_type;
+	glm::vec3		m_t;
+	glm::vec3		m_t2;
+	bool			m_invalid;
+	bool			m_temp;
 };
 
 //Forward declarations for externed inlineable methods
-extern inline particle createParticle(const glm::vec3& position, const glm::vec3& velocity, 
+extern inline Particle CreateParticle(const glm::vec3& position, const glm::vec3& velocity, 
 									  const glm::vec3& normal, const float& density);
-extern inline macgrid createMacgrid(const glm::vec3& dimensions);
-extern inline void clearMacgrid(macgrid& m);
+extern inline MacGrid CreateMacgrid(const glm::vec3& dimensions);
+extern inline void ClearMacgrid(MacGrid& m);
 
 //====================================
 // Function Implementations
 //====================================
 
-particle createParticle(const glm::vec3& position, const glm::vec3& velocity, 
+Particle CreateParticle(const glm::vec3& position, const glm::vec3& velocity, 
 						const glm::vec3& normal, const float& density){
-	particle p;
-	p.p = position;
-	p.u = velocity;
-	p.n = normal;
-	p.density= density;
+	Particle p;
+	p.m_p = position;
+	p.m_u = velocity;
+	p.m_n = normal;
+	p.m_density= density;
 	return p;
 }
 
-macgrid createMacgrid(const glm::vec3& dimensions){
+MacGrid CreateMacgrid(const glm::vec3& dimensions){
 	int x = (int)dimensions.x; int y = (int)dimensions.y; int z = (int)dimensions.z;
-	macgrid m;
-	m.dimensions = dimensions;
-	m.u_x = new Grid<float>(glm::vec3(x+1,y,z), 0.0f);
-	m.u_y = new Grid<float>(glm::vec3(x,y+1,z), 0.0f);
-	m.u_z = new Grid<float>(glm::vec3(x,y,z+1), 0.0f);
-	m.D = new Grid<float>(glm::vec3(x,y,z), 0.0f);
-	m.P = new Grid<float>(glm::vec3(x,y,z), 0.0f);
-	m.A = new Grid<int>(glm::vec3(x,y,z), 0);
-	m.L = new Grid<float>(glm::vec3(x,y,z), 1.6f);
+	MacGrid m;
+	m.m_dimensions = dimensions;
+	m.m_u_x = new Grid<float>(glm::vec3(x+1,y,z), 0.0f);
+	m.m_u_y = new Grid<float>(glm::vec3(x,y+1,z), 0.0f);
+	m.m_u_z = new Grid<float>(glm::vec3(x,y,z+1), 0.0f);
+	m.m_D = new Grid<float>(glm::vec3(x,y,z), 0.0f);
+	m.m_P = new Grid<float>(glm::vec3(x,y,z), 0.0f);
+	m.m_A = new Grid<int>(glm::vec3(x,y,z), 0);
+	m.m_L = new Grid<float>(glm::vec3(x,y,z), 1.6f);
 	return m;
 }
 
-void clearMacgrid(macgrid& m){
-	delete m.u_x;
-	delete m.u_y;
-	delete m.u_z;
-	delete m.D;
-	delete m.P;
+void ClearMacgrid(MacGrid& m){
+	delete m.m_u_x;
+	delete m.m_u_y;
+	delete m.m_u_z;
+	delete m.m_D;
+	delete m.m_P;
 }
 }
 

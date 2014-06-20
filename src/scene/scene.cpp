@@ -15,10 +15,10 @@
 namespace sceneCore{
 
 Scene::Scene(){
-	m_solidLevelSet = new fluidCore::levelset();
-	m_liquidLevelSet = new fluidCore::levelset();
-	m_permaSolidLevelSet = new fluidCore::levelset();
-	m_permaLiquidLevelSet = new fluidCore::levelset();
+	m_solidLevelSet = new fluidCore::LevelSet();
+	m_liquidLevelSet = new fluidCore::LevelSet();
+	m_permaSolidLevelSet = new fluidCore::LevelSet();
+	m_permaLiquidLevelSet = new fluidCore::LevelSet();
 	m_permaLiquidSDFActive = false;
 	m_permaSolidSDFActive = false;
 }
@@ -36,14 +36,14 @@ void Scene::SetPaths(const std::string& imagePath, const std::string& meshPath,
 	m_partioPath = partioPath;
 }
 
-void Scene::ExportParticles(std::vector<fluidCore::particle*> particles, const float& maxd,
+void Scene::ExportParticles(std::vector<fluidCore::Particle*> particles, const float& maxd,
 							const int& frame, const bool& VDB, const bool& OBJ, 
 							const bool& PARTIO){
 	unsigned int particlesCount = particles.size();
 
-	std::vector<fluidCore::particle*> sdfparticles;
+	std::vector<fluidCore::Particle*> sdfparticles;
 	for(unsigned int i = 0; i<particlesCount; i++){
-		if(particles[i]->type==FLUID && !particles[i]->invalid){
+		if(particles[i]->m_type==FLUID && !particles[i]->m_invalid){
 			sdfparticles.push_back(particles[i]);
 		}
 	}
@@ -70,13 +70,13 @@ void Scene::ExportParticles(std::vector<fluidCore::particle*> particles, const f
 
 		for(unsigned int i = 0; i<sdfparticlesCount; i++){
 			float* pos = partioData->dataWrite<float>(positionAttr, i);
-			pos[0] = sdfparticles[i]->p.x * maxd;
-			pos[1] = sdfparticles[i]->p.y * maxd;
-			pos[2] = sdfparticles[i]->p.z * maxd;
+			pos[0] = sdfparticles[i]->m_p.x * maxd;
+			pos[1] = sdfparticles[i]->m_p.y * maxd;
+			pos[2] = sdfparticles[i]->m_p.z * maxd;
 			float* vel = partioData->dataWrite<float>(velocityAttr, i);
-			vel[0] = sdfparticles[i]->u.x;
-			vel[1] = sdfparticles[i]->u.y;
-			vel[2] = sdfparticles[i]->u.z;
+			vel[0] = sdfparticles[i]->m_u.x;
+			vel[1] = sdfparticles[i]->m_u.y;
+			vel[2] = sdfparticles[i]->m_u.z;
 			int* id = partioData->dataWrite<int>(idAttr, i);
 			id[0] = i;			
 		}
@@ -92,14 +92,14 @@ void Scene::ExportParticles(std::vector<fluidCore::particle*> particles, const f
 	    std::string objfilename = m_meshPath;
 	    utilityCore::replaceString(objfilename, ".obj", "."+frameString+".obj");
 
-		fluidCore::levelset* fluidSDF = new fluidCore::levelset(sdfparticles, maxd);
+		fluidCore::LevelSet* fluidSDF = new fluidCore::LevelSet(sdfparticles, maxd);
 
 		if(VDB){
-			fluidSDF->writeVDBGridToFile(vdbfilename);
+			fluidSDF->WriteVDBGridToFile(vdbfilename);
 		}
 
 		if(OBJ){
-			fluidSDF->writeObjToFile(objfilename);
+			fluidSDF->WriteObjToFile(objfilename);
 		}
 		delete fluidSDF;
 	}
@@ -114,11 +114,11 @@ void Scene::AddSolidObject(objCore::Obj* object, const int& startFrame, const in
 	if(startFrame<0 && endFrame<0){
 		if(m_permaSolidSDFActive==false){
 			delete m_permaSolidLevelSet;
-			m_permaSolidLevelSet = new fluidCore::levelset(object);
+			m_permaSolidLevelSet = new fluidCore::LevelSet(object);
 			m_permaSolidSDFActive = true;
 		}else{
-			fluidCore::levelset* objectSDF = new fluidCore::levelset(object);
-			m_permaSolidLevelSet->merge(*objectSDF);
+			fluidCore::LevelSet* objectSDF = new fluidCore::LevelSet(object);
+			m_permaSolidLevelSet->Merge(*objectSDF);
 			delete objectSDF;
 		}
 	}
@@ -131,11 +131,11 @@ void Scene::AddLiquidObject(objCore::Obj* object, const int& startFrame, const i
 	if(startFrame<0 && endFrame<0){
 		if(m_permaLiquidSDFActive==false){
 			delete m_permaLiquidLevelSet;
-			m_permaLiquidLevelSet = new fluidCore::levelset(object);
+			m_permaLiquidLevelSet = new fluidCore::LevelSet(object);
 			m_permaLiquidSDFActive = true;
 		}else{
-			fluidCore::levelset* objectSDF = new fluidCore::levelset(object);
-			m_permaLiquidLevelSet->merge(*objectSDF);
+			fluidCore::LevelSet* objectSDF = new fluidCore::LevelSet(object);
+			m_permaLiquidLevelSet->Merge(*objectSDF);
 			delete objectSDF;
 		}
 	}
@@ -143,9 +143,9 @@ void Scene::AddLiquidObject(objCore::Obj* object, const int& startFrame, const i
 
 void Scene::ProjectPointsToSolidSurface(std::vector<glm::vec3>& points){
 	std::vector<glm::vec3> p1(points);
-	m_solidLevelSet->projectPointsToSurface(p1);
+	m_solidLevelSet->ProjectPointsToSurface(p1);
 	std::vector<glm::vec3> p2(points);
-	m_permaSolidLevelSet->projectPointsToSurface(p2);
+	m_permaSolidLevelSet->ProjectPointsToSurface(p2);
 
 	unsigned int pointsCount = points.size();
 
@@ -170,9 +170,9 @@ void Scene::BuildLevelSets(const int& frame){
 	//first rebuild frame dependent levelsets, then merge with permanent sets if needed
 
 	delete m_liquidLevelSet;
-	m_liquidLevelSet = new fluidCore::levelset();
+	m_liquidLevelSet = new fluidCore::LevelSet();
 	delete m_solidLevelSet;
-	m_solidLevelSet = new fluidCore::levelset();
+	m_solidLevelSet = new fluidCore::LevelSet();
 
 	unsigned int liquidObjectsCount = m_liquidObjects.size();
 	bool liquidSDFCreated = false;
@@ -180,11 +180,11 @@ void Scene::BuildLevelSets(const int& frame){
 		if( (frame<=m_liquidObjectFrameRanges[i][1] && frame>=m_liquidObjectFrameRanges[i][0]) ){
 			if(liquidSDFCreated==false){
 				delete m_liquidLevelSet;
-				m_liquidLevelSet = new fluidCore::levelset(m_liquidObjects[i]);
+				m_liquidLevelSet = new fluidCore::LevelSet(m_liquidObjects[i]);
 				liquidSDFCreated = true;
 			}else{
-				fluidCore::levelset* objectSDF = new fluidCore::levelset(m_liquidObjects[i]);
-				m_liquidLevelSet->merge(*objectSDF);
+				fluidCore::LevelSet* objectSDF = new fluidCore::LevelSet(m_liquidObjects[i]);
+				m_liquidLevelSet->Merge(*objectSDF);
 				delete objectSDF;
 			}
 		}
@@ -195,11 +195,11 @@ void Scene::BuildLevelSets(const int& frame){
 		if( (frame<=m_solidObjectFrameRanges[i][1] && frame>=m_solidObjectFrameRanges[i][0]) ){
 			if(solidSDFCreated==false){
 				delete m_solidLevelSet;
-				m_solidLevelSet = new fluidCore::levelset(m_solidObjects[i]);
+				m_solidLevelSet = new fluidCore::LevelSet(m_solidObjects[i]);
 				solidSDFCreated = true;
 			}else{
-				fluidCore::levelset* objectSDF = new fluidCore::levelset(m_solidObjects[i]);
-				m_solidLevelSet->merge(*objectSDF);
+				fluidCore::LevelSet* objectSDF = new fluidCore::LevelSet(m_solidObjects[i]);
+				m_solidLevelSet->Merge(*objectSDF);
 				delete objectSDF;
 			}
 		}
@@ -208,10 +208,10 @@ void Scene::BuildLevelSets(const int& frame){
 	if(m_permaLiquidSDFActive){
 		if(!liquidSDFCreated){
 			delete m_liquidLevelSet;
-			m_liquidLevelSet = new fluidCore::levelset();
-			m_liquidLevelSet->copy(*m_permaLiquidLevelSet);
+			m_liquidLevelSet = new fluidCore::LevelSet();
+			m_liquidLevelSet->Copy(*m_permaLiquidLevelSet);
 		}else{
-			m_liquidLevelSet->merge(*m_permaLiquidLevelSet);
+			m_liquidLevelSet->Merge(*m_permaLiquidLevelSet);
 		}
 	}
 
@@ -223,9 +223,9 @@ void Scene::BuildLevelSets(const int& frame){
 // 	liquidLevelSet = new fluidCore::levelset(particles);
 // }
 
-void Scene::GenerateParticles(std::vector<fluidCore::particle*>& particles, const glm::vec3& dimensions, 
-					   		  const float& density, fluidCore::ParticleGrid* pgrid, 
-					   		  const int& frame){
+void Scene::GenerateParticles(std::vector<fluidCore::Particle*>& particles, 
+							  const glm::vec3& dimensions, const float& density, 
+							  fluidCore::ParticleGrid* pgrid, const int& frame){
 
 	float maxdimension = glm::max(glm::max(dimensions.x, dimensions.y), dimensions.z);
 
@@ -272,59 +272,59 @@ void Scene::GenerateParticles(std::vector<fluidCore::particle*>& particles, cons
 }
 
 void Scene::AddParticle(const glm::vec3& pos, const geomtype& type, const float& thickness, 
-						const float& scale, std::vector<fluidCore::particle*>& particles, 
+						const float& scale, std::vector<fluidCore::Particle*>& particles, 
 						const int& frame){
 	bool inside = false;
 	bool temp = false; //used to flag frame-variante solid particles
 
 	if(type==FLUID){
 		glm::vec3 worldpos = pos*scale;
-		if(m_liquidLevelSet->getInterpolatedCell(worldpos)<0.0f /*thickness*/){ 
+		if(m_liquidLevelSet->GetInterpolatedCell(worldpos)<0.0f /*thickness*/){ 
 			//TODO: figure out if we need this
 			inside = true;
 		}
 		//if particles are in a wall, don't generate them
-		if(m_solidLevelSet->getInterpolatedCell(worldpos)<0.0f /*thickness*/){ 
+		if(m_solidLevelSet->GetInterpolatedCell(worldpos)<0.0f /*thickness*/){ 
 			inside = false; 
 		}	
 		if(frame==0 && m_permaSolidSDFActive){
-			if(m_permaSolidLevelSet->getInterpolatedCell(worldpos)<0.0f /*thickness*/){
+			if(m_permaSolidLevelSet->GetInterpolatedCell(worldpos)<0.0f /*thickness*/){
 				inside = false;
 			}
 		}
 
 	}else if(type==SOLID){
 		glm::vec3 worldpos = pos*scale;
-		if(m_solidLevelSet->getInterpolatedCell(worldpos)<0.0f /*thickness*/){
+		if(m_solidLevelSet->GetInterpolatedCell(worldpos)<0.0f /*thickness*/){
 			inside = true;
 			temp = true;
 		}	
 		if(frame==0 && m_permaSolidSDFActive){
-			if(m_permaSolidLevelSet->getInterpolatedCell(worldpos)<0.0f /*thickness*/){
+			if(m_permaSolidLevelSet->GetInterpolatedCell(worldpos)<0.0f /*thickness*/){
 				inside = true;
 			}
 		}
 	}
 
 	if(inside){
-		fluidCore::particle* p = new fluidCore::particle;
-		p->p = pos;
-		p->u = glm::vec3(0,0,0);
-		p->n = glm::vec3(0,0,0);
-		p->density = 10.0f;
-		p->type = type;
-		p->mass = 1.0f;
-		p->invalid = false;
-		p->temp = temp;
+		fluidCore::Particle* p = new fluidCore::Particle;
+		p->m_p = pos;
+		p->m_u = glm::vec3(0,0,0);
+		p->m_n = glm::vec3(0,0,0);
+		p->m_density = 10.0f;
+		p->m_type = type;
+		p->m_mass = 1.0f;
+		p->m_invalid = false;
+		p->m_temp = temp;
 		particles.push_back(p);
 	}
 }
 
-fluidCore::levelset* Scene::GetSolidLevelSet(){
+fluidCore::LevelSet* Scene::GetSolidLevelSet(){
 	return m_solidLevelSet;	
 }
 
-fluidCore::levelset* Scene::GetLiquidLevelSet(){
+fluidCore::LevelSet* Scene::GetLiquidLevelSet(){
 	return m_liquidLevelSet;
 }
 

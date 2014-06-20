@@ -19,11 +19,11 @@ Viewer::~Viewer(){
 
 }
 
-void Viewer::Load(fluidCore::flipsim* sim, const bool& retina){
+void Viewer::Load(fluidCore::FlipSim* sim, const bool& retina){
     Load(sim, retina, glm::vec2(1024), glm::vec3(0), glm::vec3(0,0,30), glm::vec2(45.0f), 30.0f);
 }
 
-void Viewer::Load(fluidCore::flipsim* sim, const bool& retina, const glm::vec2& resolution, 
+void Viewer::Load(fluidCore::FlipSim* sim, const bool& retina, const glm::vec2& resolution, 
                   const glm::vec3& camrotate, const glm::vec3& camtranslate, 
 				  const glm::vec2& camfov, const float& camlookat){
     m_resolution = resolution;
@@ -62,15 +62,15 @@ void Viewer::Load(fluidCore::flipsim* sim, const bool& retina, const glm::vec2& 
 }
 
 void Viewer::SimLoopThread(){
-    if(m_sim->frame==0){
-        m_sim->init();
-        m_particles = m_sim->getParticles();
+    if(m_sim->m_frame==0){
+        m_sim->Init();
+        m_particles = m_sim->GetParticles();
         m_siminitialized = true;
     }
     while(1){
         if(!m_pause){
-            m_sim->step(m_dumpVDB, m_dumpOBJ, m_dumpPARTIO);
-            m_particles = m_sim->getParticles();
+            m_sim->Step(m_dumpVDB, m_dumpOBJ, m_dumpPARTIO);
+            m_particles = m_sim->GetParticles();
             if(m_dumpFramebuffer && m_dumpReady){
                 m_framebufferWriteLock.lock();
                 {
@@ -103,9 +103,9 @@ bool Viewer::Launch(){
 }
 
 void Viewer::SaveFrame(){
-    std::string filename = m_sim->getScene()->m_imagePath;
+    std::string filename = m_sim->GetScene()->m_imagePath;
     std::string frameString = utilityCore::padString(4, 
-                                                     utilityCore::convertIntToString(m_sim->frame));
+                                                utilityCore::convertIntToString(m_sim->m_frame));
     utilityCore::replaceString(filename, ".png", "."+frameString+".png");
 
     char anim_filename[2048];
@@ -128,20 +128,21 @@ void Viewer::MainLoop(){
             std::vector<glm::vec4> colorData;
             unsigned int psize = m_particles->size();
 
-            glm::vec3 gridSize = m_sim->getDimensions();
+            glm::vec3 gridSize = m_sim->GetDimensions();
             vertexData.reserve(psize);
             colorData.reserve(psize);
             float maxd = glm::max(glm::max(gridSize.x, gridSize.z), gridSize.y);
 
             for(unsigned int j=0; j<psize; j++){
-                if(m_particles->operator[](j)->type==FLUID){
-                    if(!m_particles->operator[](j)->invalid || 
-                       (m_particles->operator[](j)->invalid && m_drawInvalid)){
-                        vertexData.push_back(m_particles->operator[](j)->p*maxd);
-                        float c = glm::length(m_particles->operator[](j)->u)/3.0f;
+                if(m_particles->operator[](j)->m_type==FLUID){
+                    if(!m_particles->operator[](j)->m_invalid || 
+                       (m_particles->operator[](j)->m_invalid && m_drawInvalid)){
+                        vertexData.push_back(m_particles->operator[](j)->m_p*maxd);
+                        float c = glm::length(m_particles->operator[](j)->m_u)/3.0f;
                         c = glm::max(c, 
-                                     1.0f*glm::max((.7f-m_particles->operator[](j)->density),0.0f));
-                        bool invalid = m_particles->operator[](j)->invalid;
+                                     1.0f*glm::max((.7f-m_particles->operator[](j)->m_density),
+                                     0.0f));
+                        bool invalid = m_particles->operator[](j)->m_invalid;
                         if(invalid){
                             colorData.push_back(glm::vec4(1,0,0,0));
                         }else{
@@ -185,7 +186,7 @@ void Viewer::MainLoop(){
                 glEnableClientState(GL_COLOR_ARRAY);
                 glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-                glm::vec3 res = m_sim->getDimensions();
+                glm::vec3 res = m_sim->GetDimensions();
                 glTranslatef(-res.x/2, 0, -res.y/2);
 
                 if(i==m_vbokeys["boundingbox"]){
@@ -195,8 +196,8 @@ void Viewer::MainLoop(){
                 bool skipDraw = false;
                 if(m_vbos[i].m_type==GL_QUADS || m_vbos[i].m_type==GL_TRIANGLES){
                     glm::vec2 frame = m_frameranges[m_vbos[i].m_key];
-                    if(!((frame[0]<0 && frame[1]<0) || (frame[0]<=m_sim->frame 
-                        && m_sim->frame<=frame[1]))){
+                    if(!((frame[0]<0 && frame[1]<0) || (frame[0]<=m_sim->m_frame 
+                        && m_sim->m_frame<=frame[1]))){
                         skipDraw = true;
                     }
                 }
@@ -439,32 +440,32 @@ bool Viewer::Init(){
 
     //buffer for sim bounding box
     key = "boundingbox";
-    glm::vec3 res = m_sim->getDimensions();
+    glm::vec3 res = m_sim->GetDimensions();
     geomCore::Cube cubebuilder;
     data = CreateVBOFromObj(cubebuilder.Tesselate(glm::vec3(0), res), glm::vec4(.2,.2,.2,0), key);
     m_vbos.push_back(data);
     m_vbokeys["boundingbox"] = m_vbos.size()-1;
 
-    unsigned int numberOfSolidObjects = m_sim->getScene()->GetSolidObjects().size();
-    std::vector<objCore::Obj*> solids = m_sim->getScene()->GetSolidObjects();
+    unsigned int numberOfSolidObjects = m_sim->GetScene()->GetSolidObjects().size();
+    std::vector<objCore::Obj*> solids = m_sim->GetScene()->GetSolidObjects();
     for(unsigned int i=0; i<numberOfSolidObjects; i++){
         VboData objectdata;
         key = "solid"+utilityCore::convertIntToString(i);
         objectdata = CreateVBOFromObj(solids[i], glm::vec4(1,0,0,.75), key);
         m_vbos.push_back(objectdata);
         m_vbokeys[key] = m_vbos.size()-1;
-        m_frameranges[key] = m_sim->getScene()->GetSolidFrameRange(i);
+        m_frameranges[key] = m_sim->GetScene()->GetSolidFrameRange(i);
     }
 
-    unsigned int numberOfLiquidObjects = m_sim->getScene()->GetLiquidObjects().size();
-    std::vector<objCore::Obj*> liquids = m_sim->getScene()->GetLiquidObjects();
+    unsigned int numberOfLiquidObjects = m_sim->GetScene()->GetLiquidObjects().size();
+    std::vector<objCore::Obj*> liquids = m_sim->GetScene()->GetLiquidObjects();
     for(unsigned int i=0; i<numberOfLiquidObjects; i++){
         VboData objectdata;
         key = "liquid"+utilityCore::convertIntToString(i);
         objectdata = CreateVBOFromObj(liquids[i], glm::vec4(0,0,1,.75), key);
         m_vbos.push_back(objectdata);
         m_vbokeys[key] = m_vbos.size()-1;
-        m_frameranges[key] = m_sim->getScene()->GetLiquidFrameRange(i);
+        m_frameranges[key] = m_sim->GetScene()->GetLiquidFrameRange(i);
     }
 
     return true;

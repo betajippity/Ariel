@@ -26,15 +26,15 @@ class Scene {
 
 		void AddSolidObject(objCore::Obj* object, const int& startFrame, const int& endFrame);
 		void AddLiquidObject(objCore::Obj* object, const int& startFrame, const int& endFrame);
-		void GenerateParticles(std::vector<fluidCore::particle*>& particles, 
+		void GenerateParticles(std::vector<fluidCore::Particle*>& particles, 
 							   const glm::vec3& dimensions, const float& density, 
 							   fluidCore::ParticleGrid* pgrid, const int& frame);
 
 		std::vector<objCore::Obj*>& GetSolidObjects();
 		std::vector<objCore::Obj*>& GetLiquidObjects();
 
-		fluidCore::levelset* GetSolidLevelSet();
-		fluidCore::levelset* GetLiquidLevelSet();
+		fluidCore::LevelSet* GetSolidLevelSet();
+		fluidCore::LevelSet* GetLiquidLevelSet();
 
 		void BuildLevelSets(const int& frame);
 		void SetPaths(const std::string& imagePath, const std::string& meshPath, 
@@ -45,7 +45,7 @@ class Scene {
 
 		void ProjectPointsToSolidSurface(std::vector<glm::vec3>& points);
 
-		void ExportParticles(std::vector<fluidCore::particle*> particles, const float& maxd, 
+		void ExportParticles(std::vector<fluidCore::Particle*> particles, const float& maxd, 
 							 const int& frame, const bool& VDB, const bool& OBJ, 
 							 const bool& PARTIO);
 
@@ -56,17 +56,17 @@ class Scene {
 
 	private:
 		void AddParticle(const glm::vec3& pos, const geomtype& type, const float& thickness, 
-						 const float& scale, std::vector<fluidCore::particle*>& particles, 
+						 const float& scale, std::vector<fluidCore::Particle*>& particles, 
 						 const int& frame);
 
 		std::vector<objCore::Obj*>		m_solidObjects;
 		std::vector<objCore::Obj*>		m_liquidObjects;
 
-		fluidCore::levelset*			m_solidLevelSet;
-		fluidCore::levelset*			m_liquidLevelSet;
+		fluidCore::LevelSet*			m_solidLevelSet;
+		fluidCore::LevelSet*			m_liquidLevelSet;
 
-		fluidCore::levelset*			m_permaSolidLevelSet;
-		fluidCore::levelset*			m_permaLiquidLevelSet;
+		fluidCore::LevelSet*			m_permaSolidLevelSet;
+		fluidCore::LevelSet*			m_permaLiquidLevelSet;
 
 		bool							m_permaLiquidSDFActive;
 		bool							m_permaSolidSDFActive;

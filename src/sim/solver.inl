@@ -20,9 +20,9 @@ namespace fluidCore {
 //====================================
 
 //Forward declarations for externed inlineable methods
-extern inline void Solve(macgrid& mgrid, const int& subcell, const bool& verbose);
-inline void BuildPreconditioner(Grid<float>* pc, macgrid& mgrid, int subcell);
-inline void SolveConjugateGradient(macgrid& mgrid, Grid<float>* pc, int subcell, 
+extern inline void Solve(MacGrid& mgrid, const int& subcell, const bool& verbose);
+inline void BuildPreconditioner(Grid<float>* pc, MacGrid& mgrid, int subcell);
+inline void SolveConjugateGradient(MacGrid& mgrid, Grid<float>* pc, int subcell, 
 								   const bool& verbose);
 inline void ComputeAx(Grid<int>* A, Grid<float>* L, Grid<float>* X, Grid<float>* target, 
 					  glm::vec3 dimensions, int subcell);
@@ -101,23 +101,24 @@ float ADiag(Grid<int>* A, Grid<float>* L, int i, int j, int k, glm::vec3 dimensi
 }
 
 //Does what it says
-void BuildPreconditioner(Grid<float>* pc, macgrid& mgrid, int subcell){
-	int x = (int)mgrid.dimensions.x; int y = (int)mgrid.dimensions.y; 
-	int z = (int)mgrid.dimensions.z;
+void BuildPreconditioner(Grid<float>* pc, MacGrid& mgrid, int subcell){
+	int x = (int)mgrid.m_dimensions.x; int y = (int)mgrid.m_dimensions.y; 
+	int z = (int)mgrid.m_dimensions.z;
 	float a = 0.25f;
 	tbb::parallel_for(tbb::blocked_range<unsigned int>(0,x),
 		[=](const tbb::blocked_range<unsigned int>& r){
 			for(unsigned int i=r.begin(); i!=r.end(); ++i){
 				for(unsigned int j=0; j<y; ++j){
 					for(unsigned int k=0; k<z; ++k){
-						if(mgrid.A->GetCell(i,j,k)==FLUID){	
-							float left = ARef(mgrid.A,i-1,j,k,i,j,k,mgrid.dimensions) * 
-										 PRef(pc,i-1,j,k,mgrid.dimensions);
-							float bottom = ARef(mgrid.A,i,j-1,k,i,j,k,mgrid.dimensions) * 
-										   PRef(pc,i,j-1,k,mgrid.dimensions);
-							float back = ARef(mgrid.A,i,j,k-1,i,j,k,mgrid.dimensions) * 
-										 PRef(pc,i,j,k-1,mgrid.dimensions);
-							float diag = ADiag(mgrid.A, mgrid.L,i,j,k,mgrid.dimensions,subcell);
+						if(mgrid.m_A->GetCell(i,j,k)==FLUID){	
+							float left = ARef(mgrid.m_A,i-1,j,k,i,j,k,mgrid.m_dimensions) * 
+										 PRef(pc,i-1,j,k,mgrid.m_dimensions);
+							float bottom = ARef(mgrid.m_A,i,j-1,k,i,j,k,mgrid.m_dimensions) * 
+										   PRef(pc,i,j-1,k,mgrid.m_dimensions);
+							float back = ARef(mgrid.m_A,i,j,k-1,i,j,k,mgrid.m_dimensions) * 
+										 PRef(pc,i,j,k-1,mgrid.m_dimensions);
+							float diag = ADiag(mgrid.m_A, mgrid.m_L,i,j,k,mgrid.m_dimensions,
+											   subcell);
 							float e = diag - (left*left) - (bottom*bottom) - (back*back);
 							if(diag>0){
 								if( e < a*diag ){
@@ -285,22 +286,22 @@ void ApplyPreconditioner(Grid<float>* Z, Grid<float>* R, Grid<float>* P, Grid<fl
 }
 
 //Does what it says
-void SolveConjugateGradient(macgrid& mgrid, Grid<float>* PC, int subcell, const bool& verbose){
-	int x = (int)mgrid.dimensions.x; int y = (int)mgrid.dimensions.y; 
-	int z = (int)mgrid.dimensions.z;
+void SolveConjugateGradient(MacGrid& mgrid, Grid<float>* PC, int subcell, const bool& verbose){
+	int x = (int)mgrid.m_dimensions.x; int y = (int)mgrid.m_dimensions.y; 
+	int z = (int)mgrid.m_dimensions.z;
 
-	Grid<float>* R = new Grid<float>(mgrid.dimensions, 0.0f);
-	Grid<float>* Z = new Grid<float>(mgrid.dimensions, 0.0f);
-	Grid<float>* S = new Grid<float>(mgrid.dimensions, 0.0f);
+	Grid<float>* R = new Grid<float>(mgrid.m_dimensions, 0.0f);
+	Grid<float>* Z = new Grid<float>(mgrid.m_dimensions, 0.0f);
+	Grid<float>* S = new Grid<float>(mgrid.m_dimensions, 0.0f);
 
 	//note: we're calling pressure "mgrid.P" instead of x
 
-	ComputeAx(mgrid.A, mgrid.L, mgrid.P, Z, mgrid.dimensions, subcell);	// z = apply A(x)
-	Op(mgrid.A, mgrid.D, Z, R, -1.0f, mgrid.dimensions);                // r = b-Ax
-	float error0 = Product(mgrid.A, R, R, mgrid.dimensions);			// error0 = product(r,r)
+	ComputeAx(mgrid.m_A, mgrid.m_L, mgrid.m_P, Z, mgrid.m_dimensions, subcell);	// z = apply A(x)
+	Op(mgrid.m_A, mgrid.m_D, Z, R, -1.0f, mgrid.m_dimensions);                // r = b-Ax
+	float error0 = Product(mgrid.m_A, R, R, mgrid.m_dimensions);			// error0 = product(r,r)
 
 	// z = f(r), aka preconditioner step
-	ApplyPreconditioner(Z, R, PC, mgrid.L, mgrid.A, mgrid.dimensions);	
+	ApplyPreconditioner(Z, R, PC, mgrid.m_L, mgrid.m_A, mgrid.m_dimensions);	
 
 	//s = z. TODO: replace with VDB deep copy?
 
@@ -319,15 +320,15 @@ void SolveConjugateGradient(macgrid& mgrid, Grid<float>* PC, int subcell, const 
 
 
 	float eps = 1.0e-2f * (x*y*z);
-	float a = Product(mgrid.A, Z, R, mgrid.dimensions);					// a = product(z,r)
+	float a = Product(mgrid.m_A, Z, R, mgrid.m_dimensions);					// a = product(z,r)
 
 	for( int k=0; k<x*y*z; k++){
 		//Solve current iteration
-		ComputeAx(mgrid.A, mgrid.L, S, Z, mgrid.dimensions, subcell);	// z = applyA(s)
-		float alpha = a/Product(mgrid.A, Z, S, mgrid.dimensions);		// alpha = a/(z . s)
-		Op(mgrid.A, mgrid.P, S, mgrid.P, alpha, mgrid.dimensions);		// x = x + alpha*s
-		Op(mgrid.A, R, Z, R, -alpha, mgrid.dimensions);					// r = r - alpha*z;
-		float error1 = Product(mgrid.A, R, R, mgrid.dimensions);		// error1 = product(r,r)
+		ComputeAx(mgrid.m_A, mgrid.m_L, S, Z, mgrid.m_dimensions, subcell);	// z = applyA(s)
+		float alpha = a/Product(mgrid.m_A, Z, S, mgrid.m_dimensions);		// alpha = a/(z . s)
+		Op(mgrid.m_A, mgrid.m_P, S, mgrid.m_P, alpha, mgrid.m_dimensions);		// x = x + alpha*s
+		Op(mgrid.m_A, R, Z, R, -alpha, mgrid.m_dimensions);					// r = r - alpha*z;
+		float error1 = Product(mgrid.m_A, R, R, mgrid.m_dimensions);		// error1 = product(r,r)
         error0 = glm::max(error0, error1);
         //Output progress
         float rate = 1.0f - glm::max(0.0f,glm::min(1.0f,(error1-eps)/(error0-eps)));
@@ -340,10 +341,10 @@ void SolveConjugateGradient(macgrid& mgrid, Grid<float>* PC, int subcell, const 
         }
         //Prep next iteration
         // z = f(r)
-        ApplyPreconditioner(Z, R, PC, mgrid.L, mgrid.A, mgrid.dimensions);
-        float a2 = Product(mgrid.A, Z, R, mgrid.dimensions);				// a2 = product(z,r)
+        ApplyPreconditioner(Z, R, PC, mgrid.m_L, mgrid.m_A, mgrid.m_dimensions);
+        float a2 = Product(mgrid.m_A, Z, R, mgrid.m_dimensions);				// a2 = product(z,r)
         float beta = a2/a;													// beta = a2/a
-        Op(mgrid.A, Z, S, S, beta, mgrid.dimensions);						// s = z + beta*s
+        Op(mgrid.m_A, Z, S, S, beta, mgrid.m_dimensions);						// s = z + beta*s
         a = a2;
 	}
 
@@ -352,7 +353,7 @@ void SolveConjugateGradient(macgrid& mgrid, Grid<float>* PC, int subcell, const 
 	delete S;
 }
 
-void Solve(macgrid& mgrid, const int& subcell, const bool& verbose){
+void Solve(MacGrid& mgrid, const int& subcell, const bool& verbose){
 
 	//if in VDB mode, force to single threaded to prevent VDB write issues. 
 	//this is a kludgey fix for now.
@@ -361,10 +362,10 @@ void Solve(macgrid& mgrid, const int& subcell, const bool& verbose){
 	// }
 
 	//flip divergence
-	FlipGrid(mgrid.D, mgrid.dimensions);
+	FlipGrid(mgrid.m_D, mgrid.m_dimensions);
 
 	//build preconditioner
-	Grid<float>* preconditioner = new Grid<float>(mgrid.dimensions, 0.0f);
+	Grid<float>* preconditioner = new Grid<float>(mgrid.m_dimensions, 0.0f);
 	BuildPreconditioner(preconditioner, mgrid, subcell);
 
 	//solve conjugate gradient

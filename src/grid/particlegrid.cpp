@@ -25,10 +25,10 @@ void ParticleGrid::Init(const int& x, const int& y, const int& z){
 	m_grid = new Grid<int>(glm::vec3(x,y,z), -1);
 }
 
-std::vector<particle*> ParticleGrid::GetCellNeighbors(const glm::vec3& index,
+std::vector<Particle*> ParticleGrid::GetCellNeighbors(const glm::vec3& index,
 													  const glm::vec3& numberOfNeighbors){
 	//loop through neighbors, for each neighbor, check if cell has particles and push back contents
-	std::vector<particle*> neighbors;
+	std::vector<Particle*> neighbors;
 	for( int sx=index.x-numberOfNeighbors.x; sx<=index.x+numberOfNeighbors.x; sx++ ){
 		for( int sy=index.y-numberOfNeighbors.y; sy<=index.y+numberOfNeighbors.y; sy++ ) {
 			for( int sz=index.z-numberOfNeighbors.z; sz<=index.z+numberOfNeighbors.z; sz++ ) {
@@ -49,9 +49,9 @@ std::vector<particle*> ParticleGrid::GetCellNeighbors(const glm::vec3& index,
 	return neighbors;
 }
 
-std::vector<particle*> ParticleGrid::GetWallNeighbors(const glm::vec3& index, 
+std::vector<Particle*> ParticleGrid::GetWallNeighbors(const glm::vec3& index, 
 													  const glm::vec3& numberOfNeighbors){
-	std::vector<particle*> neighbors;
+	std::vector<Particle*> neighbors;
 	for( int sx=index.x-numberOfNeighbors.x; sx<=index.x+numberOfNeighbors.x-1; sx++ ){
 		for( int sy=index.y-numberOfNeighbors.y; sy<=index.y+numberOfNeighbors.y-1; sy++ ) {
 			for( int sz=index.z-numberOfNeighbors.z; sz<=index.z+numberOfNeighbors.z-1; sz++ ) {
@@ -78,8 +78,8 @@ float ParticleGrid::CellSDF(const int& i, const int& j, const int& k, const floa
 	int cellindex = m_grid->GetCell(i,j,k);
 	if(cellindex>=0){
 		for( int a=0; a<m_cells[cellindex].size(); a++ ) { 
-			if( m_cells[cellindex][a]->type == type) {
-				accm += m_cells[cellindex][a]->density;
+			if( m_cells[cellindex][a]->m_type == type) {
+				accm += m_cells[cellindex][a]->m_density;
 			} else {
 				return 1.0f;
 			}
@@ -89,15 +89,15 @@ float ParticleGrid::CellSDF(const int& i, const int& j, const int& k, const floa
 	return 0.2f*n0-accm;
 }
 
-void ParticleGrid::BuildSDF(macgrid& mgrid, const float& density){
+void ParticleGrid::BuildSDF(MacGrid& mgrid, const float& density){
 	int x = m_dimensions.x; int y = m_dimensions.y; int z = m_dimensions.z;
-	mgrid.L->Clear();
+	mgrid.m_L->Clear();
 	tbb::parallel_for(tbb::blocked_range<unsigned int>(0,x),
 		[=](const tbb::blocked_range<unsigned int>& r){
 			for(unsigned int i=r.begin(); i!=r.end(); ++i){	
 				for(int j = 0; j < y; ++j){
 					for(int k = 0; k < z; ++k){
-						mgrid.L->SetCell(i, j, k, CellSDF(i, j, k, density, FLUID));
+						mgrid.m_L->SetCell(i, j, k, CellSDF(i, j, k, density, FLUID));
 					}
 				}
 			}	
@@ -105,7 +105,7 @@ void ParticleGrid::BuildSDF(macgrid& mgrid, const float& density){
 	);
 }
 
-void ParticleGrid::MarkCellTypes(std::vector<particle*>& particles, Grid<int>* A, 
+void ParticleGrid::MarkCellTypes(std::vector<Particle*>& particles, Grid<int>* A, 
 								 const float& density){
 	int x = m_dimensions.x; int y = m_dimensions.y; int z = m_dimensions.z;
 	tbb::parallel_for(tbb::blocked_range<unsigned int>(0,x),
@@ -117,7 +117,7 @@ void ParticleGrid::MarkCellTypes(std::vector<particle*>& particles, Grid<int>* A
 						int cellindex = m_grid->GetCell(i,j,k);
 						if(cellindex>=0 && cellindex<m_cells.size()){
 							for( int a=0; a<m_cells[cellindex].size(); a++ ) { 
-								if( m_cells[cellindex][a]->type == SOLID ) {
+								if( m_cells[cellindex][a]->m_type == SOLID ) {
 									A->SetCell(i,j,k, SOLID);
 								}
 							}
@@ -137,7 +137,7 @@ void ParticleGrid::MarkCellTypes(std::vector<particle*>& particles, Grid<int>* A
 	);
 }
 
-void ParticleGrid::Sort(std::vector<particle*>& particles){
+void ParticleGrid::Sort(std::vector<Particle*>& particles){
 	// clear existing cells
 	int cellcount = m_cells.size();
 	for(int i=0; i<cellcount; i++){
@@ -150,9 +150,9 @@ void ParticleGrid::Sort(std::vector<particle*>& particles){
 	int cellscount = m_cells.size();
 	// cout << particlecount << endl;
 	for(int i=0; i<particlecount; i++){
-		particle* p = particles[i];
+		Particle* p = particles[i];
 
-		glm::vec3 pos = p->p;
+		glm::vec3 pos = p->m_p;
 		pos.x = (int)glm::max(0.0f, glm::min((int)maxd-1.0f, int(maxd)*pos.x));
 		pos.y = (int)glm::max(0.0f, glm::min((int)maxd-1.0f, int(maxd)*pos.y));
 		pos.z = (int)glm::max(0.0f, glm::min((int)maxd-1.0f, int(maxd)*pos.z));
@@ -162,7 +162,7 @@ void ParticleGrid::Sort(std::vector<particle*>& particles){
 		if(cellindex>=0){ //if grid has value here, a cell already exists for it
 			m_cells[cellindex].push_back(p);
 		}else{ //if grid has no value, create new cell and push index to grid
-			std::vector<particle*> cell;
+			std::vector<Particle*> cell;
 			cell.push_back(p);
 			m_cells.push_back(cell);
 			m_grid->SetCell(pos, cellscount);

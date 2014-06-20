@@ -68,8 +68,8 @@ class Viewer{
 		~Viewer();
 
 		bool Launch();
-		void Load(fluidCore::flipsim* sim, const bool& retina);
-		void Load(fluidCore::flipsim* sim, const bool& retina, const glm::vec2& resolution, 
+		void Load(fluidCore::FlipSim* sim, const bool& retina);
+		void Load(fluidCore::FlipSim* sim, const bool& retina, const glm::vec2& resolution, 
 				  const glm::vec3& camrotate, const glm::vec3& camtranslate, 
 				  const glm::vec2& camfov, const float& camlookat);
 	private:
@@ -104,9 +104,9 @@ class Viewer{
 		std::map<std::string, int> 			m_vbokeys;
 		std::map<std::string, glm::vec2> 	m_frameranges;
 		GLCamera 							m_cam;
-		std::vector<fluidCore::particle*>* 	m_particles;
+		std::vector<fluidCore::Particle*>* 	m_particles;
 
-    	fluidCore::flipsim* 				m_sim;
+    	fluidCore::FlipSim* 				m_sim;
     	bool 								m_siminitialized;
     	bool 								m_drawobjects;
     	bool 								m_drawInvalid;

@@ -20,88 +20,92 @@ namespace fluidCore {
 // Class Declarations
 //====================================
 
-class particleList{ //used for VDB particle to level set construction
+class ParticleList{ //used for VDB particle to level set construction
 	public:
-		particleList(){ }
+		ParticleList(){ }
 
-		particleList(std::vector<particle*> plist, float maxdimension){
-			particles = plist;
-			this->maxdimension = maxdimension;
+		ParticleList(std::vector<Particle*> plist, float maxdimension){
+			m_particles = plist;
+			m_maxdimension = maxdimension;
 		}
 
-		~particleList(){ }
+		~ParticleList(){ }
 
 		int size() const { 
-			return particles.size(); 
+			return m_particles.size(); 
 		}
 
 		void getPos(size_t n, openvdb::Vec3R& pos) const {
-			pos = openvdb::Vec3f(particles[n]->p.x*maxdimension, particles[n]->p.y*maxdimension, 
-								 particles[n]->p.z*maxdimension);
+			pos = openvdb::Vec3f(m_particles[n]->m_p.x*m_maxdimension, 
+								 m_particles[n]->m_p.y*m_maxdimension, 
+								 m_particles[n]->m_p.z*m_maxdimension);
 		}
 
 		void getPosRad(size_t n, openvdb::Vec3R& pos, openvdb::Real& rad) const {
-		    pos = openvdb::Vec3f(particles[n]->p.x*maxdimension, particles[n]->p.y*maxdimension, 
-		    					 particles[n]->p.z*maxdimension);
-		    rad = particles[n]->density;
+		    pos = openvdb::Vec3f(m_particles[n]->m_p.x*m_maxdimension, 
+		    					 m_particles[n]->m_p.y*m_maxdimension, 
+		    					 m_particles[n]->m_p.z*m_maxdimension);
+		    rad = m_particles[n]->m_density;
 		    rad = .5f;
-		    if(particles[n]->invalid){
+		    if(m_particles[n]->m_invalid){
 		    	rad = 0.0f;
 		    }
 		}
 
 		void getPosRadVel(size_t n, openvdb::Vec3R& pos, openvdb::Real& rad, 
 						  openvdb::Vec3R& vel) const {
-			pos = openvdb::Vec3f(particles[n]->p.x*maxdimension, particles[n]->p.y*maxdimension, 
-								 particles[n]->p.z*maxdimension);
-		    rad = particles[n]->density;
+			pos = openvdb::Vec3f(m_particles[n]->m_p.x*m_maxdimension, 
+								 m_particles[n]->m_p.y*m_maxdimension, 
+								 m_particles[n]->m_p.z*m_maxdimension);
+		    rad = m_particles[n]->m_density;
 		    rad = .5f;
-		    vel = openvdb::Vec3f(particles[n]->u.x, particles[n]->u.y, particles[n]->u.z);
-		    if(particles[n]->invalid){
+		    vel = openvdb::Vec3f(m_particles[n]->m_u.x, m_particles[n]->m_u.y, 
+		    					 m_particles[n]->m_u.z);
+		    if(m_particles[n]->m_invalid){
 		    	rad = 0.0f;
 		    }
 	    }
 
 		void getAtt(size_t n, openvdb::Index32& att) const { att = n; }
 	private:
-		std::vector<particle*> particles;
-		float maxdimension;
+		std::vector<Particle*>		m_particles;
+		float						m_maxdimension;
 };
 
-class levelset{
+class LevelSet{
 	public:
 		//Initializers
-		levelset();
+		LevelSet();
 		// levelset(openvdb::FloatGrid::Ptr grid);
-		levelset(objCore::Obj* mesh);
-		levelset(std::vector<particle*>& particles, float maxdimension);
-		~levelset();
+		LevelSet(objCore::Obj* mesh);
+		LevelSet(std::vector<Particle*>& particles, float maxdimension);
+		~LevelSet();
 
 		//Cell accessors and setters and whatever
-		float getCell(const glm::vec3& index);
-		float getCell(const int& x, const int& y, const int& z);
+		float GetCell(const glm::vec3& index);
+		float GetCell(const int& x, const int& y, const int& z);
 
-		void setCell(const glm::vec3& index, const float& value);
-		void setCell(const int& x, const int& y, const int& z, const float& value);
+		void SetCell(const glm::vec3& index, const float& value);
+		void SetCell(const int& x, const int& y, const int& z, const float& value);
 
-		float getInterpolatedCell(const glm::vec3& index);
-		float getInterpolatedCell(const float& x, const float& y, const float& z);
+		float GetInterpolatedCell(const glm::vec3& index);
+		float GetInterpolatedCell(const float& x, const float& y, const float& z);
 
-		openvdb::FloatGrid::Ptr& getVDBGrid();
+		openvdb::FloatGrid::Ptr& GetVDBGrid();
 
-		void merge(levelset& ls);
-		void copy(levelset& ls);
+		void Merge(LevelSet& ls);
+		void Copy(LevelSet& ls);
 
-		void projectPointsToSurface(std::vector<glm::vec3>& points);
+		void ProjectPointsToSurface(std::vector<glm::vec3>& points);
 
-		void writeObjToFile(std::string filename);
-		void writeVDBGridToFile(std::string filename);
+		void WriteObjToFile(std::string filename);
+		void WriteVDBGridToFile(std::string filename);
 
 	protected:
-		openvdb::FloatGrid::Ptr vdbgrid;
+		openvdb::FloatGrid::Ptr		m_vdbgrid;
 
-		tbb::mutex GetInterpolatedCellLock;
-		tbb::mutex SetCellLock;
+		tbb::mutex					m_getInterpolatedCellLock;
+		tbb::mutex					m_setCellLock;
 };
 }
 

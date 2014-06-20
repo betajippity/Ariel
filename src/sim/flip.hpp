@@ -17,62 +17,62 @@ namespace fluidCore {
 // Class Declarations
 //====================================
 
-class flipsim{
+class FlipSim{
 	public:
-		flipsim(const glm::vec3& maxres, sceneCore::Scene* scene, const float& density, 
+		FlipSim(const glm::vec3& maxres, sceneCore::Scene* scene, const float& density, 
 				const bool& verbose);
-		~flipsim();
+		~FlipSim();
 
-		void init();
-		void step(bool saveVDB, bool saveOBJ, bool savePARTIO);
+		void Init();
+		void Step(bool saveVDB, bool saveOBJ, bool savePARTIO);
 
-		std::vector<particle*>* getParticles();
-		glm::vec3 getDimensions();
-		sceneCore::Scene* getScene();
+		std::vector<Particle*>* GetParticles();
+		glm::vec3 GetDimensions();
+		sceneCore::Scene* GetScene();
 
-		int frame;
+		int							m_frame;
 
 	private:
-		void computeDensity();
-		void applyExternalForces();
-		void subtractPreviousGrid();
-		void storePreviousGrid();
-		void subtractPressureGradient();
-		void extrapolateVelocity();
-		void project();
-		void solvePicFlip();
-		void advectParticles();
-		bool isCellFluid(const int& x, const int& y, const int& z);
+		void ComputeDensity();
+		void ApplyExternalForces();
+		void SubtractPreviousGrid();
+		void StorePreviousGrid();
+		void SubtractPressureGradient();
+		void ExtrapolateVelocity();
+		void Project();
+		void SolvePicFlip();
+		void AdvectParticles();
+		bool IsCellFluid(const int& x, const int& y, const int& z);
 
-		glm::vec3 dimensions;
-		std::vector<particle*> particles;
-		macgrid mgrid;
-		macgrid mgrid_previous;
-		ParticleGrid* pgrid;
+		glm::vec3					m_dimensions;
+		std::vector<Particle*>		m_particles;
+		MacGrid						m_mgrid;
+		MacGrid						m_mgrid_previous;
+		ParticleGrid*				m_pgrid;
 
-		int subcell;
-		float density;
-		float max_density;
-		float densitythreshold;
-		float picflipratio;
+		int							m_subcell;
+		float						m_density;
+		float						m_max_density;
+		float						m_densitythreshold;
+		float						m_picflipratio;
 
-		sceneCore::Scene* scene;
+		sceneCore::Scene*			m_scene;
 
-		float stepsize;
+		float						m_stepsize;
 
-		bool verbose;
+		bool						m_verbose;
 };
 
-class fliptask: public tbb::task {
+class FlipTask: public tbb::task {
 	public:
-		fliptask(flipsim* sim, bool dumpVDB, bool dumpOBJ, bool dumpPARTIO);
+		FlipTask(FlipSim* sim, bool dumpVDB, bool dumpOBJ, bool dumpPARTIO);
 
 		tbb::task* execute();
 	private:
-		flipsim* m_sim;
-		bool m_dumpPARTIO;
-		bool m_dumpOBJ;
-		bool m_dumpVDB;
+		FlipSim*					m_sim;
+		bool						m_dumpPARTIO;
+		bool						m_dumpOBJ;
+		bool						m_dumpVDB;
 };
 }
 
