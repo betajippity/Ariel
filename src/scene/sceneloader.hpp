@@ -16,37 +16,37 @@ namespace sceneCore {
 // Class Declarations
 //====================================
 
-class sceneloader {
+class SceneLoader {
 	public:
-		sceneloader(std::string filename);
-		~sceneloader();
+		SceneLoader(const std::string& filename);
+		~SceneLoader();
 
-		scene* getScene();
-		float getDensity();
-		glm::vec3 getDimensions();
+		Scene* GetScene();
+		float GetDensity();
+		glm::vec3 GetDimensions();
 
-		glm::vec3 camera_rotate;
-		glm::vec3 camera_translate;
-		float camera_lookat;
-		glm::vec2 camera_resolution;
-		glm::vec2 camera_fov;
+		glm::vec3		m_cameraRotate;
+		glm::vec3		m_cameraTranslate;
+		float			m_cameraLookat;
+		glm::vec2		m_cameraResolution;
+		glm::vec2		m_cameraFov;
 		
 	private:
-		void loadSettings(const Json::Value& jsonsettings);
-		void loadSim(const Json::Value& jsonsettings);
-		void loadBox(const Json::Value& jsoncube);
-		void loadSphere(const Json::Value& jsonsphere);
-		void loadObj(const Json::Value& jsonobj);
-		void loadCamera(const Json::Value& jsoncamera);
+		void LoadSettings(const Json::Value& jsonsettings);
+		void LoadSim(const Json::Value& jsonsettings);
+		void LoadBox(const Json::Value& jsoncube);
+		void LoadSphere(const Json::Value& jsonsphere);
+		void LoadObj(const Json::Value& jsonobj);
+		void LoadCamera(const Json::Value& jsoncamera);
 
-		scene* s;
-		glm::vec3 dimensions;
-		float density;
-		std::string relativePath;
-		std::string imagePath;
-		std::string meshPath;
-		std::string vdbPath;
-		std::string partioPath;
+		Scene*			m_s;
+		glm::vec3		m_dimensions;
+		float			m_density;
+		std::string		m_relativePath;
+		std::string		m_imagePath;
+		std::string		m_meshPath;
+		std::string		m_vdbPath;
+		std::string		m_partioPath;
 		
 };
 }

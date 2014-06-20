@@ -8,21 +8,21 @@
 #define GEOM_HPP
 
 #include <glm/glm.hpp>
-#include "obj/objcontainer.hpp"
+#include "obj/obj.hpp"
 
 namespace geomCore {
 //====================================
 // Class Declarations
 //====================================
 
-class geom{
+class Geom{
 	public:
 		//Initializers
-		geom(){};
-		virtual ~geom(){};
+		Geom(){};
+		virtual ~Geom(){};
 
 		//Interactions
-		virtual objCore::objContainer* tesselate() = 0;
+		virtual objCore::Obj* Tesselate() = 0;
 };
 }
 

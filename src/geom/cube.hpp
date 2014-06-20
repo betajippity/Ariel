@@ -14,15 +14,15 @@ namespace geomCore {
 // Class Declarations
 //====================================
 	
-class cube: public geom {
+class Cube: public Geom {
 	public:
 		//Initializers
-		cube();
-		~cube();
+		Cube();
+		~Cube();
 
 		//Getters
-		objCore::objContainer* tesselate();
-    objCore::objContainer* tesselate(const glm::vec3& lowerCorner, const glm::vec3& upperCorner);
+		objCore::Obj* Tesselate();
+		objCore::Obj* Tesselate(const glm::vec3& lowerCorner, const glm::vec3& upperCorner);
 };
 }
 

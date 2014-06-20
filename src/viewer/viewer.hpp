@@ -24,105 +24,103 @@
 
 namespace viewerCore {
 
-struct vboData{
-	GLuint vboID;
-	GLuint cboID;
-	int size;
-	GLenum type;
-	std::string key;
+struct VboData{
+	GLuint 			m_vboID;
+	GLuint 			m_cboID;
+	int 			m_size;
+	GLenum 			m_type;
+	std::string 	m_key;
 };
 
 //Used just for tracking OpenGL viewport camera position/keeping in sync with rendercam
-struct glCamera{
-	glm::vec2 mouseOld;
-	glm::vec3 rotate;
-	glm::vec3 translate;
-	glm::vec2 fov;
-	float lookat;
-	int currentKey;
-	int currentMouseClick;
-	float rotateSpeed;
-	float zoomSpeed;
-	float panSpeed;
+struct GLCamera{
+	glm::vec2 		m_mouseOld;
+	glm::vec3 		m_rotate;
+	glm::vec3 		m_translate;
+	glm::vec2 		m_fov;
+	float 			m_lookat;
+	int 			m_currentKey;
+	int 			m_currentMouseClick;
+	float 			m_rotateSpeed;
+	float 			m_zoomSpeed;
+	float 			m_panSpeed;
 
 	//Initializer
-	glCamera(): mouseOld(glm::vec2(0.0f,0.0f)), 
-				rotate(glm::vec3(0.0f,0.0f,0.0f)), 
-				translate(glm::vec3(0.0f,0.0f,0.0f)),
-				lookat(0.0f),
-				fov(45.0f),
-				currentKey(0),
-				currentMouseClick(0),
-				rotateSpeed(0.2f),
-				zoomSpeed(0.1f),
-				panSpeed(0.1f){};
+	GLCamera(): m_mouseOld(glm::vec2(0.0f,0.0f)), 
+				m_rotate(glm::vec3(0.0f,0.0f,0.0f)), 
+				m_translate(glm::vec3(0.0f,0.0f,0.0f)),
+				m_lookat(0.0f),
+				m_fov(45.0f),
+				m_currentKey(0),
+				m_currentMouseClick(0),
+				m_rotateSpeed(0.2f),
+				m_zoomSpeed(0.1f),
+				m_panSpeed(0.1f){};
 };
 
 //====================================
 // Class Declarations
 //====================================
 
-class viewer{
+class Viewer{
 	public:
-		viewer();
-		~viewer();
+		Viewer();
+		~Viewer();
 
-		bool launch();
-		void load(fluidCore::flipsim* sim, bool retina);
-		void load(fluidCore::flipsim* sim, bool retina, glm::vec2 resolution, glm::vec3 camrotate, 
-				  glm::vec3 camtranslate, glm::vec2 camfov, float camlookat);
+		bool Launch();
+		void Load(fluidCore::FlipSim* sim, const bool& retina);
+		void Load(fluidCore::FlipSim* sim, const bool& retina, const glm::vec2& resolution, 
+				  const glm::vec3& camrotate, const glm::vec3& camtranslate, 
+				  const glm::vec2& camfov, const float& camlookat);
 	private:
 		//Initialize stuff
-		bool init();
+		bool Init();
 
 		//Sim thread stuff
-		void simLoopThread();
+		void SimLoopThread();
 
 		//Main draw functions
-		void mainLoop();
-		void updateInputs();
+		void MainLoop();
+		void UpdateInputs();
 
 		//VBO stuff
-		vboData createVBO(vboData data, float* vertices, int vertexcount, float* colors,
-                          int colorcount, GLenum type, std::string key);
-		vboData createVBOFromObj(objCore::objContainer* o, glm::vec4 color, std::string key);
+		VboData CreateVBO(VboData& data, float* vertices, const unsigned int& vertexcount, 
+						  float* colors, const unsigned int& colorcount, const GLenum& type, 
+						  const std::string& key);
+		VboData CreateVBOFromObj(objCore::Obj* o, const glm::vec4& color, const std::string& key);
 
-		void saveFrame();
+		void SaveFrame();
 
 		//Interface callbacks
-		static void errorCallback(int error, const char* description);		
-		static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+		static void ErrorCallback(int error, const char* description);		
+		static void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
 		//Cached data
-		bool loaded;
-		bool runrender;
+		bool 								m_loaded;
+		bool 								m_runrender;
+		glm::vec2 							m_resolution;
+		GLFWwindow* 						m_window;
+		std::vector<VboData> 				m_vbos;
+		std::map<std::string, int> 			m_vbokeys;
+		std::map<std::string, glm::vec2> 	m_frameranges;
+		GLCamera 							m_cam;
+		std::vector<fluidCore::Particle*>* 	m_particles;
 
-		glm::vec2 resolution;
-		GLFWwindow* window;
-		std::vector<vboData> vbos;
-		std::map<std::string, int> vbokeys;
-		std::map<std::string, glm::vec2> frameranges;
-
-		glCamera cam;
-
-		std::vector<fluidCore::particle*>* particles;
-
-    	fluidCore::flipsim* sim;
-    	bool siminitialized;
-    	bool drawobjects;
-    	bool drawInvalid;
+    	fluidCore::FlipSim* 				m_sim;
+    	bool 								m_siminitialized;
+    	bool 								m_drawobjects;
+    	bool 								m_drawInvalid;
     	
-    	unsigned char* bitmapData;
-    	bool dumpFramebuffer;
-    	bool dumpReady;
-    	bool pause;
-    	tbb::mutex framebufferWriteLock;
+    	unsigned char* 						m_bitmapData;
+    	bool 								m_dumpFramebuffer;
+    	bool 								m_dumpReady;
+    	bool 								m_pause;
+    	tbb::mutex 							m_framebufferWriteLock;
+    	int 								m_framebufferScale;
 
-    	int framebufferScale;
-
-    	bool dumpVDB;
-    	bool dumpOBJ;
-    	bool dumpPARTIO;
+    	bool 								m_dumpVDB;
+    	bool 								m_dumpOBJ;
+    	bool 								m_dumpPARTIO;
 };
 }
 

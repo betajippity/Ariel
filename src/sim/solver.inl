@@ -20,40 +20,34 @@ namespace fluidCore {
 //====================================
 
 //Forward declarations for externed inlineable methods
-extern inline void solve(macgrid& mgrid, const int& subcell, const bool& verbose);
-inline void flipDivergence(macgrid& mgrid);
-inline void buildPreconditioner(floatgrid* pc, macgrid& mgrid, int subcell);
-inline float fluidRef(intgrid* A, int i, int j, int k, int qi, int qj, int qk, 
-					  glm::vec3 dimensions);
-inline float preconditionerRef(floatgrid* p, int i, int j, int k, glm::vec3 dimensions);
-inline float fluidDiag(intgrid* A, floatgrid* L, int i, int j, int k, glm::vec3 dimensions, 
-					   int subcell);
-inline void solveConjugateGradient(macgrid& mgrid, floatgrid* pc, int subcell, 
+extern inline void Solve(MacGrid& mgrid, const int& subcell, const bool& verbose);
+inline void BuildPreconditioner(Grid<float>* pc, MacGrid& mgrid, int subcell);
+inline void SolveConjugateGradient(MacGrid& mgrid, Grid<float>* pc, int subcell, 
 								   const bool& verbose);
-inline void computeAx(intgrid* A, floatgrid* L, floatgrid* X, floatgrid* target, 
+inline void ComputeAx(Grid<int>* A, Grid<float>* L, Grid<float>* X, Grid<float>* target, 
 					  glm::vec3 dimensions, int subcell);
-inline float xRef(intgrid* A, floatgrid* L, floatgrid* X, glm::vec3 f, glm::vec3 p, 
+inline float XRef(Grid<int>* A, Grid<float>* L, Grid<float>* X, glm::vec3 f, glm::vec3 p, 
 				  glm::vec3 dimensions, int subcell);
-inline void op(intgrid* A, floatgrid* X, floatgrid* Y, floatgrid* target, float alpha, 
+inline void Op(Grid<int>* A, Grid<float>* X, Grid<float>* Y, Grid<float>* target, float alpha, 
 			   glm::vec3 dimensions);
-inline float product(intgrid* A, floatgrid* X, floatgrid* Y, glm::vec3 dimensions);
-inline void applyPreconditioner(floatgrid* Z, floatgrid* R, floatgrid* P, floatgrid* L, 
-								intgrid* A, glm::vec3 dimensions, gridtype type);
+inline float Product(Grid<int>* A, Grid<float>* X, Grid<float>* Y, glm::vec3 dimensions);
+inline void ApplyPreconditioner(Grid<float>* Z, Grid<float>* R, Grid<float>* P, Grid<float>* L, 
+								Grid<int>* A, glm::vec3 dimensions);
 
 //====================================
 // Function Implementations
 //====================================
 
 //Takes a grid, multiplies everything by -1
-void flipGrid(floatgrid* grid, glm::vec3 dimensions){
+void FlipGrid(Grid<float>* grid, glm::vec3 dimensions){
 	int x = (int)dimensions.x; int y = (int)dimensions.y; int z = (int)dimensions.z;
 	tbb::parallel_for(tbb::blocked_range<unsigned int>(0,x),
 		[=](const tbb::blocked_range<unsigned int>& r){
 			for(unsigned int i=r.begin(); i!=r.end(); ++i){
 		  		for(unsigned int j=0; j<y; ++j){
 					for(unsigned int k=0; k<z; ++k){
-						float flipped = -grid->getCell(i,j,k);
-						grid->setCell(i,j,k,flipped);
+						float flipped = -grid->GetCell(i,j,k);
+						grid->SetCell(i,j,k,flipped);
 					}
 				}      	
 	      	}
@@ -62,32 +56,32 @@ void flipGrid(floatgrid* grid, glm::vec3 dimensions){
 }
 
 //Helper for preconditioner builder
-float ARef(intgrid* A, int i, int j, int k, int qi, int qj, int qk, glm::vec3 dimensions){
+float ARef(Grid<int>* A, int i, int j, int k, int qi, int qj, int qk, glm::vec3 dimensions){
 	int x = (int)dimensions.x; int y = (int)dimensions.y; int z = (int)dimensions.z;
-	if( i<0 || i>x-1 || j<0 || j>y-1 || k<0 || k>z-1 || A->getCell(i,j,k)!=FLUID ){ //if not liquid
+	if( i<0 || i>x-1 || j<0 || j>y-1 || k<0 || k>z-1 || A->GetCell(i,j,k)!=FLUID ){ //if not liquid
 		return 0.0;
 	} 
 	//if not liquid
-	if( qi<0 || qi>x-1 || qj<0 || qj>y-1 || qk<0 || qk>z-1 || A->getCell(qi,qj,qk)!=FLUID ){ 
+	if( qi<0 || qi>x-1 || qj<0 || qj>y-1 || qk<0 || qk>z-1 || A->GetCell(qi,qj,qk)!=FLUID ){ 
 		return 0.0;
 	} 
 	return -1.0;	
 }
 
 //Helper for preconditioner builder
-float PRef(floatgrid* p, int i, int j, int k, glm::vec3 dimensions){
+float PRef(Grid<float>* p, int i, int j, int k, glm::vec3 dimensions){
 	int x = (int)dimensions.x; int y = (int)dimensions.y; int z = (int)dimensions.z;
-	if( i<0 || i>x-1 || j<0 || j>y-1 || k<0 || k>z-1 || p->getCell(i,j,k)!=FLUID ){ //if not liquid
+	if( i<0 || i>x-1 || j<0 || j>y-1 || k<0 || k>z-1 || p->GetCell(i,j,k)!=FLUID ){ //if not liquid
 		return 0.0f;
 	} 
-	return p->getCell(i,j,k);
+	return p->GetCell(i,j,k);
 }
 
 //Helper for preconditioner builder
-float ADiag(intgrid* A, floatgrid* L, int i, int j, int k, glm::vec3 dimensions, int subcell){
+float ADiag(Grid<int>* A, Grid<float>* L, int i, int j, int k, glm::vec3 dimensions, int subcell){
 	int x = (int)dimensions.x; int y = (int)dimensions.y; int z = (int)dimensions.z;
 	float diag = 6.0;
-	if( A->getCell(i,j,k) != FLUID ){
+	if( A->GetCell(i,j,k) != FLUID ){
 		return diag;
 	}
 	int q[][3] = { {i-1,j,k}, {i+1,j,k}, {i,j-1,k}, {i,j+1,k}, {i,j,k-1}, {i,j,k+1} };
@@ -95,11 +89,11 @@ float ADiag(intgrid* A, floatgrid* L, int i, int j, int k, glm::vec3 dimensions,
 		int qi = q[m][0];
 		int qj = q[m][1];
 		int qk = q[m][2];
-		if( qi<0 || qi>x-1 || qj<0 || qj>y-1 || qk<0 || qk>z-1 || A->getCell(qi,qj,qk)==SOLID ){
+		if( qi<0 || qi>x-1 || qj<0 || qj>y-1 || qk<0 || qk>z-1 || A->GetCell(qi,qj,qk)==SOLID ){
 			diag -= 1.0;
 		}
-		else if( A->getCell(qi,qj,qk)==AIR && subcell ) {
-			diag -= L->getCell(qi,qj,qk)/glm::min(1.0e-6f,L->getCell(i,j,k));
+		else if( A->GetCell(qi,qj,qk)==AIR && subcell ) {
+			diag -= L->GetCell(qi,qj,qk)/glm::min(1.0e-6f,L->GetCell(i,j,k));
 		}
 	}
 	
@@ -107,29 +101,30 @@ float ADiag(intgrid* A, floatgrid* L, int i, int j, int k, glm::vec3 dimensions,
 }
 
 //Does what it says
-void buildPreconditioner(floatgrid* pc, macgrid& mgrid, int subcell){
-	int x = (int)mgrid.dimensions.x; int y = (int)mgrid.dimensions.y; 
-	int z = (int)mgrid.dimensions.z;
+void BuildPreconditioner(Grid<float>* pc, MacGrid& mgrid, int subcell){
+	int x = (int)mgrid.m_dimensions.x; int y = (int)mgrid.m_dimensions.y; 
+	int z = (int)mgrid.m_dimensions.z;
 	float a = 0.25f;
 	tbb::parallel_for(tbb::blocked_range<unsigned int>(0,x),
 		[=](const tbb::blocked_range<unsigned int>& r){
 			for(unsigned int i=r.begin(); i!=r.end(); ++i){
 				for(unsigned int j=0; j<y; ++j){
 					for(unsigned int k=0; k<z; ++k){
-						if(mgrid.A->getCell(i,j,k)==FLUID){	
-							float left = ARef(mgrid.A,i-1,j,k,i,j,k,mgrid.dimensions) * 
-										 PRef(pc,i-1,j,k,mgrid.dimensions);
-							float bottom = ARef(mgrid.A,i,j-1,k,i,j,k,mgrid.dimensions) * 
-										   PRef(pc,i,j-1,k,mgrid.dimensions);
-							float back = ARef(mgrid.A,i,j,k-1,i,j,k,mgrid.dimensions) * 
-										 PRef(pc,i,j,k-1,mgrid.dimensions);
-							float diag = ADiag(mgrid.A, mgrid.L,i,j,k,mgrid.dimensions,subcell);
+						if(mgrid.m_A->GetCell(i,j,k)==FLUID){	
+							float left = ARef(mgrid.m_A,i-1,j,k,i,j,k,mgrid.m_dimensions) * 
+										 PRef(pc,i-1,j,k,mgrid.m_dimensions);
+							float bottom = ARef(mgrid.m_A,i,j-1,k,i,j,k,mgrid.m_dimensions) * 
+										   PRef(pc,i,j-1,k,mgrid.m_dimensions);
+							float back = ARef(mgrid.m_A,i,j,k-1,i,j,k,mgrid.m_dimensions) * 
+										 PRef(pc,i,j,k-1,mgrid.m_dimensions);
+							float diag = ADiag(mgrid.m_A, mgrid.m_L,i,j,k,mgrid.m_dimensions,
+											   subcell);
 							float e = diag - (left*left) - (bottom*bottom) - (back*back);
 							if(diag>0){
 								if( e < a*diag ){
 									e = diag;
 								}
-								pc->setCell(i,j,k, 1.0f/glm::sqrt(e));
+								pc->SetCell(i,j,k, 1.0f/glm::sqrt(e));
 							}
 						}
 					}
@@ -140,55 +135,56 @@ void buildPreconditioner(floatgrid* pc, macgrid& mgrid, int subcell){
 }
 
 //Helper for PCG solver: read X with clamped bounds
-float xRef(intgrid* A, floatgrid* L, floatgrid* X, glm::vec3 f, glm::vec3 p, glm::vec3 dimensions, 
-		   int subcell){
+float XRef(Grid<int>* A, Grid<float>* L, Grid<float>* X, glm::vec3 f, glm::vec3 p, 
+		   glm::vec3 dimensions, int subcell){
 	int x = (int)dimensions.x; int y = (int)dimensions.y; int z = (int)dimensions.z;
 	int i = glm::min(glm::max(0,(int)p.x),x-1); int fi = (int)f.x;
 	int j = glm::min(glm::max(0,(int)p.y),y-1); int fj = (int)f.y;
 	int k = glm::min(glm::max(0,(int)p.z),z-1); int fk = (int)f.z;
-	if(A->getCell(i,j,k) == FLUID){
-		return X->getCell(i,j,k);
-	}else if(A->getCell(i,j,k) == SOLID){
-		return X->getCell(fi,fj,fk);
+	if(A->GetCell(i,j,k) == FLUID){
+		return X->GetCell(i,j,k);
+	}else if(A->GetCell(i,j,k) == SOLID){
+		return X->GetCell(fi,fj,fk);
 	} 
 	if(subcell){
-		return L->getCell(i,j,k)/glm::min(1.0e-6f,L->getCell(fi,fj,fk))*X->getCell(fi,fj,fk);
+		return L->GetCell(i,j,k)/glm::min(1.0e-6f,L->GetCell(fi,fj,fk))*X->GetCell(fi,fj,fk);
 	}else{
 		return 0.0f;
 	}
 }
 
 // target = X + alpha*Y
-void op(intgrid* A, floatgrid* X, floatgrid* Y, floatgrid* target, float alpha, 
+void Op(Grid<int>* A, Grid<float>* X, Grid<float>* Y, Grid<float>* target, float alpha, 
 		glm::vec3 dimensions){
 	int x = (int)dimensions.x; int y = (int)dimensions.y; int z = (int)dimensions.z;
-	tbb::parallel_for(tbb::blocked_range<unsigned int>(0,x),
-		[=](const tbb::blocked_range<unsigned int>& r){
-			for(unsigned int i=r.begin(); i!=r.end(); ++i){
-				for(unsigned int j=0; j<y; ++j){
-					for(unsigned int k=0; k<z; ++k){
-						if(A->getCell(i,j,k)==FLUID){
-							float targetval = X->getCell(i,j,k)+alpha*Y->getCell(i,j,k);
-							target->setCell(i,j,k,targetval);
+	for(unsigned int j=0; j<y; ++j){
+		for(unsigned int k=0; k<z; ++k){
+			//this parallel loop has to be the inner loop or else MSVC will barf
+			tbb::parallel_for(tbb::blocked_range<unsigned int>(0,x),
+				[=](const tbb::blocked_range<unsigned int>& r){
+					for(unsigned int i=r.begin(); i!=r.end(); ++i){
+						if(A->GetCell(i,j,k)==FLUID){
+							float targetval = X->GetCell(i,j,k)+alpha*Y->GetCell(i,j,k);
+							target->SetCell(i,j,k,targetval);
 						}else{
-							target->setCell(i,j,k,0.0f);
+							target->SetCell(i,j,k,0.0f);
 						}				
 					}
 				}
-			}
+			);
 		}
-	);
+	}
 }
 
 // ans = x^T * x
-float product(intgrid* A, floatgrid* X, floatgrid* Y, glm::vec3 dimensions){
+float Product(Grid<int>* A, Grid<float>* X, Grid<float>* Y, glm::vec3 dimensions){
 	int x = (int)dimensions.x; int y = (int)dimensions.y; int z = (int)dimensions.z;
 	float result = 0.0f;
 	for(unsigned int i=0; i<x; i++){
 		for(unsigned int j=0; j<y; j++){
 			for(unsigned int k=0; k<z; k++){
-				if(A->getCell(i,j,k)==FLUID){
-					result += X->getCell(i,j,k) * Y->getCell(i,j,k);
+				if(A->GetCell(i,j,k)==FLUID){
+					result += X->GetCell(i,j,k) * Y->GetCell(i,j,k);
 				}
 			}
 		}
@@ -197,8 +193,8 @@ float product(intgrid* A, floatgrid* X, floatgrid* Y, glm::vec3 dimensions){
 }
 
 //Helper for PCG solver: target = AX
-void computeAx(intgrid* A, floatgrid* L, floatgrid* X, floatgrid* target, glm::vec3 dimensions, 
-			   int subcell){
+void ComputeAx(Grid<int>* A, Grid<float>* L, Grid<float>* X, Grid<float>* target, 
+			   glm::vec3 dimensions, int subcell){
 	int x = (int)dimensions.x; int y = (int)dimensions.y; int z = (int)dimensions.z;
 	float n = (float)glm::max(glm::max(x,y),z);
 	float h = 1.0f/(n*n);
@@ -207,24 +203,24 @@ void computeAx(intgrid* A, floatgrid* L, floatgrid* X, floatgrid* target, glm::v
 			for(unsigned int i=r.begin(); i!=r.end(); ++i){
 				for(unsigned int j=0; j<y; ++j){
 					for(unsigned int k=0; k<z; ++k){
-						if(A->getCell(i,j,k) == FLUID){
-							float result = (6.0f*X->getCell(i,j,k)
-											-xRef(A, L, X, glm::vec3(i,j,k), glm::vec3(i+1,j,k), 
+						if(A->GetCell(i,j,k) == FLUID){
+							float result = (6.0f*X->GetCell(i,j,k)
+											-XRef(A, L, X, glm::vec3(i,j,k), glm::vec3(i+1,j,k), 
 												  dimensions, subcell)
-											-xRef(A, L, X, glm::vec3(i,j,k), glm::vec3(i-1,j,k), 
+											-XRef(A, L, X, glm::vec3(i,j,k), glm::vec3(i-1,j,k), 
 												  dimensions, subcell)
-											-xRef(A, L, X, glm::vec3(i,j,k), glm::vec3(i,j+1,k), 
+											-XRef(A, L, X, glm::vec3(i,j,k), glm::vec3(i,j+1,k), 
 												  dimensions, subcell)
-											-xRef(A, L, X, glm::vec3(i,j,k), glm::vec3(i,j-1,k), 
+											-XRef(A, L, X, glm::vec3(i,j,k), glm::vec3(i,j-1,k), 
 												  dimensions, subcell)
-											-xRef(A, L, X, glm::vec3(i,j,k), glm::vec3(i,j,k+1), 
+											-XRef(A, L, X, glm::vec3(i,j,k), glm::vec3(i,j,k+1), 
 												  dimensions, subcell)
-											-xRef(A, L, X, glm::vec3(i,j,k), glm::vec3(i,j,k-1), 
+											-XRef(A, L, X, glm::vec3(i,j,k), glm::vec3(i,j,k-1), 
 												  dimensions, subcell)
 											)/h;
-							target->setCell(i,j,k,result);
+							target->SetCell(i,j,k,result);
 						} else {
-							target->setCell(i,j,k,0.0f);
+							target->SetCell(i,j,k,0.0f);
 						}
 					}
 				}
@@ -233,10 +229,10 @@ void computeAx(intgrid* A, floatgrid* L, floatgrid* X, floatgrid* target, glm::v
 	);
 }
 
-void applyPreconditioner(floatgrid* Z, floatgrid* R, floatgrid* P, floatgrid* L, intgrid* A, 
-						 glm::vec3 dimensions, gridtype type){
+void ApplyPreconditioner(Grid<float>* Z, Grid<float>* R, Grid<float>* P, Grid<float>* L, 
+						 Grid<int>* A, glm::vec3 dimensions){
 	int x = (int)dimensions.x; int y = (int)dimensions.y; int z = (int)dimensions.z;
-	floatgrid* Q = new floatgrid(type, dimensions, 0.0f);
+	Grid<float>* Q = new Grid<float>(dimensions, 0.0f);
 
 	// LQ = R
 	tbb::parallel_for(tbb::blocked_range<unsigned int>(0,x),
@@ -244,7 +240,7 @@ void applyPreconditioner(floatgrid* Z, floatgrid* R, floatgrid* P, floatgrid* L,
 			for(unsigned int i=r.begin(); i!=r.end(); ++i){
 				for(unsigned int j=0; j<y; ++j){
 					for(unsigned int k=0; k<z; ++k){
-						if(A->getCell(i,j,k) == FLUID) {
+						if(A->GetCell(i,j,k) == FLUID) {
 							float left = ARef(A,i-1,j,k,i,j,k,dimensions)*
 										 PRef(P,i-1,j,k,dimensions)*PRef(Q,i-1,j,k,dimensions);
 							float bottom = ARef(A,i,j-1,k,i,j,k,dimensions)*
@@ -252,9 +248,9 @@ void applyPreconditioner(floatgrid* Z, floatgrid* R, floatgrid* P, floatgrid* L,
 							float back = ARef(A,i,j,k-1,i,j,k,dimensions)*
 										 PRef(P,i,j,k-1,dimensions)*PRef(Q,i,j,k-1,dimensions);
 							
-							float t = R->getCell(i,j,k) - left - bottom - back;
-							float qVal = t * P->getCell(i,j,k);
-							Q->setCell(i,j,k,qVal);
+							float t = R->GetCell(i,j,k) - left - bottom - back;
+							float qVal = t * P->GetCell(i,j,k);
+							Q->SetCell(i,j,k,qVal);
 						}
 					}
 				}
@@ -263,12 +259,13 @@ void applyPreconditioner(floatgrid* Z, floatgrid* R, floatgrid* P, floatgrid* L,
 	);
 
 	// L^T Z = Q
-	tbb::parallel_for(tbb::blocked_range<int>(-1,x-1),
-		[=](const tbb::blocked_range<int>& r){
-			for(int i=r.end(); i!=r.begin(); i--){
-				for(int j=y-1; j>=0; j--){
-					for(int k=z-1; k>=0; k--){
-						if(A->getCell(i,j,k) == FLUID){
+	for(int j=y-1; j>=0; j--){
+		for(int k=z-1; k>=0; k--){
+			//this parallel loop has to be the inner loop or else MSVC will barf
+			tbb::parallel_for(tbb::blocked_range<int>(-1,x-1),
+				[=](const tbb::blocked_range<int>& r){
+					for(int i=r.end(); i!=r.begin(); i--){
+						if(A->GetCell(i,j,k) == FLUID){
 							float right = ARef(A,i,j,k,i+1,j,k,dimensions)*
 										  PRef(P,i,j,k,dimensions)*PRef(Z,i+1,j,k,dimensions);
 							float top = ARef(A,i,j,k,i,j+1,k,dimensions)*
@@ -276,59 +273,62 @@ void applyPreconditioner(floatgrid* Z, floatgrid* R, floatgrid* P, floatgrid* L,
 							float front = ARef(A,i,j,k,i,j,k+1,dimensions)*
 										  PRef(P,i,j,k,dimensions)*PRef(Z,i,j,k+1,dimensions);
 						
-							float t = Q->getCell(i,j,k) - right - top - front;
-							float zVal = t * P->getCell(i,j,k);
-							Z->setCell(i,j,k,zVal);
+							float t = Q->GetCell(i,j,k) - right - top - front;
+							float zVal = t * P->GetCell(i,j,k);
+							Z->SetCell(i,j,k,zVal);
 						}
 					}
 				}
-			}
+			);
 		}
-	);
+	}
 	delete Q;
 }
 
 //Does what it says
-void solveConjugateGradient(macgrid& mgrid, floatgrid* PC, int subcell, const bool& verbose){
-	int x = (int)mgrid.dimensions.x; int y = (int)mgrid.dimensions.y; 
-	int z = (int)mgrid.dimensions.z;
+void SolveConjugateGradient(MacGrid& mgrid, Grid<float>* PC, int subcell, const bool& verbose){
+	int x = (int)mgrid.m_dimensions.x; int y = (int)mgrid.m_dimensions.y; 
+	int z = (int)mgrid.m_dimensions.z;
 
-	floatgrid* R = new floatgrid(mgrid.type, mgrid.dimensions, 0.0f);
-	floatgrid* Z = new floatgrid(mgrid.type, mgrid.dimensions, 0.0f);
-	floatgrid* S = new floatgrid(mgrid.type, mgrid.dimensions, 0.0f);
+	Grid<float>* R = new Grid<float>(mgrid.m_dimensions, 0.0f);
+	Grid<float>* Z = new Grid<float>(mgrid.m_dimensions, 0.0f);
+	Grid<float>* S = new Grid<float>(mgrid.m_dimensions, 0.0f);
 
 	//note: we're calling pressure "mgrid.P" instead of x
 
-	computeAx(mgrid.A, mgrid.L, mgrid.P, Z, mgrid.dimensions, subcell);	// z = apply A(x)
-	op(mgrid.A, mgrid.D, Z, R, -1.0f, mgrid.dimensions);                // r = b-Ax
-	float error0 = product(mgrid.A, R, R, mgrid.dimensions);			// error0 = product(r,r)
+	ComputeAx(mgrid.m_A, mgrid.m_L, mgrid.m_P, Z, mgrid.m_dimensions, subcell);	// z = apply A(x)
+	Op(mgrid.m_A, mgrid.m_D, Z, R, -1.0f, mgrid.m_dimensions);                // r = b-Ax
+	float error0 = Product(mgrid.m_A, R, R, mgrid.m_dimensions);			// error0 = product(r,r)
 
 	// z = f(r), aka preconditioner step
-	applyPreconditioner(Z, R, PC, mgrid.L, mgrid.A, mgrid.dimensions, mgrid.type);	
+	ApplyPreconditioner(Z, R, PC, mgrid.m_L, mgrid.m_A, mgrid.m_dimensions);	
 
 	//s = z. TODO: replace with VDB deep copy?
-	tbb::parallel_for(tbb::blocked_range<unsigned int>(0,x),
-		[=](const tbb::blocked_range<unsigned int>& r){
-			for(unsigned int i=r.begin(); i!=r.end(); ++i){
-				for(unsigned int j=0; j<y; ++j ){
-					for(unsigned int k=0; k<z; ++k ){
-						S->setCell(i,j,k,Z->getCell(i,j,k));
+
+	for(unsigned int j=0; j<y; ++j ){
+		for(unsigned int k=0; k<z; ++k ){
+			//this parallel loop has to be the inner loop or else MSVC will barf
+			tbb::parallel_for(tbb::blocked_range<unsigned int>(0,x),
+				[=](const tbb::blocked_range<unsigned int>& r){
+					for(unsigned int i=r.begin(); i!=r.end(); ++i){
+						S->SetCell(i,j,k,Z->GetCell(i,j,k));
 					}
 				}
-			}
+			);	
 		}
-	);
+	}
+
 
 	float eps = 1.0e-2f * (x*y*z);
-	float a = product(mgrid.A, Z, R, mgrid.dimensions);					// a = product(z,r)
+	float a = Product(mgrid.m_A, Z, R, mgrid.m_dimensions);					// a = product(z,r)
 
 	for( int k=0; k<x*y*z; k++){
 		//Solve current iteration
-		computeAx(mgrid.A, mgrid.L, S, Z, mgrid.dimensions, subcell);	// z = applyA(s)
-		float alpha = a/product(mgrid.A, Z, S, mgrid.dimensions);		// alpha = a/(z . s)
-		op(mgrid.A, mgrid.P, S, mgrid.P, alpha, mgrid.dimensions);		// x = x + alpha*s
-		op(mgrid.A, R, Z, R, -alpha, mgrid.dimensions);					// r = r - alpha*z;
-		float error1 = product(mgrid.A, R, R, mgrid.dimensions);		// error1 = product(r,r)
+		ComputeAx(mgrid.m_A, mgrid.m_L, S, Z, mgrid.m_dimensions, subcell);	// z = applyA(s)
+		float alpha = a/Product(mgrid.m_A, Z, S, mgrid.m_dimensions);		// alpha = a/(z . s)
+		Op(mgrid.m_A, mgrid.m_P, S, mgrid.m_P, alpha, mgrid.m_dimensions);		// x = x + alpha*s
+		Op(mgrid.m_A, R, Z, R, -alpha, mgrid.m_dimensions);					// r = r - alpha*z;
+		float error1 = Product(mgrid.m_A, R, R, mgrid.m_dimensions);		// error1 = product(r,r)
         error0 = glm::max(error0, error1);
         //Output progress
         float rate = 1.0f - glm::max(0.0f,glm::min(1.0f,(error1-eps)/(error0-eps)));
@@ -341,10 +341,10 @@ void solveConjugateGradient(macgrid& mgrid, floatgrid* PC, int subcell, const bo
         }
         //Prep next iteration
         // z = f(r)
-        applyPreconditioner(Z, R, PC, mgrid.L, mgrid.A, mgrid.dimensions, mgrid.type);	
-        float a2 = product(mgrid.A, Z, R, mgrid.dimensions);				// a2 = product(z,r)
+        ApplyPreconditioner(Z, R, PC, mgrid.m_L, mgrid.m_A, mgrid.m_dimensions);
+        float a2 = Product(mgrid.m_A, Z, R, mgrid.m_dimensions);				// a2 = product(z,r)
         float beta = a2/a;													// beta = a2/a
-        op(mgrid.A, Z, S, S, beta, mgrid.dimensions);						// s = z + beta*s
+        Op(mgrid.m_A, Z, S, S, beta, mgrid.m_dimensions);						// s = z + beta*s
         a = a2;
 	}
 
@@ -353,7 +353,7 @@ void solveConjugateGradient(macgrid& mgrid, floatgrid* PC, int subcell, const bo
 	delete S;
 }
 
-void solve(macgrid& mgrid, const int& subcell, const bool& verbose){
+void Solve(MacGrid& mgrid, const int& subcell, const bool& verbose){
 
 	//if in VDB mode, force to single threaded to prevent VDB write issues. 
 	//this is a kludgey fix for now.
@@ -362,14 +362,14 @@ void solve(macgrid& mgrid, const int& subcell, const bool& verbose){
 	// }
 
 	//flip divergence
-	flipGrid(mgrid.D, mgrid.dimensions);
+	FlipGrid(mgrid.m_D, mgrid.m_dimensions);
 
 	//build preconditioner
-	floatgrid* preconditioner = new floatgrid(mgrid.type, mgrid.dimensions, 0.0f);
-	buildPreconditioner(preconditioner, mgrid, subcell);
+	Grid<float>* preconditioner = new Grid<float>(mgrid.m_dimensions, 0.0f);
+	BuildPreconditioner(preconditioner, mgrid, subcell);
 
 	//solve conjugate gradient
-	solveConjugateGradient(mgrid, preconditioner, subcell, verbose);
+	SolveConjugateGradient(mgrid, preconditioner, subcell, verbose);
 
 	delete preconditioner;
 

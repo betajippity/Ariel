@@ -81,13 +81,11 @@ if(MSVC)
 endif()
 
 set(SOURCE_FILES "src/main.cpp"
-				 "src/grid/floatgrid.cpp"
-				 "src/grid/intgrid.cpp"
 				 "src/sim/flip.cpp"
 				 "src/grid/particlegrid.cpp"
 				 "src/geom/sphere.cpp"
 				 "src/geom/cube.cpp"
-				 "src/geom/obj/objcontainer.cpp"
+				 "src/geom/obj/obj.cpp"
 				 "src/scene/scene.cpp"
 				 "src/scene/sceneloader.cpp"
 				 "src/viewer/viewer.cpp"
