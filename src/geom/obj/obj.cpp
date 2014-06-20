@@ -194,7 +194,7 @@ bool Obj::WriteObj(const std::string& filename){
                 glm::uvec4 fv = m_polyVertexIndices[i];
                 outputFile << "f ";
                 outputFile << fv.x << " " << fv.y << " " << fv.z << " ";
-                if(fv.w>=0){
+                if(fv.w!=0){
                     outputFile << fv.w;
                 }
                 outputFile << "\n";
@@ -208,7 +208,7 @@ bool Obj::WriteObj(const std::string& filename){
                 outputFile << fv.x << "/" << fuv.x << "/" << fn.x << " ";
                 outputFile << fv.y << "/" << fuv.y << "/" << fn.y << " ";
                 outputFile << fv.z << "/" << fuv.z << "/" << fn.z << " ";
-                if(fv.w>=0){
+                if(fv.w!=0){
                     outputFile << fv.w << "/" << fuv.w << "/" << fn.w << " ";
                 }
                 outputFile << "\n";
