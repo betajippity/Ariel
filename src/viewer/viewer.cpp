@@ -495,13 +495,13 @@ VboData Viewer::CreateVBOFromObj(objCore::Obj* o, const glm::vec4& color, const 
     std::vector<glm::vec4> colorData;
 
     glm::uvec4 fcheck = o->m_polyVertexIndices[0];
-    if(fcheck[3]-1>0){
+    if(int(fcheck[3])-1>0){
         for(unsigned int i=0; i<o->m_numberOfPolys; i++){
             glm::uvec4 f = o->m_polyVertexIndices[i];
-            glm::vec3 p0 = o->m_vertices[f[0]-1];
-            glm::vec3 p1 = o->m_vertices[f[1]-1];
-            glm::vec3 p2 = o->m_vertices[f[2]-1];
-            glm::vec3 p3 = o->m_vertices[f[3]-1];
+            glm::vec3 p0 = o->m_vertices[int(f[0])-1];
+            glm::vec3 p1 = o->m_vertices[int(f[1])-1];
+            glm::vec3 p2 = o->m_vertices[int(f[2])-1];
+            glm::vec3 p3 = o->m_vertices[int(f[3])-1];
             if(f[3]-1<0){
                 p3 = p0;
             }
@@ -520,13 +520,13 @@ VboData Viewer::CreateVBOFromObj(objCore::Obj* o, const glm::vec4& color, const 
     }else{
         for(unsigned int i=0; i<o->m_numberOfPolys; i++){
             glm::uvec4 f = o->m_polyVertexIndices[i];
-            glm::vec3 p0 = o->m_vertices[f[0]-1];
-            glm::vec3 p1 = o->m_vertices[f[1]-1];
-            glm::vec3 p2 = o->m_vertices[f[2]-1];
+            glm::vec3 p0 = o->m_vertices[int(f[0])-1];
+            glm::vec3 p1 = o->m_vertices[int(f[1])-1];
+            glm::vec3 p2 = o->m_vertices[int(f[2])-1];
             vertexData.push_back(p0);
             vertexData.push_back(p1);
             vertexData.push_back(p2);  
-            if(f[3]-1>=0){
+            if(int(f[3])-1>=0){
                 glm::vec3 p3 = o->m_vertices[f[3]-1];
                 vertexData.push_back(p3);
                 vertexData.push_back(p1);
