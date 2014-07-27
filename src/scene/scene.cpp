@@ -107,6 +107,14 @@ void Scene::ExportParticles(std::vector<fluidCore::Particle*> particles, const f
 	
 }
 
+void Scene::AddExternalForce(glm::vec3 force){
+	m_externalForces.push_back(force);
+}
+
+std::vector<glm::vec3>& Scene::GetExternalForces(){
+	return m_externalForces;
+}
+
 void Scene::AddSolidObject(objCore::Obj* object, const int& startFrame, const int& endFrame){
 	m_solidObjects.push_back(object);
 	m_solidObjectFrameRanges.push_back(glm::vec2(startFrame, endFrame));

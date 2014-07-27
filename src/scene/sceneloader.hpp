@@ -24,6 +24,7 @@ class SceneLoader {
 		Scene* GetScene();
 		float GetDensity();
 		glm::vec3 GetDimensions();
+		float GetStepsize();
 
 		glm::vec3		m_cameraRotate;
 		glm::vec3		m_cameraTranslate;
@@ -38,15 +39,18 @@ class SceneLoader {
 		void LoadSphere(const Json::Value& jsonsphere);
 		void LoadObj(const Json::Value& jsonobj);
 		void LoadCamera(const Json::Value& jsoncamera);
+		void LoadForces(const Json::Value& jsonforces);
 
-		Scene*			m_s;
-		glm::vec3		m_dimensions;
-		float			m_density;
-		std::string		m_relativePath;
-		std::string		m_imagePath;
-		std::string		m_meshPath;
-		std::string		m_vdbPath;
-		std::string		m_partioPath;
+		Scene*						m_s;
+		glm::vec3					m_dimensions;
+		float						m_density;
+		float						m_stepsize;
+		std::string					m_relativePath;
+		std::string					m_imagePath;
+		std::string					m_meshPath;
+		std::string					m_vdbPath;
+		std::string					m_partioPath;
+		std::vector<glm::vec3>		m_externalForces;
 		
 };
 }

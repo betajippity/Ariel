@@ -19,8 +19,8 @@ namespace fluidCore {
 
 class FlipSim{
 	public:
-		FlipSim(const glm::vec3& maxres, sceneCore::Scene* scene, const float& density, 
-				const bool& verbose);
+		FlipSim(const glm::vec3& maxres, const float& density, const float& stepsize, 
+				sceneCore::Scene* scene, const bool& verbose);
 		~FlipSim();
 
 		void Init();
@@ -58,9 +58,8 @@ class FlipSim{
 
 		sceneCore::Scene*			m_scene;
 
-		float						m_stepsize;
-
 		bool						m_verbose;
+		float						m_stepsize;
 };
 
 class FlipTask: public tbb::task {

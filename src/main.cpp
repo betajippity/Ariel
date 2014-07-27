@@ -49,8 +49,9 @@ int main(int argc, char** argv){
 
 	sceneCore::SceneLoader* sloader = new sceneCore::SceneLoader(scenefile);
 
-    fluidCore::FlipSim* f = new fluidCore::FlipSim(sloader->GetDimensions(), sloader->GetScene(), 
-    											   sloader->GetDensity(), verbose);
+    fluidCore::FlipSim* f = new fluidCore::FlipSim(sloader->GetDimensions(), sloader->GetDensity(), 
+    											   sloader->GetStepsize(), sloader->GetScene(), 
+    											   verbose);
 
     viewerCore::Viewer* glview = new viewerCore::Viewer();
     glview->Load(f, retina, sloader->m_cameraResolution, sloader->m_cameraRotate, 

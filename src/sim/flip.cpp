@@ -12,8 +12,8 @@
 
 namespace fluidCore{
 
-FlipSim::FlipSim(const glm::vec3& maxres, sceneCore::Scene* s, const float& density, 
-				 const bool& verbose){
+FlipSim::FlipSim(const glm::vec3& maxres, const float& density, const float& stepsize, 
+				 sceneCore::Scene* s, const bool& verbose){
 	m_dimensions = maxres;	
 	m_pgrid = new ParticleGrid(maxres);
 	m_mgrid = CreateMacgrid(maxres);
@@ -22,7 +22,7 @@ FlipSim::FlipSim(const glm::vec3& maxres, sceneCore::Scene* s, const float& dens
 	m_density = density;
 	m_scene = s;
 	m_frame = 0;
-	m_stepsize = 0.005f;
+	m_stepsize = stepsize;
 	m_subcell = 1;
 	m_picflipratio = .95f;
 	m_densitythreshold = 0.04f;
@@ -663,12 +663,15 @@ void FlipSim::SubtractPressureGradient(){
 }
 
 void FlipSim::ApplyExternalForces(){
-	glm::vec3 gravity = glm::vec3(0,-9.8f, 0); //for now, just gravity
+	std::vector<glm::vec3> externalForces = m_scene->GetExternalForces();
+	unsigned int numberOfExternalForces = externalForces.size();
 	unsigned int particlecount = m_particles.size();
 	tbb::parallel_for(tbb::blocked_range<unsigned int>(0,particlecount),
 		[=](const tbb::blocked_range<unsigned int>& r){
 			for(unsigned int i=r.begin(); i!=r.end(); ++i){	
-				m_particles[i]->m_u += gravity*m_stepsize;
+				for(unsigned int j=0; j<numberOfExternalForces; j++){
+					m_particles[i]->m_u += externalForces[j]*m_stepsize;
+				}
 			}
 		}
 	);

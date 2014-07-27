@@ -46,6 +46,9 @@ SceneLoader::SceneLoader(const std::string& filename){
 		if(root.isMember("camera")){
 			LoadCamera(root["camera"][0]);
 		}
+		if(root.isMember("forces")){
+			LoadForces(root["forces"]);
+		}
 	}
 
 	m_s->SetPaths(m_imagePath, m_meshPath, m_vdbPath, m_partioPath);
@@ -69,15 +72,34 @@ glm::vec3 SceneLoader::GetDimensions(){
 	return m_dimensions;
 }
 
+float SceneLoader::GetStepsize(){
+	return m_stepsize;
+}
+
+void SceneLoader::LoadForces(const Json::Value& jsonforces){
+	unsigned int forceCount = jsonforces.size();
+	for(unsigned int i=0; i<forceCount; i++){
+		glm::vec3 force;
+		force[0] = jsonforces[i]["x"].asFloat();
+		force[1] = jsonforces[i]["y"].asFloat();
+		force[2] = jsonforces[i]["z"].asFloat();
+		m_s->AddExternalForce(force);
+	}
+}
+
 void SceneLoader::LoadSettings(const Json::Value& jsonsettings){
 	m_density = .5f;
 	m_dimensions = glm::vec3(32);
 	m_imagePath = m_relativePath;
 	m_meshPath = m_relativePath;
 	m_vdbPath = m_relativePath;
+	m_stepsize = 0.005f;
 
 	if(jsonsettings.isMember("density")){
 		m_density = jsonsettings["density"].asFloat();
+	}
+	if(jsonsettings.isMember("stepsize")){
+		m_stepsize = jsonsettings["stepsize"].asFloat();
 	}
 	if(jsonsettings.isMember("dim_x")){
 		m_dimensions.x = jsonsettings["dim_x"].asInt();

@@ -30,6 +30,9 @@ class Scene {
 							   const glm::vec3& dimensions, const float& density, 
 							   fluidCore::ParticleGrid* pgrid, const int& frame);
 
+		void AddExternalForce(glm::vec3 force);
+		std::vector<glm::vec3>& GetExternalForces();
+
 		std::vector<objCore::Obj*>& GetSolidObjects();
 		std::vector<objCore::Obj*>& GetLiquidObjects();
 
@@ -73,6 +76,8 @@ class Scene {
 
 		std::vector<glm::vec2>			m_solidObjectFrameRanges;
 		std::vector<glm::vec2>			m_liquidObjectFrameRanges;
+
+		std::vector<glm::vec3>			m_externalForces;
 };
 }
 
