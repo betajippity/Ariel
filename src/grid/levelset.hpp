@@ -13,7 +13,7 @@
 #include <openvdb/tools/LevelSetSphere.h>
 #include <openvdb/tools/Composite.h>
 #include "macgrid.inl"
-#include "../geom/geom.inl"
+#include "../geom/geomlist.hpp"
 
 namespace fluidCore {
 //====================================

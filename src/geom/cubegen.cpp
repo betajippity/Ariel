@@ -5,21 +5,21 @@
 // Implements cube.hpp
 
 #include <tbb/tbb.h>
-#include "cube.hpp"
+#include "cubegen.hpp"
 #include "../utilities/utilities.h" 
 
 namespace geomCore{
 
 //Default empty constructor defaults to 1 subdivs in axis and height
-Cube::Cube(){	
+CubeGen::CubeGen(){	
 }
 
 //Boring empty destructor is boring
-Cube::~Cube(){
+CubeGen::~CubeGen(){
 }
 
 //Literally just embed an obj because that's how we roll. Stupid but it works.
-objCore::Obj* Cube::Tesselate(){
+void CubeGen::Tesselate(objCore::Obj* o){
 	glm::vec3* vertices = new glm::vec3[8];
 	vertices[0] = glm::vec3(-0.5, -0.5,  0.5);
 	vertices[1] = glm::vec3( 0.5, -0.5,  0.5);
@@ -80,26 +80,25 @@ objCore::Obj* Cube::Tesselate(){
 	polyUVIndices[3] = glm::uvec4(1,2,3,4);
 	polyUVIndices[4] = glm::uvec4(1,2,3,4);
 	polyUVIndices[5] = glm::uvec4(1,2,3,4);
-	objCore::Obj* mesh = new objCore::Obj();
-    mesh->m_numberOfVertices = 8;
-    mesh->m_vertices = vertices;
-    mesh->m_numberOfNormals = 24;
-    mesh->m_normals = normals;
-    mesh->m_numberOfUVs = 4;
-    mesh->m_uvs = uvs;
-    mesh->m_numberOfPolys = 6;
-    mesh->m_polyVertexIndices = polyVertexIndices;
-    mesh->m_polyNormalIndices = polyNormalIndices;
-    mesh->m_polyUVIndices = polyUVIndices;
-	return mesh;
+    o->m_numberOfVertices = 8;
+    o->m_vertices = vertices;
+    o->m_numberOfNormals = 24;
+    o->m_normals = normals;
+    o->m_numberOfUVs = 4;
+    o->m_uvs = uvs;
+    o->m_numberOfPolys = 6;
+    o->m_polyVertexIndices = polyVertexIndices;
+    o->m_polyNormalIndices = polyNormalIndices;
+    o->m_polyUVIndices = polyUVIndices;
 }
 
-objCore::Obj* Cube::Tesselate(const glm::vec3& lowerCorner, const glm::vec3& upperCorner){
+void CubeGen::Tesselate(objCore::Obj* o, const glm::vec3& lowerCorner, 
+						const glm::vec3& upperCorner){
 	glm::vec3 scale = upperCorner-lowerCorner;
 	glm::vec3 center = (upperCorner+lowerCorner)/2.0f;
 	glm::mat4 transform = utilityCore::buildTransformationMatrix(center, glm::vec3(0,0,0), scale);
 
-	objCore::Obj* o = Tesselate();
+	Tesselate(o);
 	unsigned int numberOfPoints = o->m_numberOfVertices;
 
 	tbb::parallel_for(tbb::blocked_range<unsigned int>(0,numberOfPoints),
@@ -109,8 +108,6 @@ objCore::Obj* Cube::Tesselate(const glm::vec3& lowerCorner, const glm::vec3& upp
 			}
 		}
 	);
-
-	return o;
 }
 }
 

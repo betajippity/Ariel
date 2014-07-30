@@ -19,6 +19,8 @@
 #include <fstream>
 #include <iostream>
 #include "../../utilities/utilities.h"
+#include "../../ray/ray.hpp"
+#include "../../spatial/aabb.hpp"
 
 namespace objCore {
 
@@ -102,6 +104,23 @@ class Obj {
 		HOST DEVICE static Poly TransformPoly(const Poly& p, const glm::mat4& m);
 		HOST DEVICE static Point TransformPoint(const Point& p, const glm::mat4& m);
 
+        //Standard interface functions for accel. structures
+        HOST DEVICE rayCore::Intersection IntersectElement(const unsigned int& primID,
+                                                           const rayCore::Ray& r);
+        HOST DEVICE spaceCore::Aabb GetElementAabb(const unsigned int& primID);
+        HOST DEVICE unsigned int GetNumberOfElements();
+
+        HOST DEVICE static inline rayCore::Intersection RayTriangleTest(const glm::vec3& v0,
+                                                                        const glm::vec3& v1,
+                                                                        const glm::vec3& v2,
+                                                                        const glm::vec3& n0,
+                                                                        const glm::vec3& n1,
+                                                                        const glm::vec3& n2,
+                                                                        const glm::vec2& u0,
+                                                                        const glm::vec2& u1,
+                                                                        const glm::vec2& u2,
+                                                                        const rayCore::Ray& r);
+
 		unsigned int    m_numberOfVertices;
 	    glm::vec3*      m_vertices;
 	    unsigned int    m_numberOfNormals;
@@ -117,7 +136,36 @@ class Obj {
         
 	private:
 		void PrereadObj(const std::string& filename);
+        HOST DEVICE rayCore::Intersection TriangleTest(const unsigned int& polyIndex, 
+                                                       const rayCore::Ray& r, 
+                                                       const bool& checkQuad);
+        HOST DEVICE rayCore::Intersection QuadTest(const unsigned int& polyIndex,
+                                                   const rayCore::Ray& r);
+};
 
+class InterpolatedObj {
+    public:
+        InterpolatedObj();
+        InterpolatedObj(objCore::Obj* obj0, objCore::Obj* obj1);
+        ~InterpolatedObj();
+
+        HOST DEVICE Poly GetPoly(const unsigned int& polyIndex, const float& interpolation);
+
+        //Standard interface functions for accel. structures
+        HOST DEVICE rayCore::Intersection IntersectElement(const unsigned int& primID,
+                                                           const rayCore::Ray& r);
+        HOST DEVICE spaceCore::Aabb GetElementAabb(const unsigned int& primID);
+        HOST DEVICE unsigned int GetNumberOfElements();
+
+        objCore::Obj*   m_obj0;
+        objCore::Obj*   m_obj1;
+
+    private:
+        HOST DEVICE rayCore::Intersection TriangleTest(const unsigned int& polyIndex, 
+                                                       const rayCore::Ray& r, 
+                                                       const bool& checkQuad);
+        HOST DEVICE rayCore::Intersection QuadTest(const unsigned int& polyIndex,
+                                                   const rayCore::Ray& r); 
 };
 }
 

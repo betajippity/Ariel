@@ -9,6 +9,7 @@
 
 #include <json/json.h>
 #include "../utilities/utilities.h"
+#include "../geom/geomlist.hpp"
 #include "scene.hpp"
 
 namespace sceneCore {

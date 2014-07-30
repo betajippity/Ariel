@@ -35,7 +35,7 @@
 #define EPSILON                   0.000000001
 // #define ZERO_ABSORPTION_EPSILON   0.00001
 // #define RAY_BIAS_AMOUNT           0.0002
-// #define REALLY_BIG_NUMBER         1000000000000000000
+#define REALLY_BIG_NUMBER         1000000000000000000
 
 namespace utilityCore {
 
@@ -69,6 +69,9 @@ extern inline glm::mat4 buildTransformationMatrix(glm::vec3 translation, glm::ve
 extern inline glm::mat4 buildInverseTransformationMatrix(glm::vec3 translation, 
 														 glm::vec3 rotation, glm::vec3 scale);
 HOST DEVICE extern inline glm::vec4 multiply(glm::mat4 m, glm::vec4 v);
+HOST DEVICE extern inline glm::mat4 buildTranslation(glm::vec3 translation);
+HOST DEVICE extern inline glm::mat4 buildRotation(float radian, glm::vec3 axis);
+HOST DEVICE extern inline glm::mat4 buildScale(glm::vec3 scale);
 
 //GLM Printers
 extern inline void printMat4(glm::mat4);

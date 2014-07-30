@@ -203,12 +203,20 @@ void Viewer::MainLoop(){
                 }
 
                 if(m_vbos[i].m_type==GL_QUADS){
-                    if(!(i!=m_vbokeys["boundingbox"] && m_drawobjects==false) && skipDraw==false){
+                    if(m_drawobjects==true && skipDraw==false){
                         glDrawArrays(GL_QUADS, 0, m_vbos[i].m_size/3);
+                    }else{
+                        if(i==m_vbokeys["boundingbox"]){
+                            glDrawArrays(GL_QUADS, 0, m_vbos[i].m_size/3);
+                        }
                     }
                 }else if(m_vbos[i].m_type==GL_TRIANGLES){
-                    if(!(i!=m_vbokeys["boundingbox"] && m_drawobjects==false) && skipDraw==false){
+                    if(m_drawobjects==true && skipDraw==false){
                         glDrawArrays(GL_TRIANGLES, 0, m_vbos[i].m_size/3);
+                    }else{
+                        if(i==m_vbokeys["boundingbox"]){
+                            glDrawArrays(GL_TRIANGLES, 0, m_vbos[i].m_size/3);
+                        }
                     }
                 }else if(m_vbos[i].m_type==GL_LINES){
                     glDrawArrays(GL_LINES, 0, m_vbos[i].m_size/3);
@@ -441,8 +449,10 @@ bool Viewer::Init(){
     //buffer for sim bounding box
     key = "boundingbox";
     glm::vec3 res = m_sim->GetDimensions();
-    geomCore::Cube cubebuilder;
-    data = CreateVBOFromObj(cubebuilder.Tesselate(glm::vec3(0), res), glm::vec4(.2,.2,.2,0), key);
+    geomCore::CubeGen cubebuilder;
+    objCore::Obj* simboundingbox = new objCore::Obj();
+    cubebuilder.Tesselate(simboundingbox, glm::vec3(0), res);
+    data = CreateVBOFromObj(simboundingbox, glm::vec4(.2,.2,.2,0), key);
     m_vbos.push_back(data);
     m_vbokeys["boundingbox"] = m_vbos.size()-1;
 

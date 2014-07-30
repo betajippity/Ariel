@@ -159,17 +159,22 @@ int utilityCore::compareMilliseconds(int referenceTime){
 
 glm::mat4 utilityCore::buildTransformationMatrix(glm::vec3 translation, glm::vec3 rotation,
                                                  glm::vec3 scale){
-    glm::mat4 translationMat = glm::translate(glm::mat4(), translation);
-    glm::mat4 rotationMat = glm::rotate(glm::mat4(), toRadian(rotation.z), glm::vec3(0,0,1));
-    rotationMat = rotationMat*glm::rotate(glm::mat4(), toRadian(rotation.y), glm::vec3(0,1,0));
-    rotationMat = rotationMat*glm::rotate(glm::mat4(), toRadian(rotation.x), glm::vec3(1,0,0));
-    glm::mat4 scaleMat = glm::scale(glm::mat4(), scale);
+    glm::mat4 translationMat = buildTranslation(translation);
+    glm::mat4 rotationMat = buildRotation(toRadian(rotation.z), glm::vec3(0,0,1));
+    rotationMat = rotationMat*buildRotation(toRadian(rotation.y), glm::vec3(0,1,0));
+    rotationMat = rotationMat*buildRotation(toRadian(rotation.x), glm::vec3(1,0,0));
+    glm::mat4 scaleMat = buildScale(scale);
     return translationMat*rotationMat*scaleMat;
 }
 
 glm::mat4 utilityCore::buildInverseTransformationMatrix(glm::vec3 translation, glm::vec3 rotation, 
                                                         glm::vec3 scale){
-    return glm::inverse(buildTransformationMatrix(translation, rotation, scale));
+    glm::mat4 translationMat = buildTranslation(-translation);
+    glm::mat4 rotationMat = buildRotation(toRadian(-rotation.x), glm::vec3(1,0,0));
+    rotationMat = rotationMat*buildRotation(toRadian(-rotation.y), glm::vec3(0,1,0));
+    rotationMat = rotationMat*buildRotation(toRadian(-rotation.z), glm::vec3(0,0,1));
+    glm::mat4 scaleMat = buildScale(glm::vec3(1.0f)/scale);
+    return scaleMat*rotationMat*translationMat;
 }
 
 HOST DEVICE glm::vec4 utilityCore::multiply(glm::mat4 m, glm::vec4 v){
@@ -179,6 +184,44 @@ HOST DEVICE glm::vec4 utilityCore::multiply(glm::mat4 m, glm::vec4 v){
     r.z = m[0][2] * v.x + m[1][2] * v.y + m[2][2] * v.z + m[3][2] * v.w;
     r.w = m[0][3] * v.x + m[1][3] * v.y + m[2][3] * v.z + m[3][3] * v.w;
     return r;
+}
+
+//this duplicates GLM functionality, but is necessary to work on CUDA
+HOST DEVICE glm::mat4 utilityCore::buildTranslation(glm::vec3 translation){
+    glm::mat4 m = glm::mat4();
+    m[3][0] = translation[0];
+    m[3][1] = translation[1];
+    m[3][2] = translation[2];
+    return m;
+}
+
+HOST DEVICE glm::mat4 utilityCore::buildRotation(float radian, glm::vec3 axis){
+    axis = axis/glm::length(axis);
+    float a = radian;
+    float c = glm::cos(a);
+    float s = glm::sin(a);
+    glm::mat4 m = glm::mat4();
+    m[0][0] = c + (1.0f - c)      * axis.x     * axis.x;
+    m[0][1] = (1.0f - c) * axis.x * axis.y + s * axis.z;
+    m[0][2] = (1.0f - c) * axis.x * axis.z - s * axis.y;
+    m[0][3] = 0.0f;
+    m[1][0] = (1.0f - c) * axis.y * axis.x - s * axis.z;
+    m[1][1] = c + (1.0f - c) * axis.y * axis.y;
+    m[1][2] = (1.0f - c) * axis.y * axis.z + s * axis.x;
+    m[1][3] = 0.0f;
+    m[2][0] = (1.0f - c) * axis.z * axis.x + s * axis.y;
+    m[2][1] = (1.0f - c) * axis.z * axis.y - s * axis.x;
+    m[2][2] = c + (1.0f - c) * axis.z * axis.z;
+    m[2][3] = 0.0f;
+    return m;
+}
+
+HOST DEVICE glm::mat4 utilityCore::buildScale(glm::vec3 scale){
+    glm::mat4 m = glm::mat4();
+    m[0][0] = scale[0];
+    m[1][1] = scale[1];
+    m[2][2] = scale[2];
+    return m;
 }
 
 //====================================

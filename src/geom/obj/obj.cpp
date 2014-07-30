@@ -10,6 +10,10 @@
 
 namespace objCore {
 
+//====================================
+// Obj Class
+//====================================
+
 Obj::Obj(){
     m_numberOfVertices = 0;
     m_numberOfNormals = 0;
@@ -297,5 +301,269 @@ HOST DEVICE Poly Obj::TransformPoly(const Poly& p, const glm::mat4& m){
     r.m_vertex3 = TransformPoint(p.m_vertex3, m);
     r.m_id = p.m_id;
     return r;
+}
+
+HOST DEVICE unsigned int Obj::GetNumberOfElements(){
+    return m_numberOfPolys;
+}
+
+HOST DEVICE spaceCore::Aabb Obj::GetElementAabb(const unsigned int& primID){
+    glm::uvec4 vertexIndices = m_polyVertexIndices[primID];
+    glm::vec3 v0 = m_vertices[vertexIndices.x-1];
+    glm::vec3 v1 = m_vertices[vertexIndices.y-1];
+    glm::vec3 v2 = m_vertices[vertexIndices.z-1];
+    glm::vec3 v3 = v0;
+    if(vertexIndices.w>0){
+        v3 = m_vertices[vertexIndices.w-1];  
+    }
+    glm::vec3 min = glm::min(glm::min(glm::min(v0, v1), v2), v3);
+    glm::vec3 max = glm::max(glm::max(glm::max(v0, v1), v2), v3);
+    //if v0 and v3 are the same, it's a triangle! else, it's a quad. TODO: find better way to
+    //handle this check
+    glm::vec3 centroid = glm::vec3(0.0f);
+    if(vertexIndices.w>0){
+        centroid = (v0 + v1 + v2)/3.0f;
+    }else{
+        centroid = (v0 + v1 + v2 + v3)/4.0f;
+    }
+    return spaceCore::Aabb(min, max, centroid, primID);
+}
+
+HOST DEVICE rayCore::Intersection Obj::IntersectElement(const unsigned int& primID, 
+                                                        const rayCore::Ray& r){
+    //check if quad by comparing x and w components
+    glm::uvec4 vi = m_polyVertexIndices[primID];  
+    //triangle case
+    if(vi.w==0){
+        return TriangleTest(primID, r, false);
+    }else{ //quad case
+        return QuadTest(primID, r); 
+    }
+}
+
+HOST DEVICE rayCore::Intersection Obj::QuadTest(const unsigned int& polyIndex, 
+                                                const rayCore::Ray& r){
+    rayCore::Intersection intersect = TriangleTest(polyIndex, r, false);
+    if(intersect.m_hit){
+         return intersect;
+    }else{
+        return TriangleTest(polyIndex, r, true);
+    }
+}
+
+HOST DEVICE inline rayCore::Intersection Obj::RayTriangleTest(const glm::vec3& v0,
+                                                              const glm::vec3& v1,
+                                                              const glm::vec3& v2,
+                                                              const glm::vec3& n0,
+                                                              const glm::vec3& n1,
+                                                              const glm::vec3& n2,
+                                                              const glm::vec2& u0,
+                                                              const glm::vec2& u1,
+                                                              const glm::vec2& u2,
+                                                              const rayCore::Ray& r){
+    //grab points and edges from poly
+    glm::vec3 edge1 = v1-v0;
+    glm::vec3 edge2 = v2-v0;
+    //calculate determinant
+    glm::vec3 rdirection = r.m_direction;
+    glm::vec3 pvec = glm::cross(rdirection, edge2);
+    float det = glm::dot(edge1, pvec);
+    if(det == 0.0f){
+        return rayCore::Intersection();
+    }else{
+        float inv_det = 1.0f/det;
+        glm::vec3 tvec = r.m_origin - v1;
+        //calculate barycentric coord
+        glm::vec3 bary;
+        bary.x = glm::dot(tvec, pvec) * inv_det;
+        glm::vec3 qvec = glm::cross(tvec, edge1);
+        bary.y = glm::dot(rdirection, qvec) * inv_det;
+        //calcualte distance from ray origin to intersection
+        float t = glm::dot(edge2, qvec) * inv_det;
+        bool hit = (bary.x >= 0.0f && bary.y >= 0.0f && (bary.x + bary.y) <= 1.0f);
+        if(hit){
+            bary.z = 1.0f - bary.x - bary.y;
+            // glm::vec3 hitPoint = r.m_origin + t*r.m_direction;
+            glm::vec3 hitPoint = r.GetPointAlongRay(t);
+            glm::vec3 hitNormal = (n0 * bary.z)+
+                                  (n1 * bary.x)+
+                                  (n2 * bary.y);
+            hitNormal = hitNormal/glm::length(hitNormal);
+            glm::vec2 hitUV = (u0 * bary.z)+ 
+                              (u1 * bary.x)+
+                              (u2 * bary.y);
+            return rayCore::Intersection(true, hitPoint, hitNormal, hitUV, 0, 0);
+        }else{
+            return rayCore::Intersection();
+        }
+    }
+}
+
+HOST DEVICE rayCore::Intersection Obj::TriangleTest(const unsigned int& polyIndex,
+                                                    const rayCore::Ray& r,
+                                                    const bool& checkQuad){
+    //grab indices
+    glm::uvec4 vi = m_polyVertexIndices[polyIndex];
+    glm::uvec4 ni = m_polyNormalIndices[polyIndex];
+    glm::uvec4 ui = m_polyUVIndices[polyIndex];
+    //grab points, edges, uvs from poly
+    glm::vec3 v0 = m_vertices[vi.x-1];
+    glm::vec3 v1 = m_vertices[vi.y-1];
+    glm::vec3 v2 = m_vertices[vi.z-1];
+    glm::vec3 n0 = m_normals[ni.x-1];
+    glm::vec3 n1 = m_normals[ni.y-1];
+    glm::vec3 n2 = m_normals[ni.z-1];
+    glm::vec2 u0 = m_uvs[ui.x-1];
+    glm::vec2 u1 = m_uvs[ui.y-1];
+    glm::vec2 u2 = m_uvs[ui.z-1];
+    if(checkQuad==true){
+        v1 = m_vertices[vi.w-1];
+        n1 = m_normals[ni.w-1];
+        u1 = m_uvs[ui.w-1];
+    }
+    rayCore::Intersection result = Obj::RayTriangleTest(v0, v1, v2, n0, n1, n2, u0, u1, u2, r);
+    result.m_objectID = m_id;
+    result.m_primID = polyIndex;
+    return result;
+}
+
+//====================================
+// InterpolatedObj Class
+//====================================
+
+InterpolatedObj::InterpolatedObj(){
+    m_obj0 = NULL;
+    m_obj1 = NULL;
+}
+
+/*Right now only prints a warning if objs have mismatched topology, must make this do something
+better in the future since mismatched topology leads to Very Bad Things*/
+InterpolatedObj::InterpolatedObj(objCore::Obj* obj0, objCore::Obj* obj1){
+    m_obj0 = obj0;
+    m_obj1 = obj1;
+    if(obj0->m_numberOfPolys!=obj1->m_numberOfPolys){
+        std::cout << "Warning: Attempted to create InterpolatedObj with mismatched topology!"
+                  << std::endl;
+    }
+}
+
+InterpolatedObj::~InterpolatedObj(){
+}
+
+HOST DEVICE rayCore::Intersection InterpolatedObj::IntersectElement(const unsigned int& primID, 
+                                                                    const rayCore::Ray& r){
+    //check if quad by comparing x and w components
+    glm::uvec4 vi = m_obj0->m_polyVertexIndices[primID];  
+    //triangle case
+    if(vi.w==0){
+        return TriangleTest(primID, r, false);
+    }else{ //quad case
+        return QuadTest(primID, r); 
+    }
+}
+
+HOST DEVICE rayCore::Intersection InterpolatedObj::TriangleTest(const unsigned int& polyIndex, 
+                                                                const rayCore::Ray& r,
+                                                                const bool& checkQuad){
+    //make sure interp value is between 0 and 1
+    float clampedInterp = r.m_frame - glm::floor(r.m_frame); 
+    //grab indices
+    glm::uvec4 vi0 = m_obj0->m_polyVertexIndices[polyIndex];
+    glm::uvec4 ni0 = m_obj0->m_polyNormalIndices[polyIndex];
+    glm::uvec4 ui0 = m_obj0->m_polyUVIndices[polyIndex];
+    glm::uvec4 vi1 = m_obj1->m_polyVertexIndices[polyIndex];
+    glm::uvec4 ni1 = m_obj1->m_polyNormalIndices[polyIndex];
+    glm::uvec4 ui1 = m_obj1->m_polyUVIndices[polyIndex];
+    //grab points, edges, uvs from poly
+    glm::vec3 v0 = m_obj0->m_vertices[vi0.x-1] * (1.0f-clampedInterp) + 
+                   m_obj1->m_vertices[vi1.x-1] * clampedInterp;
+    glm::vec3 v1 = m_obj0->m_vertices[vi0.y-1] * (1.0f-clampedInterp) + 
+                   m_obj1->m_vertices[vi1.y-1] * clampedInterp;
+    glm::vec3 v2 = m_obj0->m_vertices[vi0.z-1] * (1.0f-clampedInterp) + 
+                   m_obj1->m_vertices[vi1.z-1] * clampedInterp;
+    glm::vec3 n0 = m_obj0->m_normals[ni0.x-1] * (1.0f-clampedInterp) + 
+                   m_obj1->m_normals[ni1.x-1] * clampedInterp;
+    glm::vec3 n1 = m_obj0->m_normals[ni0.y-1] * (1.0f-clampedInterp) + 
+                   m_obj1->m_normals[ni1.y-1] * clampedInterp;
+    glm::vec3 n2 = m_obj0->m_normals[ni0.z-1] * (1.0f-clampedInterp) + 
+                   m_obj1->m_normals[ni1.z-1] * clampedInterp;
+    glm::vec2 u0 = m_obj0->m_uvs[ui0.x-1] * (1.0f-clampedInterp) + 
+                   m_obj1->m_uvs[ui1.x-1] * clampedInterp;
+    glm::vec2 u1 = m_obj0->m_uvs[ui0.y-1] * (1.0f-clampedInterp) + 
+                   m_obj1->m_uvs[ui1.y-1] * clampedInterp;
+    glm::vec2 u2 = m_obj0->m_uvs[ui0.z-1] * (1.0f-clampedInterp) + 
+                   m_obj1->m_uvs[ui1.z-1] * clampedInterp;
+    if(checkQuad==true){
+        v1 = m_obj0->m_vertices[vi0.w-1] * (1.0f-clampedInterp) + 
+             m_obj1->m_vertices[vi1.w-1] * clampedInterp;
+        n1 = m_obj0->m_normals[ni0.w-1] * (1.0f-clampedInterp) + 
+             m_obj1->m_normals[ni1.w-1] * clampedInterp;
+        u1 = m_obj0->m_uvs[ui0.w-1] * (1.0f-clampedInterp) + 
+             m_obj1->m_uvs[ui1.w-1] * clampedInterp;
+    }
+    rayCore::Intersection result = Obj::RayTriangleTest(v0, v1, v2, n0/glm::length(n0), 
+                                                        n1/glm::length(n1), n2/glm::length(n2), 
+                                                        u0, u1, u2, r);
+    result.m_objectID = m_obj0->m_id;
+    result.m_primID = polyIndex;
+    return result;
+}
+
+HOST DEVICE rayCore::Intersection InterpolatedObj::QuadTest(const unsigned int& polyIndex,
+                                                            const rayCore::Ray& r){
+    rayCore::Intersection intersect = TriangleTest(polyIndex, r, false);
+    if(intersect.m_hit){
+         return intersect;
+    }else{
+        return TriangleTest(polyIndex, r, true);
+    }
+}
+
+/*Calls GetPoly for both referenced objs and returns a single interpolated poly. */
+HOST DEVICE Poly InterpolatedObj::GetPoly(const unsigned int& polyIndex, 
+                                          const float& interpolation){
+    Poly p0 = m_obj0->GetPoly(polyIndex);
+    Poly p1 = m_obj1->GetPoly(polyIndex);
+    //make sure interp value is between 0 and 1
+    float clampedInterp = interpolation - glm::floor(interpolation); 
+    Poly p;
+    p.m_vertex0.m_position = p0.m_vertex0.m_position * (1.0f-clampedInterp) + 
+                             p1.m_vertex0.m_position * clampedInterp;
+    p.m_vertex1.m_position = p0.m_vertex1.m_position * (1.0f-clampedInterp) + 
+                             p1.m_vertex1.m_position * clampedInterp;
+    p.m_vertex2.m_position = p0.m_vertex2.m_position * (1.0f-clampedInterp) + 
+                             p1.m_vertex2.m_position * clampedInterp;
+    p.m_vertex3.m_position = p0.m_vertex3.m_position * (1.0f-clampedInterp) + 
+                             p1.m_vertex3.m_position * clampedInterp;
+    p.m_vertex0.m_normal = p0.m_vertex0.m_normal * (1.0f-clampedInterp) + 
+                           p1.m_vertex0.m_normal * clampedInterp;
+    p.m_vertex1.m_normal = p0.m_vertex1.m_normal * (1.0f-clampedInterp) + 
+                           p1.m_vertex1.m_normal * clampedInterp;
+    p.m_vertex2.m_normal = p0.m_vertex2.m_normal * (1.0f-clampedInterp) + 
+                           p1.m_vertex2.m_normal * clampedInterp;
+    p.m_vertex3.m_normal = p0.m_vertex3.m_normal * (1.0f-clampedInterp) + 
+                           p1.m_vertex3.m_normal * clampedInterp;
+    p.m_vertex0.m_uv = p0.m_vertex0.m_uv * (1.0f-clampedInterp) + 
+                       p1.m_vertex0.m_uv * clampedInterp;
+    p.m_vertex1.m_uv = p0.m_vertex1.m_uv * (1.0f-clampedInterp) + 
+                       p1.m_vertex1.m_uv * clampedInterp;
+    p.m_vertex2.m_uv = p0.m_vertex2.m_uv * (1.0f-clampedInterp) + 
+                       p1.m_vertex2.m_uv * clampedInterp;
+    p.m_vertex3.m_uv = p0.m_vertex3.m_uv * (1.0f-clampedInterp) + 
+                       p1.m_vertex3.m_uv * clampedInterp;
+    return p;
+}
+
+HOST DEVICE spaceCore::Aabb InterpolatedObj::GetElementAabb(const unsigned int& primID){
+    spaceCore::Aabb aabb0 = m_obj0->GetElementAabb(primID);
+    spaceCore::Aabb aabb1 = m_obj1->GetElementAabb(primID);
+    glm::vec3 combinedMin = glm::min(aabb0.m_min, aabb1.m_min);
+    glm::vec3 combinedMax = glm::max(aabb0.m_max, aabb1.m_max);
+    glm::vec3 combinedCentroid = (aabb0.m_centroid + aabb1.m_centroid) / 2.0f;
+    return spaceCore::Aabb(combinedMin, combinedMax, combinedCentroid, aabb0.m_id);
+}
+
+HOST DEVICE unsigned int InterpolatedObj::GetNumberOfElements(){
+    return m_obj0->GetNumberOfElements();
 }
 }

@@ -5,30 +5,30 @@
 // Implements sphere.hpp
 
 #include <tbb/tbb.h>
-#include "sphere.hpp"
+#include "spheregen.hpp"
 #include "../utilities/utilities.h"
 
 namespace geomCore{
 
 //Default empty constructor defaults to 20 subdivs in axis and height
-Sphere::Sphere(){	
+SphereGen::SphereGen(){	
 	m_subdivs = 20;
 }
 
 //Constructor with options for presets
-Sphere::Sphere(const unsigned int& subdivCount){
+SphereGen::SphereGen(const unsigned int& subdivCount){
 	m_subdivs = subdivCount;
 }
 
 //Boring empty destructor is boring
-Sphere::~Sphere(){
+SphereGen::~SphereGen(){
 }
 
-objCore::Obj* Sphere::Tesselate(const glm::vec3& center, const float& radius){
+void SphereGen::Tesselate(objCore::Obj* o, const glm::vec3& center, const float& radius){
 	glm::vec3 scale = glm::vec3(radius*2.0f);
 	glm::mat4 transform = utilityCore::buildTransformationMatrix(center, glm::vec3(0,0,0), scale);
 
-	objCore::Obj* o = Tesselate();
+	Tesselate(o);
 	unsigned int numberOfPoints = o->m_numberOfVertices;
 
 	tbb::parallel_for(tbb::blocked_range<unsigned int>(0,numberOfPoints),
@@ -38,14 +38,13 @@ objCore::Obj* Sphere::Tesselate(const glm::vec3& center, const float& radius){
 			}
 		}
 	);
-	return o;
 }
 
 /*Returns sphere mesh with specified subdiv counts. 
 Axis and height must have a minimum of 3 subdivs and 
 tesselate() will default to 3 if subdiv count is below 3.*/
 //Yes, this function is total spaghetti and hacked together in many places. Will fix later. Maybe.
-objCore::Obj* Sphere::Tesselate(){
+void SphereGen::Tesselate(objCore::Obj* o){
 	unsigned int a = std::max(m_subdivs, 3);
 	unsigned int h = std::max(m_subdivs, 3);
 	unsigned int vertCount = (a*(h-1))+2;
@@ -165,21 +164,19 @@ objCore::Obj* Sphere::Tesselate(){
 	for(unsigned int i=0; i<vertCount+(3*h); i++){
 		uvs[i].x = 1.0f-uvs[i].x;
 	}
-	objCore::Obj* mesh = new objCore::Obj();
-    mesh->m_numberOfVertices = vertCount;
-    mesh->m_vertices = vertices;
-    mesh->m_numberOfNormals = vertCount;
-    mesh->m_normals = normals;
-    mesh->m_numberOfUVs = vertCount+(3*h);
-    mesh->m_uvs = uvs;
-    mesh->m_numberOfPolys = faceCount;
-    mesh->m_polyVertexIndices = polyVertexIndices;
-    mesh->m_polyNormalIndices = polyNormalIndices;
-    mesh->m_polyUVIndices = polyUVIndices;
-	return mesh;
+    o->m_numberOfVertices = vertCount;
+    o->m_vertices = vertices;
+    o->m_numberOfNormals = vertCount;
+    o->m_normals = normals;
+    o->m_numberOfUVs = vertCount+(3*h);
+    o->m_uvs = uvs;
+    o->m_numberOfPolys = faceCount;
+    o->m_polyVertexIndices = polyVertexIndices;
+    o->m_polyNormalIndices = polyNormalIndices;
+    o->m_polyUVIndices = polyUVIndices;
 }
 
-glm::vec3 Sphere::GetPointOnSphereByAngles(const float& angle1, const float& angle2){
+glm::vec3 SphereGen::GetPointOnSphereByAngles(const float& angle1, const float& angle2){
 	float x = sin(PI*angle1)*cos(TWO_PI*angle2);
 	float y = sin(PI*angle1)*sin(TWO_PI*angle2);
 	float z = cos(PI*angle1);

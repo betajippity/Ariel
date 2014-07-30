@@ -10,9 +10,10 @@
 #include <vector>
 #include "../utilities/utilities.h"
 #include "../grid/macgrid.inl"
-#include "../geom/geom.inl"
+#include "../geom/obj/obj.hpp"
 #include "../grid/particlegrid.hpp"
 #include "../grid/levelset.hpp"
+#include "../spatial/bvh.hpp"
 
 namespace sceneCore {
 //====================================
@@ -62,8 +63,8 @@ class Scene {
 						 const float& scale, std::vector<fluidCore::Particle*>& particles, 
 						 const int& frame);
 
-		std::vector<objCore::Obj*>		m_solidObjects;
-		std::vector<objCore::Obj*>		m_liquidObjects;
+		std::vector< objCore::Obj* >		m_solidObjects;
+		std::vector< objCore::Obj* >		m_liquidObjects;
 
 		fluidCore::LevelSet*			m_solidLevelSet;
 		fluidCore::LevelSet*			m_liquidLevelSet;

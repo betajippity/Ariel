@@ -1,14 +1,14 @@
 // Ariel: FLIP Fluid Simulator
 // Written by Yining Karl Li
 //
-// File: geom.inl
+// File: geomlist.hpp. Adapted from Takua Render.
 // Coalesces all geom files for easy including.
 
-#ifndef GEOM_INL
-#define GEOM_INL
+#ifndef GEOMLIST_HPP
+#define GEOMLIST_HPP
 
-#include "sphere.hpp"
-#include "cube.hpp"
+#include "spheregen.hpp"
+#include "cubegen.hpp"
 #include "obj/obj.hpp"
 
 #endif

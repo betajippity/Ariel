@@ -170,7 +170,7 @@ void SceneLoader::LoadSim(const Json::Value& jsonsim){
 }
 
 void SceneLoader::LoadBox(const Json::Value& jsoncube){
-	geomCore::Cube cubebuilder;
+	geomCore::CubeGen cubebuilder;
 	glm::vec3 point0;
 	point0.x = jsoncube["point0_x"].asFloat();
 	point0.y = jsoncube["point0_y"].asFloat();
@@ -189,15 +189,18 @@ void SceneLoader::LoadBox(const Json::Value& jsoncube){
 		endFrame = jsoncube["endFrame"].asInt();
 	}
 
+	objCore::Obj* o = new objCore::Obj();
+	cubebuilder.Tesselate(o, point0, point1);
+
 	if(std::strcmp(jsoncube["type"].asString().c_str(), "solid")==0){
-		m_s->AddSolidObject(cubebuilder.Tesselate(point0, point1), startFrame, endFrame);
+		m_s->AddSolidObject(o, startFrame, endFrame);
 	}else if(std::strcmp(jsoncube["type"].asString().c_str(), "liquid")==0){
-		m_s->AddLiquidObject(cubebuilder.Tesselate(point0, point1), startFrame, endFrame);
+		m_s->AddLiquidObject(o, startFrame, endFrame);
 	}
 }
 
 void SceneLoader::LoadSphere(const Json::Value& jsonsphere){
-	geomCore::Sphere spherebuilder;
+	geomCore::SphereGen spherebuilder;
 	glm::vec3 center;
 	center.x = jsonsphere["center_x"].asFloat();
 	center.y = jsonsphere["center_y"].asFloat();
@@ -214,10 +217,13 @@ void SceneLoader::LoadSphere(const Json::Value& jsonsphere){
 		endFrame = jsonsphere["endFrame"].asInt();
 	}
 
+	objCore::Obj* o = new objCore::Obj();
+	spherebuilder.Tesselate(o, center, radius);
+
 	if(std::strcmp(jsonsphere["type"].asString().c_str(), "solid")==0){
-		m_s->AddSolidObject(spherebuilder.Tesselate(center, radius), startFrame, endFrame);
+		m_s->AddSolidObject(o, startFrame, endFrame);
 	}else if(std::strcmp(jsonsphere["type"].asString().c_str(), "liquid")==0){
-		m_s->AddLiquidObject(spherebuilder.Tesselate(center, radius), startFrame, endFrame);
+		m_s->AddLiquidObject(o, startFrame, endFrame);
 	}
 }
 
