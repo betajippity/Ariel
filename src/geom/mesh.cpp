@@ -14,7 +14,7 @@ namespace geomCore {
 
 HOST DEVICE MeshContainer::MeshContainer(){
     m_meshFrames = NULL;
-    m_geomFrames = NULL;
+    m_geomTransforms = NULL;
     m_prePersist = false;
     m_postPersist = false;
     m_frameInterval = 1;
@@ -26,10 +26,10 @@ HOST DEVICE MeshContainer::MeshContainer(const unsigned int& numberOfFrames,
                                          const unsigned int& frameInterval,
                                          const bool& prePersist,
                                          const bool& postPersist,
-                                         GeomFrame** geomFrames,
+                                         GeomTransform** geomTransforms,
                                          spaceCore::Bvh<objCore::Obj>** meshFrames){
     m_numberOfFrames = numberOfFrames;
-    m_geomFrames = geomFrames;
+    m_geomTransforms = geomTransforms;
     m_meshFrames = meshFrames;
     m_frameOffset = frameOffset;
     m_frameInterval = frameInterval;
@@ -39,7 +39,7 @@ HOST DEVICE MeshContainer::MeshContainer(const unsigned int& numberOfFrames,
 
 HOST DEVICE MeshContainer::MeshContainer(MeshContainerData data){
     m_numberOfFrames = data.m_numberOfFrames;
-    m_geomFrames = data.m_geomFrames;
+    m_geomTransforms = data.m_geomTransforms;
     m_meshFrames = data.m_meshFrames;
     m_id = data.m_id;
 }
@@ -70,12 +70,12 @@ HOST DEVICE void MeshContainer::Intersect(const rayCore::Ray& r,
     unsigned int lowerFrame = glm::floor(clampedFrame);
     float lerpWeight = clampedFrame - float(lowerFrame);
     //grab relevant transforms and LERP to get interpolated transform, apply inverse to ray
-    glm::vec3 interpT = m_geomFrames[lowerFrame]->m_translation * (1.0f-lerpWeight) + 
-                        m_geomFrames[upperFrame]->m_translation * lerpWeight;
-    glm::vec3 interpR = m_geomFrames[lowerFrame]->m_rotation * (1.0f-lerpWeight) + 
-                        m_geomFrames[upperFrame]->m_rotation * lerpWeight;
-    glm::vec3 interpS = m_geomFrames[lowerFrame]->m_scale * (1.0f-lerpWeight) + 
-                        m_geomFrames[upperFrame]->m_scale * lerpWeight;
+    glm::vec3 interpT = m_geomTransforms[lowerFrame]->m_translation * (1.0f-lerpWeight) + 
+                        m_geomTransforms[upperFrame]->m_translation * lerpWeight;
+    glm::vec3 interpR = m_geomTransforms[lowerFrame]->m_rotation * (1.0f-lerpWeight) + 
+                        m_geomTransforms[upperFrame]->m_rotation * lerpWeight;
+    glm::vec3 interpS = m_geomTransforms[lowerFrame]->m_scale * (1.0f-lerpWeight) + 
+                        m_geomTransforms[upperFrame]->m_scale * lerpWeight;
     rayCore::Ray transformedR = r.Transform(utilityCore::buildInverseTransformationMatrix(interpT,
                                                                                           interpR,
                                                                                           interpS));
@@ -90,7 +90,7 @@ HOST DEVICE void MeshContainer::Intersect(const rayCore::Ray& r,
 
 HOST DEVICE AnimatedMeshContainer::AnimatedMeshContainer(){
     m_meshFrames = NULL;
-    m_geomFrames = NULL;
+    m_geomTransforms = NULL;
     m_prePersist = false;
     m_postPersist = false;
     m_frameInterval = 1;
@@ -102,11 +102,11 @@ HOST DEVICE AnimatedMeshContainer::AnimatedMeshContainer(const unsigned int& num
                                                          const unsigned int& frameInterval,
                                                          const bool& prePersist,
                                                          const bool& postPersist,
-                                                         GeomFrame** geomFrames,
+                                                         GeomTransform** geomTransforms,
                                                          spaceCore::Bvh<objCore::InterpolatedObj>** 
                                                             meshFrames){
     m_numberOfFrames = numberOfFrames;
-    m_geomFrames = geomFrames;
+    m_geomTransforms = geomTransforms;
     m_meshFrames = meshFrames;
     m_frameOffset = frameOffset;
     m_frameInterval = frameInterval;
@@ -116,7 +116,7 @@ HOST DEVICE AnimatedMeshContainer::AnimatedMeshContainer(const unsigned int& num
 
 HOST DEVICE AnimatedMeshContainer::AnimatedMeshContainer(AnimatedMeshContainerData data){
     m_numberOfFrames = data.m_numberOfFrames;
-    m_geomFrames = data.m_geomFrames;
+    m_geomTransforms = data.m_geomTransforms;
     m_meshFrames = data.m_meshFrames;
     m_id = data.m_id;
 }
@@ -147,12 +147,12 @@ HOST DEVICE void AnimatedMeshContainer::Intersect(const rayCore::Ray& r,
     unsigned int lowerFrame = glm::floor(clampedFrame);
     float lerpWeight = clampedFrame - float(lowerFrame);
     //grab relevant transforms and LERP to get interpolated transform, apply inverse to ray
-    glm::vec3 interpT = m_geomFrames[lowerFrame]->m_translation * (1.0f-lerpWeight) + 
-                        m_geomFrames[upperFrame]->m_translation * lerpWeight;
-    glm::vec3 interpR = m_geomFrames[lowerFrame]->m_rotation * (1.0f-lerpWeight) + 
-                        m_geomFrames[upperFrame]->m_rotation * lerpWeight;
-    glm::vec3 interpS = m_geomFrames[lowerFrame]->m_scale * (1.0f-lerpWeight) + 
-                        m_geomFrames[upperFrame]->m_scale * lerpWeight;
+    glm::vec3 interpT = m_geomTransforms[lowerFrame]->m_translation * (1.0f-lerpWeight) + 
+                        m_geomTransforms[upperFrame]->m_translation * lerpWeight;
+    glm::vec3 interpR = m_geomTransforms[lowerFrame]->m_rotation * (1.0f-lerpWeight) + 
+                        m_geomTransforms[upperFrame]->m_rotation * lerpWeight;
+    glm::vec3 interpS = m_geomTransforms[lowerFrame]->m_scale * (1.0f-lerpWeight) + 
+                        m_geomTransforms[upperFrame]->m_scale * lerpWeight;
     rayCore::Ray transformedR = r.Transform(utilityCore::buildInverseTransformationMatrix(interpT,
                                                                                           interpR,
                                                                                           interpS));

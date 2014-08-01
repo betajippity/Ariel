@@ -10,7 +10,7 @@
 #include <vector>
 #include "../utilities/utilities.h"
 #include "../grid/macgrid.inl"
-#include "../geom/obj/obj.hpp"
+#include "../geom/mesh.hpp"
 #include "../grid/particlegrid.hpp"
 #include "../grid/levelset.hpp"
 #include "../spatial/bvh.hpp"
@@ -21,6 +21,7 @@ namespace sceneCore {
 //====================================
 
 class Scene {
+	friend class SceneLoader;
 	public:
 		Scene();
 		~Scene();
@@ -79,6 +80,14 @@ class Scene {
 		std::vector<glm::vec2>			m_liquidObjectFrameRanges;
 
 		std::vector<glm::vec3>			m_externalForces;
+
+		//new stuff
+		std::vector<geomCore::GeomTransform>						m_geomTransforms;
+		std::vector<spaceCore::Bvh<objCore::Obj> >					m_meshFiles;
+		std::vector<spaceCore::Bvh<objCore::InterpolatedObj> >		m_animMeshes;
+		std::vector<geomCore::Geom>									m_geoms;
+		std::vector<geomCore::MeshContainer>						m_meshContainers;
+		std::vector<geomCore::AnimatedMeshContainer>				m_animmeshContainers;
 };
 }
 

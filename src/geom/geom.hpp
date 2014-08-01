@@ -29,7 +29,7 @@ namespace geomCore {
 //====================================
 
 class Geom;
-class GeomFrame;
+class GeomTransform;
 class GeomInterface;
 
 class Geom {
@@ -58,11 +58,11 @@ class GeomInterface {
 		HOST DEVICE virtual unsigned int GetID() = 0;
 };
 
-class GeomFrame {
+class GeomTransform {
 	public:
-		GeomFrame();
-		GeomFrame(const glm::vec3& t, const glm::vec3& r, const glm::vec3& s);
-		~GeomFrame();
+		GeomTransform();
+		GeomTransform(const glm::vec3& t, const glm::vec3& r, const glm::vec3& s);
+		~GeomTransform();
 
 		void SetContents(const glm::vec3& t, const glm::vec3& r, const glm::vec3& s);
 

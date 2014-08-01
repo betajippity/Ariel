@@ -40,19 +40,27 @@ class SceneLoader {
 		void LoadSphere(const Json::Value& jsonsphere);
 		void LoadObj(const Json::Value& jsonobj);
 		void LoadCamera(const Json::Value& jsoncamera);
-		void LoadForces(const Json::Value& jsonforces);
+		void LoadGlobalForces(const Json::Value& jsonforces);
 
-		Scene*						m_s;
-		glm::vec3					m_dimensions;
-		float						m_density;
-		float						m_stepsize;
-		std::string					m_relativePath;
-		std::string					m_imagePath;
-		std::string					m_meshPath;
-		std::string					m_vdbPath;
-		std::string					m_partioPath;
-		std::vector<glm::vec3>		m_externalForces;
+		void LoadGeomTransforms(const Json::Value& jsontransforms);
+		void LoadMeshFiles(const Json::Value& jsonmeshfiles);
+		void LoadAnimMeshSequences(const Json::Value& jsonanimmesh);
+		void LoadGeom(const Json::Value& jsongeom);
+
+		Scene*									m_s;
+		glm::vec3								m_dimensions;
+		float									m_density;
+		float									m_stepsize;
+		std::string								m_relativePath;
+		std::string								m_imagePath;
+		std::string								m_meshPath;
+		std::string								m_vdbPath;
+		std::string								m_partioPath;
+		std::vector<glm::vec3>					m_externalForces;
 		
+		std::map<std::string, unsigned int>     					m_linkNames;
+		std::vector< std::vector< 
+					 spaceCore::Bvh<objCore::InterpolatedObj>* > >	m_animMeshSequences;
 };
 }
 

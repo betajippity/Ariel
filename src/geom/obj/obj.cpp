@@ -166,10 +166,10 @@ bool Obj::ReadObj(const std::string& filename){
     }
 
     std::cout << "Read obj from " << filename << std::endl;
-    std::cout << m_numberOfVertices << " vertices" << std::endl;
-    std::cout << m_numberOfNormals << " normals" << std::endl;
-    std::cout << m_numberOfUVs << " uvs" << std::endl;
-    std::cout << m_numberOfPolys << " polys" << std::endl;
+    // std::cout << m_numberOfVertices << " vertices" << std::endl;
+    // std::cout << m_numberOfNormals << " normals" << std::endl;
+    // std::cout << m_numberOfUVs << " uvs" << std::endl;
+    // std::cout << m_numberOfPolys << " polys" << std::endl;
 
     return true;
 }

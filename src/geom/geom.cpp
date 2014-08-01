@@ -37,22 +37,22 @@ HOST DEVICE GeomType Geom::GetType(){
 }
 
 //====================================
-// GeomFrame Class
+// GeomTransform Class
 //====================================
 
-GeomFrame::GeomFrame(){
+GeomTransform::GeomTransform(){
     SetContents(glm::vec3(0), glm::vec3(0), glm::vec3(1));
 }
 
-GeomFrame::GeomFrame(const glm::vec3& t, const glm::vec3& r, const glm::vec3& s){
+GeomTransform::GeomTransform(const glm::vec3& t, const glm::vec3& r, const glm::vec3& s){
     SetContents(t, r, s);
 }
 
-GeomFrame::~GeomFrame(){
+GeomTransform::~GeomTransform(){
 
 }
 
-void GeomFrame::SetContents(const glm::vec3& t, const glm::vec3& r, const glm::vec3& s){
+void GeomTransform::SetContents(const glm::vec3& t, const glm::vec3& r, const glm::vec3& s){
     m_translation = t;
     m_rotation = r;
     m_scale = s;

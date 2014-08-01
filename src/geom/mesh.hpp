@@ -31,7 +31,7 @@ namespace geomCore {
 //Only used as a temp data transfer container for CUDA memory setup
 struct AnimatedMeshContainerData {
     spaceCore::Bvh<objCore::InterpolatedObj>**      m_meshFrames;
-    GeomFrame**                                     m_geomFrames;
+    GeomTransform**                                 m_geomTransforms;
     unsigned int                                    m_numberOfFrames;
     unsigned int                                    m_id; 
     unsigned int                                    m_frameOffset;
@@ -40,7 +40,7 @@ struct AnimatedMeshContainerData {
 
 struct MeshContainerData {
     spaceCore::Bvh<objCore::Obj>**                  m_meshFrames;
-    GeomFrame**                                     m_geomFrames;
+    GeomTransform**                                 m_geomTransforms;
     unsigned int                                    m_numberOfFrames;
     unsigned int                                    m_id; 
     unsigned int                                    m_frameOffset;
@@ -59,7 +59,7 @@ class MeshContainer: public virtual GeomInterface {
                                   const unsigned int& frameInterval,
                                   const bool& prePersist,
                                   const bool& postPersist,
-                                  GeomFrame** geomFrames,
+                                  GeomTransform** geomTransforms,
                                   spaceCore::Bvh<objCore::Obj>** meshFrames);
         HOST DEVICE MeshContainer(MeshContainerData data); 
         HOST DEVICE ~MeshContainer();
@@ -68,8 +68,8 @@ class MeshContainer: public virtual GeomInterface {
         HOST DEVICE unsigned int GetID();
         HOST DEVICE void Intersect(const rayCore::Ray& r, spaceCore::TraverseAccumulator& result);
 
-        spaceCore::Bvh<objCore::Obj>**      m_meshFrames;
-        GeomFrame**                                     m_geomFrames;
+        spaceCore::Bvh<objCore::Obj>**                  m_meshFrames;
+        GeomTransform**                                 m_geomTransforms;
         unsigned int                                    m_numberOfFrames;
         unsigned int                                    m_id;
         unsigned int                                    m_frameOffset;
@@ -86,7 +86,7 @@ class AnimatedMeshContainer: public virtual GeomInterface {
                                           const unsigned int& frameInterval,
                                           const bool& prePersist,
                                           const bool& postPersist,
-                                          GeomFrame** geomFrames,
+                                          GeomTransform** geomTransforms,
                                           spaceCore::Bvh<objCore::InterpolatedObj>** meshFrames);
         HOST DEVICE AnimatedMeshContainer(AnimatedMeshContainerData data); 
         HOST DEVICE ~AnimatedMeshContainer();
@@ -96,7 +96,7 @@ class AnimatedMeshContainer: public virtual GeomInterface {
         HOST DEVICE void Intersect(const rayCore::Ray& r, spaceCore::TraverseAccumulator& result);
 
         spaceCore::Bvh<objCore::InterpolatedObj>**      m_meshFrames;
-        GeomFrame**                                     m_geomFrames;
+        GeomTransform**                                 m_geomTransforms;
         unsigned int                                    m_numberOfFrames;
         unsigned int                                    m_id;
         unsigned int                                    m_frameOffset;

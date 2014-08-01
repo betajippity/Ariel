@@ -86,7 +86,11 @@ void SphereGen::Tesselate(objCore::Obj* o){
 	for(unsigned int i=0; i<h; i++){
 		glm::vec2 uv;
 		uv.x = 1;
-		uv.y = uvs[i*h-1].y;
+		unsigned int ih = i*h;
+		if(ih>0){
+			ih = ih-1;
+		}
+		uv.y = uvs[ih].y;
 		uvs[vertCount+i] = uv;
 	}
 	//generate faces for sphere sides
@@ -115,13 +119,13 @@ void SphereGen::Tesselate(objCore::Obj* o){
 	//generate faces and uvs for top pole
 	for(unsigned int x=0; x<h; x++){
 		glm::uvec4 indices = polyVertexIndices[x];
-		indices[3] = -1;
+		indices[3] = 0;
 		indices[2] = indices[0];
 		indices[0] = vertCount;
 		polyVertexIndices[faceCount-(a*2)+x] = indices;
 		polyNormalIndices[faceCount-(a*2)+x] = indices;
 		indices = polyUVIndices[x];
-		indices[3] = -1;
+		indices[3] = 0;
 		indices[2] = indices[0];
 		indices[0] = vertCount+h+x+1;
 		polyUVIndices[faceCount-(a*2)+x] = indices;
@@ -140,7 +144,7 @@ void SphereGen::Tesselate(objCore::Obj* o){
 		glm::uvec4 indices = polyVertexIndices[index];
 		indices[1] = indices[2];
 		indices[0] = indices[3];
-		indices[3] = -1;
+		indices[3] = 0;
 		indices[2] = vertCount-1;
 		polyVertexIndices[faceCount-a+x] = indices;
 		polyNormalIndices[faceCount-a+x] = indices;
@@ -149,7 +153,7 @@ void SphereGen::Tesselate(objCore::Obj* o){
 		i2[0] = indices[3];
 		i2[1] = indices[2];
 		i2[2] = vertCount+(h*2)+x+1;
-		i2[3] = -1;
+		i2[3] = 0;
 		polyUVIndices[faceCount-a+x] = i2;
 		unsigned int uvindex = vertCount+(2*h)+x;
 		glm::vec2 uv;
