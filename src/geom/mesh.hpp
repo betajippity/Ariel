@@ -68,6 +68,10 @@ class MeshContainer: public virtual GeomInterface {
         HOST DEVICE unsigned int GetID();
         HOST DEVICE void Intersect(const rayCore::Ray& r, spaceCore::TraverseAccumulator& result);
 
+        HOST DEVICE bool GetTransforms(const float& frame, glm::mat4& transform,
+                                       glm::mat4& inversetransform);
+        HOST DEVICE spaceCore::Bvh<objCore::Obj>* GetMeshFrame(const float& frame);
+
         spaceCore::Bvh<objCore::Obj>**                  m_meshFrames;
         GeomTransform**                                 m_geomTransforms;
         unsigned int                                    m_numberOfFrames;
@@ -94,6 +98,11 @@ class AnimatedMeshContainer: public virtual GeomInterface {
         HOST DEVICE GeomType GetType();
         HOST DEVICE unsigned int GetID();
         HOST DEVICE void Intersect(const rayCore::Ray& r, spaceCore::TraverseAccumulator& result);
+
+        HOST DEVICE bool GetTransforms(const float& frame, glm::mat4& transform,
+                                       glm::mat4& inversetransform);
+        HOST DEVICE spaceCore::Bvh<objCore::InterpolatedObj>* GetMeshFrame(const float& frame);
+        HOST DEVICE float GetInterpolationWeight(const float& frame);
 
         spaceCore::Bvh<objCore::InterpolatedObj>**      m_meshFrames;
         GeomTransform**                                 m_geomTransforms;

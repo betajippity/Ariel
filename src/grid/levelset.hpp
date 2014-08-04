@@ -78,6 +78,9 @@ class LevelSet{
 		LevelSet();
 		// levelset(openvdb::FloatGrid::Ptr grid);
 		LevelSet(objCore::Obj* mesh);
+		LevelSet(objCore::Obj* mesh, const glm::mat4& m);
+		LevelSet(objCore::InterpolatedObj* animmesh, const float& interpolation, 
+				 const glm::mat4& m);
 		LevelSet(std::vector<Particle*>& particles, float maxdimension);
 		~LevelSet();
 
@@ -102,6 +105,10 @@ class LevelSet{
 		void WriteVDBGridToFile(std::string filename);
 
 	protected:
+		void LevelSetFromAnimMesh(objCore::InterpolatedObj* animmesh, const float& interpolation, 
+								  const glm::mat4& m);
+		void LevelSetFromMesh(objCore::Obj* mesh, const glm::mat4& m);
+
 		openvdb::FloatGrid::Ptr		m_vdbgrid;
 
 		tbb::mutex					m_getInterpolatedCellLock;

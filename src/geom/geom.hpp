@@ -20,7 +20,7 @@
 #include "../spatial/bvh.hpp"
 #include "../ray/ray.hpp"
 
-enum GeomType{MESH, VOLUME, CURVE, NONE};
+enum GeomType{MESH, VOLUME, CURVE, ANIMMESH, NONE};
 
 namespace geomCore {
 
@@ -56,6 +56,9 @@ class GeomInterface {
 										   spaceCore::TraverseAccumulator& result) = 0;
 		HOST DEVICE virtual GeomType GetType() = 0;
 		HOST DEVICE virtual unsigned int GetID() = 0;
+
+		HOST DEVICE virtual bool GetTransforms(const float& frame, glm::mat4& transform,
+											   glm::mat4& inversetransform) = 0;
 };
 
 class GeomTransform {

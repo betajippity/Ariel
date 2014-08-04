@@ -30,6 +30,7 @@ struct VboData{
 	int 			m_size;
 	GLenum 			m_type;
 	std::string 	m_key;
+	GLfloat         m_transform[4][4];
 };
 
 //Used just for tracking OpenGL viewport camera position/keeping in sync with rendercam
@@ -82,12 +83,20 @@ class Viewer{
 		//Main draw functions
 		void MainLoop();
 		void UpdateInputs();
+		void UpdateParticles();
+		void UpdateMeshes();
 
 		//VBO stuff
 		VboData CreateVBO(VboData& data, float* vertices, const unsigned int& vertexcount, 
 						  float* colors, const unsigned int& colorcount, const GLenum& type, 
 						  const std::string& key);
 		VboData CreateVBOFromObj(objCore::Obj* o, const glm::vec4& color, const std::string& key);
+		bool CreateVBOFromMeshContainer(geomCore::MeshContainer* o, const float& frame, 
+								 		const glm::vec4& color, const std::string& key,
+								 		VboData& data);
+        bool CreateVBOFromAnimmeshContainer(geomCore::AnimatedMeshContainer* o, const float& frame,
+                                            const glm::vec4& color, const std::string& key,
+                                            VboData& data);
 
 		void SaveFrame();
 
@@ -121,6 +130,8 @@ class Viewer{
     	bool 								m_dumpVDB;
     	bool 								m_dumpOBJ;
     	bool 								m_dumpPARTIO;
+
+    	unsigned int 						m_currentFrame;
 };
 }
 

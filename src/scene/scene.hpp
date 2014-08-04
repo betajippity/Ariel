@@ -54,6 +54,10 @@ class Scene {
 							 const int& frame, const bool& VDB, const bool& OBJ, 
 							 const bool& PARTIO);
 
+		//new stuff
+		std::vector<geomCore::Geom*>& GetSolidGeoms();
+		std::vector<geomCore::Geom*>& GetLiquidGeoms();
+
 		std::string						m_imagePath;
 		std::string						m_meshPath;
 		std::string						m_vdbPath;
@@ -88,6 +92,8 @@ class Scene {
 		std::vector<geomCore::Geom>									m_geoms;
 		std::vector<geomCore::MeshContainer>						m_meshContainers;
 		std::vector<geomCore::AnimatedMeshContainer>				m_animmeshContainers;
+		std::vector<geomCore::Geom*>								m_solids;
+		std::vector<geomCore::Geom*>								m_liquids;
 };
 }
 

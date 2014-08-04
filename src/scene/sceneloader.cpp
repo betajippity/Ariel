@@ -78,7 +78,7 @@ SceneLoader::SceneLoader(const std::string& filename){
 			m_animMeshSequences.reserve(nodesInGroup);
 			unsigned int interpObjCount = 0;
 			for(unsigned int j=0; j<nodesInGroup; j++){
-				interpObjCount = interpObjCount + root["animatedmeshes"][j].size();
+				interpObjCount = interpObjCount + root["animatedmeshes"][j].size() + 1;
 			}
 			m_s->m_animMeshes.reserve(interpObjCount);
 			for(unsigned int j=0; j<nodesInGroup; j++){
@@ -106,7 +106,25 @@ SceneLoader::SceneLoader(const std::string& filename){
 		}
 		if(root.isMember("sim")){
 			std::cout << "Loading sim..." << std::endl;
-			LoadSim(root["sim"]);
+			unsigned int fluidNodeCount = 0;
+			unsigned int solidNodeCount = 0;
+			unsigned int simNodeCount = root["sim"].size();
+			for(unsigned int j=0; j<simNodeCount; j++){
+				if(strcmp(root["sim"][j]["type"].asString().c_str(), "liquid")==0){
+					fluidNodeCount++;
+				}else if(strcmp(root["sim"][j]["type"].asString().c_str(), "solid")==0){
+					solidNodeCount++;
+				}
+			}
+			m_s->m_solids.reserve(solidNodeCount);
+			m_s->m_liquids.reserve(fluidNodeCount);
+			for(unsigned int j=0; j<simNodeCount; j++){
+				LoadSim(root["sim"][j]);
+			}
+		}
+		if(root.isMember("simold")){
+			std::cout << "Loading simold..." << std::endl;
+			LoadSimOld(root["simold"]);
 		}
 	}
 
@@ -134,6 +152,17 @@ glm::vec3 SceneLoader::GetDimensions(){
 
 float SceneLoader::GetStepsize(){
 	return m_stepsize;
+}
+
+void SceneLoader::LoadSim(const Json::Value& jsonsim){
+	std::string id = jsonsim["geom"].asString();
+	unsigned int geomID = m_linkNames["geom_"+id];
+	geomCore::Geom* geomnode = &m_s->m_geoms[geomID];
+	if(strcmp(jsonsim["type"].asString().c_str(), "liquid")==0){
+		m_s->m_liquids.push_back(geomnode);
+	}else if(strcmp(jsonsim["type"].asString().c_str(), "solid")==0){
+		m_s->m_solids.push_back(geomnode);
+	}
 }
 
 void SceneLoader::LoadGeom(const Json::Value& jsongeom){
@@ -199,7 +228,7 @@ void SceneLoader::LoadGeom(const Json::Value& jsongeom){
                 spaceCore::Bvh<objCore::InterpolatedObj>** animmeshes = 
                                         new spaceCore::Bvh<objCore::InterpolatedObj>*[frameCount];
                 for(unsigned int i=0; i<frameCount; i++){
-                    animmeshes[i] = m_animMeshSequences[animmeshID][i];        
+                    animmeshes[i] = m_animMeshSequences[animmeshID][i];    
                 }
                 m_s->m_animmeshContainers.push_back(geomCore::AnimatedMeshContainer(
                                                                 frameCount, frameOffset,
@@ -230,7 +259,8 @@ void SceneLoader::LoadAnimMeshSequences(const Json::Value& jsonanimmesh){
 			std::cout << "Warning: animmesh node with ID \"" << id
 					  << "\" already exists! Skipping...\n" << std::endl;
 		}else{
-			m_animMeshSequences.push_back(std::vector<spaceCore::Bvh<objCore::InterpolatedObj>*>());
+			m_animMeshSequences.push_back(std::vector<
+                                          spaceCore::Bvh<objCore::InterpolatedObj>*>());
 			unsigned int nodeNumber = 0;
             nodeNumber = (unsigned int)m_animMeshSequences.size()-1;
             unsigned int frameCount = jsonanimmesh["frames"].size();
@@ -438,7 +468,7 @@ void SceneLoader::LoadCamera(const Json::Value& jsoncamera){
 	}
 }
 
-void SceneLoader::LoadSim(const Json::Value& jsonsim){
+void SceneLoader::LoadSimOld(const Json::Value& jsonsim){
 	int jsoncount = jsonsim.size();
 	for(int i=0; i<jsoncount; i++){
 		Json::Value object = jsonsim[i];

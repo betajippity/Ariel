@@ -35,7 +35,7 @@ class SceneLoader {
 		
 	private:
 		void LoadSettings(const Json::Value& jsonsettings);
-		void LoadSim(const Json::Value& jsonsettings);
+		void LoadSimOld(const Json::Value& jsonsettings);
 		void LoadBox(const Json::Value& jsoncube);
 		void LoadSphere(const Json::Value& jsonsphere);
 		void LoadObj(const Json::Value& jsonobj);
@@ -46,6 +46,7 @@ class SceneLoader {
 		void LoadMeshFiles(const Json::Value& jsonmeshfiles);
 		void LoadAnimMeshSequences(const Json::Value& jsonanimmesh);
 		void LoadGeom(const Json::Value& jsongeom);
+		void LoadSim(const Json::Value& jsonsim);
 
 		Scene*									m_s;
 		glm::vec3								m_dimensions;

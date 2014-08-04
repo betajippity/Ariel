@@ -23,11 +23,59 @@ LevelSet::~LevelSet(){
 }
 
 LevelSet::LevelSet(objCore::Obj* mesh){
+	LevelSetFromMesh(mesh, glm::mat4());
+}
+
+LevelSet::LevelSet(objCore::Obj* mesh, const glm::mat4& m){
+	LevelSetFromMesh(mesh, m);
+}
+
+LevelSet::LevelSet(objCore::InterpolatedObj* animmesh, const float& interpolation, 
+				   const glm::mat4& m){
+	LevelSetFromAnimMesh(animmesh, interpolation, m);
+}
+
+void LevelSet::LevelSetFromAnimMesh(objCore::InterpolatedObj* animmesh, const float& interpolation, 
+								  	const glm::mat4& m){
+	openvdb::math::Transform::Ptr transform=openvdb::math::Transform::createLinearTransform(.25f);
+	//grab object pointers
+	objCore::Obj* o0 = animmesh->m_obj0;
+	objCore::Obj* o1 = animmesh->m_obj1;
+	//copy vertices into vdb format
+	std::vector<openvdb::Vec3s> vdbpoints;
+	for(unsigned int i=0; i<o0->m_numberOfVertices; i++){
+		glm::vec3 vertex = o0->m_vertices[i] * (1.0f-interpolation) + 
+						   o1->m_vertices[i] * interpolation;
+		vertex = glm::vec3(m * glm::vec4(vertex, 1.0f));
+		openvdb::Vec3s vdbvertex(vertex.x, vertex.y, vertex.z);
+		vdbpoints.push_back(transform->worldToIndex(vdbvertex));
+	}
+	//copy faces into vdb format
+	std::vector<openvdb::Vec4I> vdbpolys;
+	for(unsigned int i=0; i<o0->m_numberOfPolys; i++){
+		glm::uvec4 poly = o0->m_polyVertexIndices[i];
+		openvdb::Vec4I vdbpoly(poly[0]-1, poly[1]-1, poly[2]-1, poly[3]-1);
+		if(poly[0]==poly[3] || poly[3]<0){
+			vdbpoly[3] = openvdb::util::INVALID_IDX;
+		}
+		vdbpolys.push_back(vdbpoly);
+	}	
+	 //call vdb tools for creating level set
+	openvdb::tools::MeshToVolume<openvdb::FloatGrid> sdfmaker(transform);
+	sdfmaker.convertToLevelSet(vdbpoints, vdbpolys);
+	m_vdbgrid = sdfmaker.distGridPtr();
+	//cleanup
+	vdbpoints.clear();
+	vdbpolys.clear();
+}
+
+void LevelSet::LevelSetFromMesh(objCore::Obj* mesh, const glm::mat4& m){
 	openvdb::math::Transform::Ptr transform=openvdb::math::Transform::createLinearTransform(.25f);
 	//copy vertices into vdb format
 	std::vector<openvdb::Vec3s> vdbpoints;
 	for(unsigned int i=0; i<mesh->m_numberOfVertices; i++){
 		glm::vec3 vertex = mesh->m_vertices[i];
+		vertex = glm::vec3(m * glm::vec4(vertex, 1.0f));
 		openvdb::Vec3s vdbvertex(vertex.x, vertex.y, vertex.z);
 		vdbpoints.push_back(transform->worldToIndex(vdbvertex));
 	}

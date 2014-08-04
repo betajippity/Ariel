@@ -56,14 +56,21 @@ HOST DEVICE unsigned int MeshContainer::GetID(){
     return m_id;
 }
 
-HOST DEVICE void MeshContainer::Intersect(const rayCore::Ray& r, 
-                                          spaceCore::TraverseAccumulator& result){
+HOST DEVICE spaceCore::Bvh<objCore::Obj>* MeshContainer::GetMeshFrame(const float& frame){
+    float clampedFrame = (frame - float(m_frameOffset)) / float(m_frameInterval);
+    clampedFrame = glm::clamp(clampedFrame, 0.0f, float(m_numberOfFrames-1));
+    unsigned int lowerFrame = glm::floor(clampedFrame);
+    return m_meshFrames[lowerFrame];
+}
+
+HOST DEVICE bool MeshContainer::GetTransforms(const float& frame, glm::mat4& transform,
+                                              glm::mat4& inversetransform){
     //translate frame into local frame space
-    float clampedFrame = (r.m_frame - float(m_frameOffset)) / float(m_frameInterval);
+    float clampedFrame = (frame - float(m_frameOffset)) / float(m_frameInterval);
     if((clampedFrame<0.0f && m_prePersist==false) || 
        (clampedFrame>=m_numberOfFrames && m_postPersist==false)){
-        return;
-    }
+        return false;
+    }   
     clampedFrame = glm::clamp(clampedFrame, 0.0f, float(m_numberOfFrames-1));
     //ceil/floor to get frame indices
     unsigned int upperFrame = glm::ceil(clampedFrame);
@@ -76,12 +83,22 @@ HOST DEVICE void MeshContainer::Intersect(const rayCore::Ray& r,
                         m_geomTransforms[upperFrame]->m_rotation * lerpWeight;
     glm::vec3 interpS = m_geomTransforms[lowerFrame]->m_scale * (1.0f-lerpWeight) + 
                         m_geomTransforms[upperFrame]->m_scale * lerpWeight;
-    rayCore::Ray transformedR = r.Transform(utilityCore::buildInverseTransformationMatrix(interpT,
-                                                                                          interpR,
-                                                                                          interpS));
+    inversetransform = utilityCore::buildInverseTransformationMatrix(interpT, interpR, interpS);
+    transform = utilityCore::buildTransformationMatrix(interpT, interpR, interpS);
+    return true;
+}
+
+HOST DEVICE void MeshContainer::Intersect(const rayCore::Ray& r, 
+                                          spaceCore::TraverseAccumulator& result){
+    glm::mat4 transform;
+    glm::mat4 inversetransform;
+    if(GetTransforms(r.m_frame, transform, inversetransform)==false){
+        return;
+    }
+    rayCore::Ray transformedR = r.Transform(inversetransform);
     //run intersection, transform result back into worldspace
-    m_meshFrames[lowerFrame]->Traverse(transformedR, result);
-    result.Transform(utilityCore::buildTransformationMatrix(interpT, interpR, interpS));
+    GetMeshFrame(r.m_frame)->Traverse(transformedR, result);
+    result.Transform(transform);
 }
 
 //====================================
@@ -126,21 +143,21 @@ HOST DEVICE AnimatedMeshContainer::~AnimatedMeshContainer(){
 }
 
 HOST DEVICE GeomType AnimatedMeshContainer::GetType(){
-    return MESH;
+    return ANIMMESH;
 }
 
 HOST DEVICE unsigned int AnimatedMeshContainer::GetID(){
     return m_id;
 }
 
-HOST DEVICE void AnimatedMeshContainer::Intersect(const rayCore::Ray& r, 
-                                                  spaceCore::TraverseAccumulator& result){
+HOST DEVICE bool AnimatedMeshContainer::GetTransforms(const float& frame, glm::mat4& transform,
+                                                      glm::mat4& inversetransform){
     //translate frame into local frame space
-    float clampedFrame = (r.m_frame - float(m_frameOffset)) / float(m_frameInterval);
+    float clampedFrame = (frame - float(m_frameOffset)) / float(m_frameInterval);
     if((clampedFrame<0.0f && m_prePersist==false) || 
        (clampedFrame>=m_numberOfFrames && m_postPersist==false)){
-        return;
-    }
+        return false;
+    }   
     clampedFrame = glm::clamp(clampedFrame, 0.0f, float(m_numberOfFrames-1));
     //ceil/floor to get frame indices
     unsigned int upperFrame = glm::ceil(clampedFrame);
@@ -153,11 +170,47 @@ HOST DEVICE void AnimatedMeshContainer::Intersect(const rayCore::Ray& r,
                         m_geomTransforms[upperFrame]->m_rotation * lerpWeight;
     glm::vec3 interpS = m_geomTransforms[lowerFrame]->m_scale * (1.0f-lerpWeight) + 
                         m_geomTransforms[upperFrame]->m_scale * lerpWeight;
-    rayCore::Ray transformedR = r.Transform(utilityCore::buildInverseTransformationMatrix(interpT,
-                                                                                          interpR,
-                                                                                          interpS));
+    inversetransform = utilityCore::buildInverseTransformationMatrix(interpT, interpR, interpS);
+    transform = utilityCore::buildTransformationMatrix(interpT, interpR, interpS);
+    return true;
+}
+
+HOST DEVICE float AnimatedMeshContainer::GetInterpolationWeight(const float& frame){
+    //translate frame into local frame space
+    float clampedFrame = (frame - float(m_frameOffset)) / float(m_frameInterval);
+    if((clampedFrame<0.0f && m_prePersist==false) || 
+       (clampedFrame>=m_numberOfFrames && m_postPersist==false)){
+        return false;
+    }   
+    clampedFrame = glm::clamp(clampedFrame, 0.0f, float(m_numberOfFrames-1));
+    //ceil/floor to get frame indices
+    unsigned int upperFrame = glm::ceil(clampedFrame);
+    unsigned int lowerFrame = glm::floor(clampedFrame);
+    float lerpWeight = clampedFrame - float(lowerFrame);
+    return lerpWeight;
+}
+
+HOST DEVICE spaceCore::Bvh<objCore::InterpolatedObj>* AnimatedMeshContainer::GetMeshFrame(
+                                                                            const float& frame){
+    float clampedFrame = (frame - float(m_frameOffset)) / float(m_frameInterval);
+    clampedFrame = glm::clamp(clampedFrame, 0.0f, float(m_numberOfFrames-1));
+    unsigned int lowerFrame = glm::floor(clampedFrame);
+    return m_meshFrames[lowerFrame];
+}
+
+HOST DEVICE void AnimatedMeshContainer::Intersect(const rayCore::Ray& r, 
+                                                  spaceCore::TraverseAccumulator& result){
+    glm::mat4 transform;
+    glm::mat4 inversetransform;
+    if(GetTransforms(r.m_frame, transform, inversetransform)==false){
+        return;
+    }
+    rayCore::Ray transformedR = r.Transform(inversetransform);
     //run intersection, transform result back into worldspace
+    float clampedFrame = (r.m_frame - float(m_frameOffset)) / float(m_frameInterval);
+    clampedFrame = glm::clamp(clampedFrame, 0.0f, float(m_numberOfFrames-1));
+    unsigned int lowerFrame = glm::floor(clampedFrame);
     m_meshFrames[lowerFrame]->Traverse(transformedR, result);
-    result.Transform(utilityCore::buildTransformationMatrix(interpT, interpR, interpS));
+    result.Transform(transform);
 }
 }

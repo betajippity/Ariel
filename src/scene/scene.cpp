@@ -174,6 +174,15 @@ std::vector<objCore::Obj*>& Scene::GetLiquidObjects(){
 	return m_liquidObjects;
 }
 
+std::vector<geomCore::Geom*>& Scene::GetSolidGeoms(){
+	return m_solids;
+}
+
+std::vector<geomCore::Geom*>& Scene::GetLiquidGeoms(){
+	return m_liquids;
+}
+
+
 void Scene::BuildLevelSets(const int& frame){
 	//first rebuild frame dependent levelsets, then merge with permanent sets if needed
 
@@ -182,21 +191,46 @@ void Scene::BuildLevelSets(const int& frame){
 	delete m_solidLevelSet;
 	m_solidLevelSet = new fluidCore::LevelSet();
 
-	unsigned int liquidObjectsCount = m_liquidObjects.size();
+	unsigned int liquidObjectsCount = m_liquids.size();
 	bool liquidSDFCreated = false;
-	for(unsigned int i = 0; i<liquidObjectsCount; i++){
-		if( (frame<=m_liquidObjectFrameRanges[i][1] && frame>=m_liquidObjectFrameRanges[i][0]) ){
-			if(liquidSDFCreated==false){
-				delete m_liquidLevelSet;
-				m_liquidLevelSet = new fluidCore::LevelSet(m_liquidObjects[i]);
-				liquidSDFCreated = true;
-			}else{
-				fluidCore::LevelSet* objectSDF = new fluidCore::LevelSet(m_liquidObjects[i]);
-				m_liquidLevelSet->Merge(*objectSDF);
-				delete objectSDF;
-			}
-		}
+	for(unsigned int i=0; i<liquidObjectsCount; i++){
+		glm::mat4 transform;
+		glm::mat4 inversetransform;
+		if(m_liquids[i]->m_geom->GetTransforms((float)frame, transform, inversetransform)==true){
+        	GeomType type = m_liquids[i]->m_geom->GetType();
+        	if(type==MESH){
+        		geomCore::MeshContainer* m = dynamic_cast<geomCore::MeshContainer*>
+        									 			 (m_liquids[i]->m_geom);
+        		objCore::Obj* o = &m->GetMeshFrame((float)frame)->m_basegeom;
+        		if(liquidSDFCreated==false){
+        			delete m_liquidLevelSet;
+        			m_liquidLevelSet = new fluidCore::LevelSet(o, transform);
+        			liquidSDFCreated = true;
+        		}else{
+        			fluidCore::LevelSet* objectSDF = new fluidCore::LevelSet(o, transform);
+					m_liquidLevelSet->Merge(*objectSDF);
+					delete objectSDF;
+        		}
+        	}else if(type==ANIMMESH){
+        		geomCore::AnimatedMeshContainer* m = dynamic_cast<geomCore::AnimatedMeshContainer*>
+        									 			 		  (m_liquids[i]->m_geom);
+        		objCore::InterpolatedObj* o = &m->GetMeshFrame((float)frame)->m_basegeom;
+        		float interpolationWeight = m->GetInterpolationWeight((float)frame);
+        		if(liquidSDFCreated==false){
+        			delete m_liquidLevelSet;
+        			m_liquidLevelSet = new fluidCore::LevelSet(o, interpolationWeight,
+        													   transform);
+        			liquidSDFCreated = true;
+        		}else{
+        			fluidCore::LevelSet* objectSDF = new fluidCore::LevelSet(o, interpolationWeight,
+        													   				 transform);
+					m_liquidLevelSet->Merge(*objectSDF);
+					delete objectSDF;
+        		}
+        	}
+    	}
 	}
+
 	unsigned int solidObjectsCount = m_solidObjects.size();
 	bool solidSDFCreated = false;
 	for (unsigned int i = 0; i<solidObjectsCount; i++){
@@ -213,15 +247,15 @@ void Scene::BuildLevelSets(const int& frame){
 		}
 	}
 
-	if(m_permaLiquidSDFActive){
-		if(!liquidSDFCreated){
-			delete m_liquidLevelSet;
-			m_liquidLevelSet = new fluidCore::LevelSet();
-			m_liquidLevelSet->Copy(*m_permaLiquidLevelSet);
-		}else{
-			m_liquidLevelSet->Merge(*m_permaLiquidLevelSet);
-		}
-	}
+	// if(m_permaLiquidSDFActive){
+	// 	if(!liquidSDFCreated){
+	// 		delete m_liquidLevelSet;
+	// 		m_liquidLevelSet = new fluidCore::LevelSet();
+	// 		m_liquidLevelSet->Copy(*m_permaLiquidLevelSet);
+	// 	}else{
+	// 		m_liquidLevelSet->Merge(*m_permaLiquidLevelSet);
+	// 	}
+	// }
 
 	// permaSolidLevelSet->writeVDBGridToFile("test.vdb");
 }
@@ -241,14 +275,13 @@ void Scene::GenerateParticles(std::vector<fluidCore::Particle*>& particles,
 	float w = density*thickness;
 
 	//place fluid particles
-	if(m_liquidObjects.size()>0){
+	if(m_liquids.size()>0){
 		for(unsigned int i = 0; i<dimensions.x / density; i++){
 			for(unsigned int j = 0; j<dimensions.y / density; j++){
 				for(unsigned int k = 0; k<dimensions.z / density; k++){
 					float x = (i*w)+(w/2.0f);
 					float y = (j*w)+(w/2.0f);
 					float z = (k*w)+(w/2.0f);
-
 
 					if( x > thickness && x < 1.0-thickness &&
 						y > thickness && y < 1.0-thickness &&
