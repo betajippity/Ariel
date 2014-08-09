@@ -77,23 +77,23 @@ void FlipSim::Init(){
 	m_pgrid->MarkCellTypes(m_particles, m_mgrid.m_A, m_density);
 
 	//Remove fluid particles that are stuck in walls
-	for(std::vector<Particle *>::iterator iter=m_particles.begin(); 
-		iter!=m_particles.end();) { //NONCHECKED
-		Particle &p = **iter;
-		if(p.m_type == SOLID){
-			iter++;
-			continue;
-		}
-		unsigned int i = glm::min(maxd-1,p.m_p.x*maxd);
-		unsigned int j = glm::min(maxd-1,p.m_p.y*maxd);
-		unsigned int k = glm::min(maxd-1,p.m_p.z*maxd);
-		if( m_mgrid.m_A->GetCell(i,j,k) == SOLID ) {
-			delete *iter;
-			iter = m_particles.erase(iter);
-		} else {
-			iter ++;
-		}
-	}
+	// for(std::vector<Particle *>::iterator iter=m_particles.begin(); 
+	// 	iter!=m_particles.end();) { //NONCHECKED
+	// 	Particle &p = **iter;
+	// 	if(p.m_type == SOLID){
+	// 		iter++;
+	// 		continue;
+	// 	}
+	// 	unsigned int i = glm::min(maxd-1,p.m_p.x*maxd);
+	// 	unsigned int j = glm::min(maxd-1,p.m_p.y*maxd);
+	// 	unsigned int k = glm::min(maxd-1,p.m_p.z*maxd);
+	// 	if( m_mgrid.m_A->GetCell(i,j,k) == SOLID ) {
+	// 		delete *iter;
+	// 		iter = m_particles.erase(iter);
+	// 	} else {
+	// 		iter ++;
+	// 	}
+	// }
 }
 
 void FlipSim::Step(bool saveVDB, bool saveOBJ, bool savePARTIO){
@@ -135,51 +135,55 @@ void FlipSim::Step(bool saveVDB, bool saveOBJ, bool savePARTIO){
 				if(t.x<0 || t.y<0 || t.z<0){
 					m_particles[p]->m_invalid = true;
 				}
-				if(m_mgrid.m_A->GetCell(t)==SOLID){
-					m_particles[p]->m_invalid = true;
-				}
+				// if(m_mgrid.m_A->GetCell(t)==SOLID){
+				// 	m_particles[p]->m_invalid = true;
+				// }
 			}
 		}
 	);
 
-	//Remove fluid particles that only valid in this frame
-	for(std::vector<Particle *>::iterator iter=m_particles.begin(); iter!=m_particles.end();) {
-		Particle &p = **iter;
-		if( p.m_temp ) {
-			delete *iter;
-			iter = m_particles.erase(iter);
-		} else {
-			iter ++;
-		}
-	}
+	//Remove fluid particles that are only valid in this frame
+	// for(std::vector<Particle *>::iterator iter=m_particles.begin(); iter!=m_particles.end();) {
+	// 	Particle &p = **iter;
+	// 	if( p.m_temp ) {
+	// 		delete *iter;
+	// 		iter = m_particles.erase(iter);
+	// 	} else {
+	// 		iter ++;
+	// 	}
+	// }
 
 	//Attempt to push particles in walls out 
-	particlecount = m_particles.size();
-	std::vector<glm::vec3> stuckPositions;
-	std::vector<Particle*> stuckParticles;
+	// particlecount = m_particles.size();
+	// std::vector<glm::vec3> stuckPositions;
+	// std::vector<Particle*> stuckParticles;
 
-	for(unsigned int p=0; p<particlecount; p++){
-		if(m_particles[p]->m_invalid && m_particles[p]->m_type == FLUID){
-			stuckParticles.push_back(m_particles[p]);
-			stuckPositions.push_back(m_particles[p]->m_p*maxd);
-		}
-	}
+	// for(unsigned int p=0; p<particlecount; p++){
+	// 	if(m_particles[p]->m_invalid && m_particles[p]->m_type == FLUID){
+	// 		stuckParticles.push_back(m_particles[p]);
+	// 		stuckPositions.push_back(m_particles[p]->m_p*maxd);
+	// 	}
+	// }
 
-	m_scene->ProjectPointsToSolidSurface(stuckPositions);
+	// m_scene->ProjectPointsToSolidSurface(stuckPositions);
 
-	particlecount = stuckPositions.size();
-	for(unsigned int p=0; p<particlecount; p++){
-		if(glm::length(stuckPositions[p] - stuckParticles[p]->m_p*maxd)>0.0001f){
-			float penaltyForce = 10.0f;
-			glm::vec3 vdir = stuckPositions[p] - stuckParticles[p]->m_p*maxd;
-			stuckParticles[p]->m_p = stuckPositions[p]/maxd;
-			stuckParticles[p]->m_u = vdir*penaltyForce;
-		}
-	}
+	// particlecount = stuckPositions.size();
+	// for(unsigned int p=0; p<particlecount; p++){
+	// 	if(glm::length(stuckPositions[p] - stuckParticles[p]->m_p*maxd)>0.0001f){
+	// 		float penaltyForce = 10.0f;
+	// 		glm::vec3 vdir = stuckPositions[p] - stuckParticles[p]->m_p*maxd;
+	// 		stuckParticles[p]->m_p = stuckPositions[p]/maxd;
+	// 		stuckParticles[p]->m_u = vdir*penaltyForce;
+	// 	}
+	// }
 
 	if(saveVDB || saveOBJ || savePARTIO){
 		m_scene->ExportParticles(m_particles, maxd, m_frame, saveVDB, saveOBJ, savePARTIO);
 	}
+}
+
+void FlipSim::StepParticle(Particle* p, const glm::vec3& velocity){
+    p->m_p += m_stepsize*velocity; 
 }
 
 void FlipSim::AdvectParticles(){
@@ -194,7 +198,7 @@ void FlipSim::AdvectParticles(){
 			for(unsigned int i=r.begin(); i!=r.end(); ++i){	
 				if(m_particles[i]->m_type == FLUID){
 					glm::vec3 velocity = InterpolateVelocity(m_particles[i]->m_p, &m_mgrid);
-					m_particles[i]->m_p += m_stepsize*velocity;
+					StepParticle(m_particles[i], velocity);
 				}
 			}
 		}
@@ -218,21 +222,21 @@ void FlipSim::AdvectParticles(){
 					unsigned int k = glm::min(z-1.0f,p->m_p.z*maxd);			
 					std::vector<Particle*> neighbors = m_pgrid->GetCellNeighbors(glm::vec3(i,j,k), 
 																			   glm::vec3(1));
-					for(int p1=0; p1<neighbors.size(); p1++){
-						Particle* np = neighbors[p1];
-						float re = 1.5f*m_density/maxd;
-						if(np->m_type == SOLID){
-							float dist = glm::length(p->m_p-np->m_p); //check this later
-							if(dist<re){
-								glm::vec3 normal = np->m_n;
-								if(glm::length(normal)<0.0000001f && dist){
-									normal = glm::normalize(p->m_p - np->m_p);
-								}
-								p->m_p += (re-dist)*normal;
-								p->m_u -= glm::dot(p->m_u, normal) * normal;
-							}
-						}
-					}
+					// for(int p1=0; p1<neighbors.size(); p1++){
+					// 	Particle* np = neighbors[p1];
+					// 	float re = 1.5f*m_density/maxd;
+					// 	if(np->m_type == SOLID){
+					// 		float dist = glm::length(p->m_p-np->m_p); //check this later
+					// 		if(dist<re){
+					// 			glm::vec3 normal = np->m_n;
+					// 			if(glm::length(normal)<0.0000001f && dist){
+					// 				normal = glm::normalize(p->m_p - np->m_p);
+					// 			}
+					// 			p->m_p += (re-dist)*normal;
+					// 			p->m_u -= glm::dot(p->m_u, normal) * normal;
+					// 		}
+					// 	}
+					// }
 				}
 			}
 		}
@@ -452,8 +456,8 @@ void FlipSim::ExtrapolateVelocity(){
 			    	for(unsigned int k = 0; k < z; ++k){
 						mark[0]->SetCell(i,j,k, (i>0 && m_mgrid.m_A->GetCell(i-1,j,k)==FLUID) || 
 											    (i<x && m_mgrid.m_A->GetCell(i,j,k)==FLUID));
-						wallmark[0]->SetCell(i,j,k,(i<=0 || m_mgrid.m_A->GetCell(i-1,j,k)==SOLID) && 
-												   (i>=x || m_mgrid.m_A->GetCell(i,j,k)==SOLID));
+						// wallmark[0]->SetCell(i,j,k,(i<=0 || m_mgrid.m_A->GetCell(i-1,j,k)==SOLID) && 
+						// 						   (i>=x || m_mgrid.m_A->GetCell(i,j,k)==SOLID));
 			    	}
 			    }
 			}
@@ -467,8 +471,8 @@ void FlipSim::ExtrapolateVelocity(){
 			    	for(unsigned int k = 0; k < z; ++k){
 						mark[1]->SetCell(i,j,k, (j>0 && m_mgrid.m_A->GetCell(i,j-1,k)==FLUID) || 
 											    (j<y && m_mgrid.m_A->GetCell(i,j,k)==FLUID));
-						wallmark[1]->SetCell(i,j,k,(j<=0 || m_mgrid.m_A->GetCell(i,j-1,k)==SOLID) && 
-												   (j>=y || m_mgrid.m_A->GetCell(i,j,k)==SOLID));
+						// wallmark[1]->SetCell(i,j,k,(j<=0 || m_mgrid.m_A->GetCell(i,j-1,k)==SOLID) && 
+						// 						   (j>=y || m_mgrid.m_A->GetCell(i,j,k)==SOLID));
 			    	}
 			    }
 			}
@@ -482,8 +486,8 @@ void FlipSim::ExtrapolateVelocity(){
 			    	for(unsigned int k = 0; k < z+1; ++k){
 						mark[2]->SetCell(i,j,k, (k>0 && m_mgrid.m_A->GetCell(i,j,k-1)==FLUID) || 
 											    (k<z && m_mgrid.m_A->GetCell(i,j,k)==FLUID));
-						wallmark[2]->SetCell(i,j,k,(k<=0 || m_mgrid.m_A->GetCell(i,j,k-1)==SOLID) && 
-												   (k>=z || m_mgrid.m_A->GetCell(i,j,k)==SOLID));
+						// wallmark[2]->SetCell(i,j,k,(k<=0 || m_mgrid.m_A->GetCell(i,j,k-1)==SOLID) && 
+						// 						   (k>=z || m_mgrid.m_A->GetCell(i,j,k)==SOLID));
 			    	}
 			    }
 			}
@@ -699,14 +703,14 @@ void FlipSim::ComputeDensity(){
 					float weightsum = 0.0f;
 					unsigned int neighborscount = neighbors.size();
 					for(unsigned int m=0; m<neighborscount; m++){
-						if(neighbors[m]->m_type!=SOLID){
+						// if(neighbors[m]->m_type!=SOLID){
 							float sqd = mathCore::Sqrlength(neighbors[m]->m_p, 
 															m_particles[i]->m_p);
 							//TODO: figure out a better density smooth approx than density/maxd
 							float weight = neighbors[m]->m_mass * 
 										   mathCore::Smooth(sqd, 4.0f*m_density/maxd);
 							weightsum = weightsum + weight;
-						}
+						// }
 					}
 					m_particles[i]->m_density = weightsum/m_max_density;
 				}
@@ -716,8 +720,7 @@ void FlipSim::ComputeDensity(){
 }
 
 bool FlipSim::IsCellFluid(const int& x, const int& y, const int& z){
-	if(m_scene->GetLiquidLevelSet()->GetCell(x,y,z)<0.0f &&
-	   m_scene->GetSolidLevelSet()->GetCell(x,y,z)>=0.0f){
+	if(m_scene->GetLiquidLevelSet()->GetCell(x,y,z)<0.0f){
 		return true;
 	}else{
 		return false;

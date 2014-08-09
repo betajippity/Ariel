@@ -43,6 +43,7 @@ class FlipSim{
 		void SolvePicFlip();
 		void AdvectParticles();
 		bool IsCellFluid(const int& x, const int& y, const int& z);
+        void StepParticle(Particle* p, const glm::vec3& velocity);
 
 		glm::vec3					m_dimensions;
 		std::vector<Particle*>		m_particles;

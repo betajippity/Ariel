@@ -372,13 +372,13 @@ HOST DEVICE inline rayCore::Intersection Obj::RayTriangleTest(const glm::vec3& v
         return rayCore::Intersection();
     }else{
         float inv_det = 1.0f/det;
-        glm::vec3 tvec = r.m_origin - v1;
+        glm::vec3 tvec = r.m_origin - v0;
         //calculate barycentric coord
         glm::vec3 bary;
         bary.x = glm::dot(tvec, pvec) * inv_det;
         glm::vec3 qvec = glm::cross(tvec, edge1);
         bary.y = glm::dot(rdirection, qvec) * inv_det;
-        //calcualte distance from ray origin to intersection
+        //calculate distance from ray origin to intersection
         float t = glm::dot(edge2, qvec) * inv_det;
         bool hit = (bary.x >= 0.0f && bary.y >= 0.0f && (bary.x + bary.y) <= 1.0f);
         if(hit){

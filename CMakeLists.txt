@@ -87,6 +87,8 @@ set(SOURCE_FILES "src/main.cpp"
 				 "src/geom/mesh.cpp"
 				 "src/geom/spheregen.cpp"
 				 "src/geom/cubegen.cpp"
+				 "src/camera/camera.cpp"
+				 "src/camera/perspcam/perspcam.cpp"
 				 "src/geom/obj/obj.cpp"
 				 "src/scene/scene.cpp"
 				 "src/scene/sceneloader.cpp"
@@ -98,6 +100,7 @@ set(SOURCE_FILES "src/main.cpp"
 				 "${NUPARU}/src/stb_image/stb_image.c"
 				 "${NUPARU}/src/stb_image/stb_image_write.c"
 				 "${NUPARU}/src/json/jsoncpp.cpp"
+				 "${NUPARU}/src/rmsd/rmsd.c"
 				 )
 
 add_executable(ariel ${SOURCE_FILES})

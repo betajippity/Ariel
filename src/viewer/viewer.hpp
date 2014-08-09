@@ -114,6 +114,8 @@ class Viewer{
 		std::map<std::string, glm::vec2> 	m_frameranges;
 		GLCamera 							m_cam;
 		std::vector<fluidCore::Particle*>* 	m_particles;
+		std::vector<rayCore::Ray>       	m_rays;
+        std::vector<glm::vec3>          	m_rayendpoints;
 
     	fluidCore::FlipSim* 				m_sim;
     	bool 								m_siminitialized;

@@ -35,10 +35,6 @@ class SceneLoader {
 		
 	private:
 		void LoadSettings(const Json::Value& jsonsettings);
-		void LoadSimOld(const Json::Value& jsonsettings);
-		void LoadBox(const Json::Value& jsoncube);
-		void LoadSphere(const Json::Value& jsonsphere);
-		void LoadObj(const Json::Value& jsonobj);
 		void LoadCamera(const Json::Value& jsoncamera);
 		void LoadGlobalForces(const Json::Value& jsonforces);
 

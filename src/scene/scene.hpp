@@ -27,16 +27,12 @@ class Scene {
 		~Scene();
 
 		void AddSolidObject(objCore::Obj* object, const int& startFrame, const int& endFrame);
-		void AddLiquidObject(objCore::Obj* object, const int& startFrame, const int& endFrame);
 		void GenerateParticles(std::vector<fluidCore::Particle*>& particles, 
 							   const glm::vec3& dimensions, const float& density, 
 							   fluidCore::ParticleGrid* pgrid, const int& frame);
 
 		void AddExternalForce(glm::vec3 force);
 		std::vector<glm::vec3>& GetExternalForces();
-
-		std::vector<objCore::Obj*>& GetSolidObjects();
-		std::vector<objCore::Obj*>& GetLiquidObjects();
 
 		fluidCore::LevelSet* GetSolidLevelSet();
 		fluidCore::LevelSet* GetLiquidLevelSet();
@@ -46,7 +42,6 @@ class Scene {
 					  const std::string& vdbPath, const std::string& partioPath);
 
 		glm::vec2 GetSolidFrameRange(const int& index);
-		glm::vec2 GetLiquidFrameRange(const int& index);
 
 		void ProjectPointsToSolidSurface(std::vector<glm::vec3>& points);
 
@@ -57,6 +52,12 @@ class Scene {
 		//new stuff
 		std::vector<geomCore::Geom*>& GetSolidGeoms();
 		std::vector<geomCore::Geom*>& GetLiquidGeoms();
+
+		rayCore::Intersection IntersectSolidGeoms(const rayCore::Ray& r);
+		bool CheckPointInsideSolidGeom(const glm::vec3& p, const float& frame, 
+									   unsigned int& solidGeomID);
+		bool CheckPointInsideLiquidGeom(const glm::vec3& p, const float& frame, 
+									    unsigned int& liquidGeomID);
 
 		std::string						m_imagePath;
 		std::string						m_meshPath;
@@ -69,15 +70,12 @@ class Scene {
 						 const int& frame);
 
 		std::vector< objCore::Obj* >		m_solidObjects;
-		std::vector< objCore::Obj* >		m_liquidObjects;
 
 		fluidCore::LevelSet*			m_solidLevelSet;
 		fluidCore::LevelSet*			m_liquidLevelSet;
 
 		fluidCore::LevelSet*			m_permaSolidLevelSet;
-		fluidCore::LevelSet*			m_permaLiquidLevelSet;
 
-		bool							m_permaLiquidSDFActive;
 		bool							m_permaSolidSDFActive;
 
 		std::vector<glm::vec2>			m_solidObjectFrameRanges;

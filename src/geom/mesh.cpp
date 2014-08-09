@@ -97,8 +97,8 @@ HOST DEVICE void MeshContainer::Intersect(const rayCore::Ray& r,
     }
     rayCore::Ray transformedR = r.Transform(inversetransform);
     //run intersection, transform result back into worldspace
-    GetMeshFrame(r.m_frame)->Traverse(transformedR, result);
-    result.Transform(transform);
+    GetMeshFrame(r.m_frame)->Traverse(r, result);
+    // result.Transform(transform);
 }
 
 //====================================

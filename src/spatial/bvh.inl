@@ -42,7 +42,6 @@ template <typename T> void Bvh<T>::Traverse(const rayCore::Ray& r, TraverseAccum
     BvhNode* current = &m_nodes[1];
     //check for root node hit/miss
     float distanceToCurrent = current->FastIntersectionTest(r);
-    result.RecordIntersection(rayCore::Intersection(), 0);
     if(distanceToCurrent<-0.5f){
         return;
     }else{
@@ -80,12 +79,12 @@ template <typename T> void Bvh<T>::Traverse(const rayCore::Ray& r, TraverseAccum
                     unsigned int primID = m_referenceIndices[current->m_referenceOffset+i];
                     rayCore::Intersection rhit = m_basegeom.IntersectElement(primID, r); 
                     if(rhit.m_hit){
-                        float hitDistance = glm::length(r.m_origin-rhit.m_point);
-                        if(hitDistance<distanceToCurrent){
-                            distanceToCurrent = hitDistance;
+                        //make sure hit is actually in front of origin
+                        glm::vec3 n = glm::normalize(rhit.m_point-r.m_origin);
+                        float degree = glm::acos(glm::dot(n, r.m_direction));
+                        if(degree<(PI/2.0f) || degree!=degree){
                             result.RecordIntersection(rhit, current->m_nodeid);
                         }
-                        distanceToCurrent = glm::min(distanceToCurrent, hitDistance);
                     }
                 }
             }

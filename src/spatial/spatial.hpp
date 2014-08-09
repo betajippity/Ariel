@@ -29,17 +29,35 @@ namespace spaceCore {
 class TraverseAccumulator {
     public:
         HOST DEVICE TraverseAccumulator();
+        HOST DEVICE TraverseAccumulator(const glm::vec3& origin);
         HOST DEVICE ~TraverseAccumulator();
         
         HOST DEVICE virtual void RecordIntersection(const rayCore::Intersection& intersect, 
                                                     const unsigned int& nodeid);
         HOST DEVICE virtual void Transform(const glm::mat4& m);
 
-        rayCore::Intersection m_intersection;
-        unsigned int m_nodeid;
+        rayCore::Intersection   m_intersection;
+        unsigned int            m_nodeid;
+        glm::vec3               m_origin;
 };
 
-class DebugTraverseAccumulator {
+class HitCountTraverseAccumulator: public TraverseAccumulator {
+    public:
+        HOST DEVICE HitCountTraverseAccumulator();
+        HOST DEVICE HitCountTraverseAccumulator(const glm::vec3& origin);
+        HOST DEVICE ~HitCountTraverseAccumulator();
+
+        HOST DEVICE void RecordIntersection(const rayCore::Intersection& intersect, 
+                                            const unsigned int& nodeid);
+        HOST DEVICE void Transform(const glm::mat4& m);
+
+        rayCore::Intersection   m_intersection;
+        unsigned int            m_nodeid;  
+        unsigned int            m_numberOfHits;
+        glm::vec3               m_origin;
+};
+
+class DebugTraverseAccumulator: public TraverseAccumulator {
     public:
         DebugTraverseAccumulator();
         ~DebugTraverseAccumulator();

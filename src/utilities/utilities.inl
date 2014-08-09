@@ -25,6 +25,7 @@
 #include <cstdio>
 #include <cstring>
 #include <fstream>
+#include <rmsd/rmsd.h>
 
 //====================================
 // Math stuff
@@ -156,6 +157,36 @@ int utilityCore::compareMilliseconds(int referenceTime){
 //====================================
 // Matrix stuff
 //====================================
+
+glm::vec3 utilityCore::calculateKabschRotation(glm::vec3 mov0, glm::vec3 mov1, glm::vec3 mov2,
+                                               glm::vec3 ref0, glm::vec3 ref1, glm::vec3 ref2){
+    double rotatedList[3][3];
+    rotatedList[0][0] = mov0.x; rotatedList[0][1] = mov0.y; rotatedList[0][2] = mov0.z;
+    rotatedList[1][0] = mov1.x; rotatedList[1][1] = mov1.y; rotatedList[1][2] = mov1.z;
+    rotatedList[2][0] = mov2.x; rotatedList[2][1] = mov2.y; rotatedList[2][2] = mov2.z;
+    double referenceList[3][3];
+    referenceList[0][0] = ref0.x; referenceList[0][1] = ref0.y; referenceList[0][2] = ref0.z;
+    referenceList[1][0] = ref1.x; referenceList[1][1] = ref1.y; referenceList[1][2] = ref1.z;
+    referenceList[2][0] = ref2.x; referenceList[2][1] = ref2.y; referenceList[2][2] = ref2.z;
+    int listCount = 3;
+    glm::vec3 movcom = (mov0+mov1+mov2)/3.0f;
+    double mov_com[3];
+    mov_com[0] = movcom.x; mov_com[1] = movcom.y; mov_com[2] = movcom.z;
+    glm::vec3 refcom = (ref0+ref1+ref2)/3.0f;
+    glm::vec3 movtoref = refcom - movcom;
+    double mov_to_ref[3];
+    mov_to_ref[0] = movtoref[0]; mov_to_ref[1] = movtoref[1]; mov_to_ref[2] = movtoref[2];
+    double U[3][3];
+    double rmsd;
+
+    calculate_rotation_rmsd(referenceList, rotatedList, listCount, mov_com, mov_to_ref, U, &rmsd);
+
+    float x = atan2( U[1][2], U[2][2]  ) * 180.0f/3.1415926f;
+    float y = atan2(-U[0][2], std::sqrt(U[1][2]*U[1][2] + U[2][2]*U[2][2]))  * 180.0f/3.1415926f;
+    float z = atan2( U[0][1], U[0][0]) * 180.0f/3.1415926f;
+
+    return glm::vec3(x-180.0f,180.0f-y,180.0f-z);
+}
 
 glm::mat4 utilityCore::buildTransformationMatrix(glm::vec3 translation, glm::vec3 rotation,
                                                  glm::vec3 scale){

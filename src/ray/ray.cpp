@@ -18,11 +18,11 @@ HOST DEVICE Ray::Ray(){
 
 HOST DEVICE Ray::Ray(const glm::vec3& origin, const glm::vec3& direction, const float& frame,
                      const unsigned int& trackingID){
-    SetContents(origin, direction, 0.0f, trackingID);
+    SetContents(origin, direction, frame, trackingID);
 }
 
 HOST DEVICE Ray::Ray(const glm::vec3& origin, const glm::vec3& direction, const float& frame){
-    SetContents(origin, direction, 0.0f, 0);
+    SetContents(origin, direction, frame, 0);
 }
 
 HOST DEVICE Ray::~Ray(){

@@ -8,6 +8,7 @@
 #include <sstream>
 #include "viewer.hpp"
 #include "../utilities/utilities.h"
+#include "../camera/cameralist.hpp"
 
 namespace viewerCore{
 
@@ -201,9 +202,10 @@ void Viewer::MainLoop(){
             glRotatef(-m_cam.m_rotate.z, 0, 0, 1);
             glTranslatef(-m_cam.m_translate.x, -m_cam.m_translate.y, -m_cam.m_translate.z);
             
+            glm::vec3 res = m_sim->GetDimensions();
+
             for(unsigned int i=0; i<m_vbos.size(); i++){
-                glPushMatrix();
-                    glm::vec3 res = m_sim->GetDimensions();
+                glPushMatrix();       
                     glTranslatef(-res.x/2, 0, -res.y/2);
                     glMultMatrixf(m_vbos[i].m_transform[0]);
                     glBindBuffer(GL_ARRAY_BUFFER, m_vbos[i].m_vboID);
@@ -244,6 +246,21 @@ void Viewer::MainLoop(){
                     glDisableClientState(GL_COLOR_ARRAY);
                 glPopMatrix();
             }
+
+            glPushMatrix();
+                glTranslatef(-res.x/2, 0, -res.y/2);
+                //draw rays
+                for(unsigned int i=0; i<m_rays.size(); i++){
+                    glm::vec3 origin = m_rays[i].m_origin;
+                    glm::vec3 distantPoint = m_rayendpoints[i];
+                    glLineWidth(1.0f);
+                    glBegin(GL_LINES);
+                        glColor4f(0.0f, 1.0f, 1.0f, 0.0f);
+                        glVertex3f(origin.x, origin.y, origin.z);
+                        glVertex3f(distantPoint.x, distantPoint.y, distantPoint.z); 
+                    glEnd();
+                }
+            glPopMatrix();
 
             //draw unit axis
             glLineWidth(2.0f);
@@ -338,7 +355,36 @@ void Viewer::UpdateInputs(){
             } 
         }else{
             if(glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_LEFT) == 1){
-                //mouseclick event goes here
+                glm::vec3 res = m_sim->GetDimensions();
+                glm::vec3 translate = m_cam.m_translate + glm::vec3(res.x/2, 0, res.y/2);
+                cameraCore::CameraFrame* camFrame = new cameraCore::CameraFrame(translate, 
+                                                    m_cam.m_rotate, 0.001f, 
+                                                    100000000.0f, m_cam.m_lookat);
+                cameraCore::PerspectiveCamera perspCam(m_resolution, m_cam.m_fov, 
+                                                       1, 1, 1, &camFrame);
+                m_rays.clear();
+                m_rayendpoints.clear();
+                float frame = (float)m_sim->m_frame;
+
+                rayCore::Ray r = perspCam.Raycast(glm::vec2(x,y), glm::vec4(0), 
+                                                  frame); 
+                float distance = 1000000000.0f;
+                std::vector<geomCore::Geom*> liquids = m_sim->GetScene()->GetLiquidGeoms();
+                unsigned int liquidCount = liquids.size();
+                for(unsigned int i=0; i<liquidCount; i++){
+                    spaceCore::HitCountTraverseAccumulator result(r.m_origin);
+                    geomCore::Geom* geom = liquids[i];
+                    geom->Intersect(r, result);
+                    // std::cout << result.m_numberOfHits << std::endl;
+                    if(result.m_intersection.m_hit==true){
+                        float hitDistance = glm::length(r.m_origin - result.m_intersection.m_point);
+                        distance = glm::min(hitDistance, distance);
+                    }
+                }
+                m_rayendpoints.push_back(r.GetPointAlongRay(distance));
+                m_rays.push_back(r);
+
+                delete camFrame;
             }
         }
     }

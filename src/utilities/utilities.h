@@ -72,6 +72,8 @@ HOST DEVICE extern inline glm::vec4 multiply(glm::mat4 m, glm::vec4 v);
 HOST DEVICE extern inline glm::mat4 buildTranslation(glm::vec3 translation);
 HOST DEVICE extern inline glm::mat4 buildRotation(float radian, glm::vec3 axis);
 HOST DEVICE extern inline glm::mat4 buildScale(glm::vec3 scale);
+extern inline glm::vec3 calculateKabschRotation(glm::vec3 mov0, glm::vec3 mov1, glm::vec3 mov2, 
+												glm::vec3 ref0, glm::vec3 ref1, glm::vec3 ref2);
 
 //GLM Printers
 extern inline void printMat4(glm::mat4);
