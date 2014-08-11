@@ -136,8 +136,10 @@ void Viewer::UpdateParticles(){
         colorData.reserve(psize);
         float maxd = glm::max(glm::max(gridSize.x, gridSize.z), gridSize.y);
 
-        for(unsigned int j=0; j<psize; j++){
-            if(m_particles->operator[](j)->m_type==FLUID){
+        unsigned int lpsize = m_sim->GetScene()->GetLiquidParticleCount();
+
+        for(unsigned int j=0; j<lpsize; j++){
+            // if(m_particles->operator[](j)->m_type==FLUID){
                 if(!m_particles->operator[](j)->m_invalid || 
                    (m_particles->operator[](j)->m_invalid && m_drawInvalid)){
                     vertexData.push_back(m_particles->operator[](j)->m_p*maxd);
@@ -147,12 +149,14 @@ void Viewer::UpdateParticles(){
                                  0.0f));
                     bool invalid = m_particles->operator[](j)->m_invalid;
                     if(invalid){
+                        colorData.push_back(glm::vec4(1,1,0,0));
+                    }else if(m_particles->operator[](j)->m_type==SOLID){
                         colorData.push_back(glm::vec4(1,0,0,0));
                     }else{
                         colorData.push_back(glm::vec4(c,c,1,0));
                     }
                 }
-            }
+            // }
         }
         glDeleteBuffers(1, &data.m_vboID);
         glDeleteBuffers(1, &data.m_cboID);

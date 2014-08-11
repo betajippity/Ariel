@@ -17,8 +17,8 @@ namespace sceneCore{
 Scene::Scene(){
 	m_solidLevelSet = new fluidCore::LevelSet();
 	m_liquidLevelSet = new fluidCore::LevelSet();
-	m_permaSolidLevelSet = new fluidCore::LevelSet();
-	m_permaSolidSDFActive = false;
+	m_highresSolidParticles = true;
+	m_solidParticlesIndexOffset = 0;
 }
 
 Scene::~Scene(){
@@ -113,40 +113,6 @@ std::vector<glm::vec3>& Scene::GetExternalForces(){
 	return m_externalForces;
 }
 
-void Scene::AddSolidObject(objCore::Obj* object, const int& startFrame, const int& endFrame){
-	m_solidObjects.push_back(object);
-	m_solidObjectFrameRanges.push_back(glm::vec2(startFrame, endFrame));
-
-	if(startFrame<0 && endFrame<0){
-		if(m_permaSolidSDFActive==false){
-			delete m_permaSolidLevelSet;
-			m_permaSolidLevelSet = new fluidCore::LevelSet(object);
-			m_permaSolidSDFActive = true;
-		}else{
-			fluidCore::LevelSet* objectSDF = new fluidCore::LevelSet(object);
-			m_permaSolidLevelSet->Merge(*objectSDF);
-			delete objectSDF;
-		}
-	}
-}
-
-void Scene::ProjectPointsToSolidSurface(std::vector<glm::vec3>& points){
-	std::vector<glm::vec3> p1(points);
-	m_solidLevelSet->ProjectPointsToSurface(p1);
-	std::vector<glm::vec3> p2(points);
-	m_permaSolidLevelSet->ProjectPointsToSurface(p2);
-
-	unsigned int pointsCount = points.size();
-
-	for(unsigned int i = 0; i<pointsCount; i++){
-		float l1 = glm::length(p1[i] - points[i]);
-		float l2 = glm::length(p2[i] - points[i]);
-		if(l1<l2){
-			points[i] = p1[i];
-		}
-	}
-}
-
 std::vector<geomCore::Geom*>& Scene::GetSolidGeoms(){
 	return m_solids;
 }
@@ -157,73 +123,101 @@ std::vector<geomCore::Geom*>& Scene::GetLiquidGeoms(){
 
 
 void Scene::BuildLevelSets(const int& frame){
-	//first rebuild frame dependent levelsets, then merge with permanent sets if needed
+	// delete m_liquidLevelSet;
+	// m_liquidLevelSet = new fluidCore::LevelSet();
+	// delete m_solidLevelSet;
+	// m_solidLevelSet = new fluidCore::LevelSet();
 
-	delete m_liquidLevelSet;
-	m_liquidLevelSet = new fluidCore::LevelSet();
-	delete m_solidLevelSet;
-	m_solidLevelSet = new fluidCore::LevelSet();
-
-	unsigned int liquidObjectsCount = m_liquids.size();
-	bool liquidSDFCreated = false;
-	for(unsigned int i=0; i<liquidObjectsCount; i++){
-		glm::mat4 transform;
-		glm::mat4 inversetransform;
-		if(m_liquids[i]->m_geom->GetTransforms((float)frame, transform, inversetransform)==true){
-        	GeomType type = m_liquids[i]->m_geom->GetType();
-        	if(type==MESH){
-        		geomCore::MeshContainer* m = dynamic_cast<geomCore::MeshContainer*>
-        									 			 (m_liquids[i]->m_geom);
-        		objCore::Obj* o = &m->GetMeshFrame((float)frame)->m_basegeom;
-        		if(liquidSDFCreated==false){
-        			delete m_liquidLevelSet;
-        			m_liquidLevelSet = new fluidCore::LevelSet(o, transform);
-        			liquidSDFCreated = true;
-        		}else{
-        			fluidCore::LevelSet* objectSDF = new fluidCore::LevelSet(o, transform);
-					m_liquidLevelSet->Merge(*objectSDF);
-					delete objectSDF;
-        		}
-        	}else if(type==ANIMMESH){
-        		geomCore::AnimatedMeshContainer* m = dynamic_cast<geomCore::AnimatedMeshContainer*>
-        									 			 		  (m_liquids[i]->m_geom);
-        		objCore::InterpolatedObj* o = &m->GetMeshFrame((float)frame)->m_basegeom;
-        		float interpolationWeight = m->GetInterpolationWeight((float)frame);
-        		if(liquidSDFCreated==false){
-        			delete m_liquidLevelSet;
-        			m_liquidLevelSet = new fluidCore::LevelSet(o, interpolationWeight,
-        													   transform);
-        			liquidSDFCreated = true;
-        		}else{
-        			fluidCore::LevelSet* objectSDF = new fluidCore::LevelSet(o, interpolationWeight,
-        													   				 transform);
-					m_liquidLevelSet->Merge(*objectSDF);
-					delete objectSDF;
-        		}
-        	}
-    	}
-	}
-
-	// unsigned int solidObjectsCount = m_solidObjects.size();
-	// bool solidSDFCreated = false;
-	// for (unsigned int i = 0; i<solidObjectsCount; i++){
-	// 	if( (frame<=m_solidObjectFrameRanges[i][1] && frame>=m_solidObjectFrameRanges[i][0]) ){
-	// 		if(solidSDFCreated==false){
-	// 			delete m_solidLevelSet;
-	// 			m_solidLevelSet = new fluidCore::LevelSet(m_solidObjects[i]);
-	// 			solidSDFCreated = true;
-	// 		}else{
-	// 			fluidCore::LevelSet* objectSDF = new fluidCore::LevelSet(m_solidObjects[i]);
-	// 			m_solidLevelSet->Merge(*objectSDF);
-	// 			delete objectSDF;
-	// 		}
-	// 	}
+	// unsigned int liquidObjectsCount = m_liquids.size();
+	// bool liquidSDFCreated = false;
+	// for(unsigned int i=0; i<liquidObjectsCount; i++){
+	// 	glm::mat4 transform;
+	// 	glm::mat4 inversetransform;
+	// 	if(m_liquids[i]->m_geom->GetTransforms((float)frame, transform, inversetransform)==true){
+ //        	GeomType type = m_liquids[i]->m_geom->GetType();
+ //        	if(type==MESH){
+ //        		geomCore::MeshContainer* m = dynamic_cast<geomCore::MeshContainer*>
+ //        									 			 (m_liquids[i]->m_geom);
+ //        		objCore::Obj* o = &m->GetMeshFrame((float)frame)->m_basegeom;
+ //        		if(liquidSDFCreated==false){
+ //        			delete m_liquidLevelSet;
+ //        			m_liquidLevelSet = new fluidCore::LevelSet(o, transform);
+ //        			liquidSDFCreated = true;
+ //        		}else{
+ //        			fluidCore::LevelSet* objectSDF = new fluidCore::LevelSet(o, transform);
+	// 				m_liquidLevelSet->Merge(*objectSDF);
+	// 				delete objectSDF;
+ //        		}
+ //        	}else if(type==ANIMMESH){
+ //        		geomCore::AnimatedMeshContainer* m=dynamic_cast<geomCore::AnimatedMeshContainer*>
+ //        									 			 		  (m_liquids[i]->m_geom);
+ //        		objCore::InterpolatedObj* o = &m->GetMeshFrame((float)frame)->m_basegeom;
+ //        		float interpolationWeight = m->GetInterpolationWeight((float)frame);
+ //        		if(liquidSDFCreated==false){
+ //        			delete m_liquidLevelSet;
+ //        			m_liquidLevelSet = new fluidCore::LevelSet(o, interpolationWeight,
+ //        													   transform);
+ //        			liquidSDFCreated = true;
+ //        		}else{
+ //        			fluidCore::LevelSet* objectSDF = new fluidCore::LevelSet(o,interpolationWeight,
+ //        													   				 transform);
+	// 				m_liquidLevelSet->Merge(*objectSDF);
+	// 				delete objectSDF;
+ //        		}
+ //        	}
+ //    	}
 	// }
+
+	// unsigned int solidObjectsCount = m_solids.size();
+	// bool solidSDFCreated = false;
+	// for(unsigned int i=0; i<solidObjectsCount; i++){
+	// 	glm::mat4 transform;
+	// 	glm::mat4 inversetransform;
+	// 	if(m_solids[i]->m_geom->GetTransforms((float)frame, transform, inversetransform)==true){
+ //        	GeomType type = m_solids[i]->m_geom->GetType();
+ //        	if(type==MESH){
+ //        		geomCore::MeshContainer* m = dynamic_cast<geomCore::MeshContainer*>
+ //        									 			 (m_solids[i]->m_geom);
+ //        		objCore::Obj* o = &m->GetMeshFrame((float)frame)->m_basegeom;
+ //        		if(solidSDFCreated==false){
+ //        			delete m_solidLevelSet;
+ //        			m_solidLevelSet = new fluidCore::LevelSet(o, transform);
+ //        			solidSDFCreated = true;
+ //        		}else{
+ //        			fluidCore::LevelSet* objectSDF = new fluidCore::LevelSet(o, transform);
+	// 				m_solidLevelSet->Merge(*objectSDF);
+	// 				delete objectSDF;
+ //        		}
+ //        	}else if(type==ANIMMESH){
+ //        		geomCore::AnimatedMeshContainer* m=dynamic_cast<geomCore::AnimatedMeshContainer*>
+ //        									 			 		  (m_solids[i]->m_geom);
+ //        		objCore::InterpolatedObj* o = &m->GetMeshFrame((float)frame)->m_basegeom;
+ //        		float interpolationWeight = m->GetInterpolationWeight((float)frame);
+ //        		if(solidSDFCreated==false){
+ //        			delete m_solidLevelSet;
+ //        			m_solidLevelSet = new fluidCore::LevelSet(o, interpolationWeight,
+ //        													   transform);
+ //        			solidSDFCreated = true;
+ //        		}else{
+ //        			fluidCore::LevelSet* objectSDF = new fluidCore::LevelSet(o,interpolationWeight,
+ //        													   				 transform);
+	// 				m_solidLevelSet->Merge(*objectSDF);
+	// 				delete objectSDF;
+ //        		}
+ //        	}
+ //    	}
+	// }
+}
+
+unsigned int Scene::GetLiquidParticleCount(){
+	return m_solidParticlesIndexOffset;
 }
 
 void Scene::GenerateParticles(std::vector<fluidCore::Particle*>& particles, 
 							  const glm::vec3& dimensions, const float& density, 
 							  fluidCore::ParticleGrid* pgrid, const int& frame){
+	//delete solid particles
+	particles.erase(particles.begin()+m_solidParticlesIndexOffset, particles.end());
 
 	float maxdimension = glm::max(glm::max(dimensions.x, dimensions.y), dimensions.z);
 
@@ -232,39 +226,57 @@ void Scene::GenerateParticles(std::vector<fluidCore::Particle*>& particles,
 
 	//place fluid particles
 	if(m_liquids.size()>0){
-		for(unsigned int i = 0; i<dimensions.x / density; i++){
-			for(unsigned int j = 0; j<dimensions.y / density; j++){
-				for(unsigned int k = 0; k<dimensions.z / density; k++){
+		for(unsigned int i = 0; i<(dimensions.x+1) / density; i++){
+			for(unsigned int j = 0; j<(dimensions.y+1) / density; j++){
+				for(unsigned int k = 0; k<(dimensions.z+1) / density; k++){
 					float x = (i*w)+(w/2.0f);
 					float y = (j*w)+(w/2.0f);
 					float z = (k*w)+(w/2.0f);
-					if( x > thickness && x < 1.0-thickness &&
-						y > thickness && y < 1.0-thickness &&
-						z > thickness && z < 1.0-thickness ) {
+					// if( x > thickness && x < 1.0-thickness &&
+					// 	y > thickness && y < 1.0-thickness &&
+					// 	z > thickness && z < 1.0-thickness ) {
 							AddParticle(glm::vec3(x,y,z), FLUID, 3.0f/maxdimension, maxdimension, 
 										particles, frame);
+					// }
+				}
+			}
+		}
+	}
+	std::cout << "Fluid particles: " << particles.size() << std::endl;
+	m_solidParticlesIndexOffset = particles.size();
+
+
+	if(m_highresSolidParticles==false){
+		if(m_solids.size()>0){
+		    w = 1.0f/maxdimension;
+			for(unsigned int i = 0; i < dimensions.x; i++) {
+				for(unsigned int j = 0; j < dimensions.y; j++) {
+		            for(unsigned int k=0; k < dimensions.z; k++ ) {
+		                float x = i*w+w/2.0f;
+		                float y = j*w+w/2.0f;
+		                float z = k*w+w/2.0f;
+		                AddParticle(glm::vec3(x,y,z), SOLID, 3.0f/maxdimension, maxdimension, 
+		                			particles, frame);
+		            }
+		        }
+		    }
+		}
+	}else{
+		if(m_solids.size()>0){
+			for(unsigned int i = 0; i<(dimensions.x+1) / density; i++){
+				for(unsigned int j = 0; j<(dimensions.y+1) / density; j++){
+					for(unsigned int k = 0; k<(dimensions.z+1) / density; k++){
+						float x = (i*w)+(w/2.0f);
+						float y = (j*w)+(w/2.0f);
+						float z = (k*w)+(w/2.0f);
+						AddParticle(glm::vec3(x,y,z), SOLID, 3.0f/maxdimension, maxdimension, 
+									particles, frame);
 					}
 				}
 			}
 		}
 	}
-	// std::cout << "Fluid particles: " << particles.size() << std::endl;
-
-	// if(m_solidObjects.size()>0){
-	//     w = 1.0f/maxdimension;
-	// 	for(unsigned int i = 0; i < dimensions.x; i++) {
-	// 		for(unsigned int j = 0; j < dimensions.y; j++) {
-	//             for(unsigned int k=0; k < dimensions.z; k++ ) {
-	//                 float x = i*w+w/2.0f;
-	//                 float y = j*w+w/2.0f;
-	//                 float z = k*w+w/2.0f;
-	//                 AddParticle(glm::vec3(x,y,z), SOLID, 3.0f/maxdimension, maxdimension, 
-	//                 			particles, frame);
-	//             }
-	//         }
-	//     }
-	// }
-    // std::cout << "Solid+Fluid particles: " << particles.size() << std::endl;
+    std::cout << "Solid+Fluid particles: " << particles.size() << std::endl;
 }
 
 bool Scene::CheckPointInsideSolidGeom(const glm::vec3& p, const float& frame, 
@@ -340,6 +352,13 @@ void Scene::AddParticle(const glm::vec3& pos, const geomtype& type, const float&
 		}
 	}
 
+	if(type==SOLID){
+		unsigned int solidGeomID;
+		if(CheckPointInsideSolidGeom(pos*scale, frame, solidGeomID)){
+			inside = true;
+		}
+	}
+
 	if(inside){
 		fluidCore::Particle* p = new fluidCore::Particle;
 		p->m_p = pos;
@@ -361,8 +380,5 @@ fluidCore::LevelSet* Scene::GetSolidLevelSet(){
 fluidCore::LevelSet* Scene::GetLiquidLevelSet(){
 	return m_liquidLevelSet;
 }
+}
 
-glm::vec2 Scene::GetSolidFrameRange(const int& index){
-	return m_solidObjectFrameRanges[index];
-}
-}

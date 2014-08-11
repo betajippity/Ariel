@@ -26,7 +26,7 @@ class Scene {
 		Scene();
 		~Scene();
 
-		void AddSolidObject(objCore::Obj* object, const int& startFrame, const int& endFrame);
+		// void AddSolidObject(objCore::Obj* object, const int& startFrame, const int& endFrame);
 		void GenerateParticles(std::vector<fluidCore::Particle*>& particles, 
 							   const glm::vec3& dimensions, const float& density, 
 							   fluidCore::ParticleGrid* pgrid, const int& frame);
@@ -41,9 +41,7 @@ class Scene {
 		void SetPaths(const std::string& imagePath, const std::string& meshPath, 
 					  const std::string& vdbPath, const std::string& partioPath);
 
-		glm::vec2 GetSolidFrameRange(const int& index);
-
-		void ProjectPointsToSolidSurface(std::vector<glm::vec3>& points);
+		// void ProjectPointsToSolidSurface(std::vector<glm::vec3>& points);
 
 		void ExportParticles(std::vector<fluidCore::Particle*> particles, const float& maxd, 
 							 const int& frame, const bool& VDB, const bool& OBJ, 
@@ -58,6 +56,8 @@ class Scene {
 									   unsigned int& solidGeomID);
 		bool CheckPointInsideLiquidGeom(const glm::vec3& p, const float& frame, 
 									    unsigned int& liquidGeomID);
+
+		unsigned int GetLiquidParticleCount();
 
 		std::string						m_imagePath;
 		std::string						m_meshPath;
@@ -74,13 +74,6 @@ class Scene {
 		fluidCore::LevelSet*			m_solidLevelSet;
 		fluidCore::LevelSet*			m_liquidLevelSet;
 
-		fluidCore::LevelSet*			m_permaSolidLevelSet;
-
-		bool							m_permaSolidSDFActive;
-
-		std::vector<glm::vec2>			m_solidObjectFrameRanges;
-		std::vector<glm::vec2>			m_liquidObjectFrameRanges;
-
 		std::vector<glm::vec3>			m_externalForces;
 
 		//new stuff
@@ -92,6 +85,9 @@ class Scene {
 		std::vector<geomCore::AnimatedMeshContainer>				m_animmeshContainers;
 		std::vector<geomCore::Geom*>								m_solids;
 		std::vector<geomCore::Geom*>								m_liquids;
+
+		bool 														m_highresSolidParticles;
+		unsigned int 												m_solidParticlesIndexOffset;									
 };
 }
 

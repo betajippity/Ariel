@@ -89,7 +89,7 @@ float ADiag(Grid<int>* A, Grid<float>* L, int i, int j, int k, glm::vec3 dimensi
 		int qi = q[m][0];
 		int qj = q[m][1];
 		int qk = q[m][2];
-		if( qi<0 || qi>x-1 || qj<0 || qj>y-1 || qk<0 || qk>z-1 ){
+		if( qi<0 || qi>x-1 || qj<0 || qj>y-1 || qk<0 || qk>z-1 || A->GetCell(qi,qj,qk)==SOLID ){
 			diag -= 1.0;
 		}
 		else if( A->GetCell(qi,qj,qk)==AIR && subcell ) {

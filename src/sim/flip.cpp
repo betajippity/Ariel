@@ -119,7 +119,7 @@ void FlipSim::Step(bool saveVDB, bool saveOBJ, bool savePARTIO){
 	
 	float maxd = glm::max(glm::max(m_dimensions.x, m_dimensions.z), m_dimensions.y);
 	float h = m_density/maxd;
-	ResampleParticles(m_pgrid, m_particles, m_stepsize, h, m_dimensions);
+	ResampleParticles(m_pgrid, m_particles, m_scene, m_frame, m_stepsize, h, m_dimensions);
 
 	unsigned int particlecount = m_particles.size();
 
@@ -183,7 +183,24 @@ void FlipSim::Step(bool saveVDB, bool saveOBJ, bool savePARTIO){
 }
 
 void FlipSim::StepParticle(Particle* p, const glm::vec3& velocity){
-    p->m_p += m_stepsize*velocity; 
+	float maxd = glm::max(glm::max(m_dimensions.x, m_dimensions.z), m_dimensions.y);
+	rayCore::Ray r;
+	r.m_origin = p->m_p * maxd;
+	r.m_frame = m_frame;
+	r.m_direction = glm::normalize(velocity);
+	rayCore::Intersection hit = m_scene->IntersectSolidGeoms(r);
+	if(hit.m_hit==true){
+		float solidDistance = glm::length(p->m_p * maxd - hit.m_point);
+		float velocityDistance = glm::length(m_stepsize*velocity) * maxd;
+		if(solidDistance<velocityDistance){
+			p->m_u = hit.m_normal;
+			p->m_p += solidDistance/maxd;
+		}else{
+			p->m_p += m_stepsize*velocity; 
+		}
+	}else{
+		p->m_p += m_stepsize*velocity; 
+	}
 }
 
 void FlipSim::AdvectParticles(){
@@ -222,21 +239,21 @@ void FlipSim::AdvectParticles(){
 					unsigned int k = glm::min(z-1.0f,p->m_p.z*maxd);			
 					std::vector<Particle*> neighbors = m_pgrid->GetCellNeighbors(glm::vec3(i,j,k), 
 																			   glm::vec3(1));
-					// for(int p1=0; p1<neighbors.size(); p1++){
-					// 	Particle* np = neighbors[p1];
-					// 	float re = 1.5f*m_density/maxd;
-					// 	if(np->m_type == SOLID){
-					// 		float dist = glm::length(p->m_p-np->m_p); //check this later
-					// 		if(dist<re){
-					// 			glm::vec3 normal = np->m_n;
-					// 			if(glm::length(normal)<0.0000001f && dist){
-					// 				normal = glm::normalize(p->m_p - np->m_p);
-					// 			}
-					// 			p->m_p += (re-dist)*normal;
-					// 			p->m_u -= glm::dot(p->m_u, normal) * normal;
-					// 		}
-					// 	}
-					// }
+					for(int p1=0; p1<neighbors.size(); p1++){
+						Particle* np = neighbors[p1];
+						float re = 1.5f*m_density/maxd;
+						if(np->m_type == SOLID){
+							float dist = glm::length(p->m_p-np->m_p); //check this later
+							if(dist<re){
+								glm::vec3 normal = np->m_n;
+								if(glm::length(normal)<0.0000001f && dist){
+									normal = glm::normalize(p->m_p - np->m_p);
+								}
+								p->m_p += (re-dist)*normal;
+								p->m_u -= glm::dot(p->m_u, normal) * normal;
+							}
+						}
+					}
 				}
 			}
 		}
