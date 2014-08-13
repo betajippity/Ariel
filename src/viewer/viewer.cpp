@@ -108,6 +108,7 @@ void Viewer::SaveFrame(){
     std::string filename = m_sim->GetScene()->m_imagePath;
     std::string frameString = utilityCore::padString(4, 
                                                 utilityCore::convertIntToString(m_sim->m_frame));
+    std::cout << filename << std::endl;
     utilityCore::replaceString(filename, ".png", "."+frameString+".png");
 
     char anim_filename[2048];
@@ -124,6 +125,8 @@ void Viewer::SaveFrame(){
 void Viewer::UpdateParticles(){
     //rebuild particles
     if(m_siminitialized){
+
+        m_sim->GetScene()->m_particleLock.lock();
 
         //dummy buffer for particles
         VboData data;
@@ -173,6 +176,8 @@ void Viewer::UpdateParticles(){
         colorData.clear();
         m_vbos.push_back(data);
         m_vbokeys["fluid"] = m_vbos.size()-1;
+
+        m_sim->GetScene()->m_particleLock.unlock();
     }
 }
 
@@ -251,20 +256,20 @@ void Viewer::MainLoop(){
                 glPopMatrix();
             }
 
-            glPushMatrix();
-                glTranslatef(-res.x/2, 0, -res.y/2);
-                //draw rays
-                for(unsigned int i=0; i<m_rays.size(); i++){
-                    glm::vec3 origin = m_rays[i].m_origin;
-                    glm::vec3 distantPoint = m_rayendpoints[i];
-                    glLineWidth(1.0f);
-                    glBegin(GL_LINES);
-                        glColor4f(0.0f, 1.0f, 1.0f, 0.0f);
-                        glVertex3f(origin.x, origin.y, origin.z);
-                        glVertex3f(distantPoint.x, distantPoint.y, distantPoint.z); 
-                    glEnd();
-                }
-            glPopMatrix();
+            // glPushMatrix();
+            //     glTranslatef(-res.x/2, 0, -res.y/2);
+            //     //draw rays
+            //     for(unsigned int i=0; i<m_rays.size(); i++){
+            //         glm::vec3 origin = m_rays[i].m_origin;
+            //         glm::vec3 distantPoint = m_rayendpoints[i];
+            //         glLineWidth(1.0f);
+            //         glBegin(GL_LINES);
+            //             glColor4f(0.0f, 1.0f, 1.0f, 0.0f);
+            //             glVertex3f(origin.x, origin.y, origin.z);
+            //             glVertex3f(distantPoint.x, distantPoint.y, distantPoint.z); 
+            //         glEnd();
+            //     }
+            // glPopMatrix();
 
             //draw unit axis
             glLineWidth(2.0f);

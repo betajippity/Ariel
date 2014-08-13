@@ -105,7 +105,7 @@ void ParticleGrid::BuildSDF(MacGrid& mgrid, const float& density){
 	);
 }
 
-void ParticleGrid::MarkCellTypes(std::vector<Particle*>& particles, Grid<int>* A, 
+void ParticleGrid::MarkCellTypes(tbb::concurrent_vector<Particle*>& particles, Grid<int>* A, 
 								 const float& density){
 	int x = m_dimensions.x; int y = m_dimensions.y; int z = m_dimensions.z;
 	tbb::parallel_for(tbb::blocked_range<unsigned int>(0,x),
@@ -137,7 +137,7 @@ void ParticleGrid::MarkCellTypes(std::vector<Particle*>& particles, Grid<int>* A
 	);
 }
 
-void ParticleGrid::Sort(std::vector<Particle*>& particles){
+void ParticleGrid::Sort(tbb::concurrent_vector<Particle*>& particles){
 	// clear existing cells
 	int cellcount = m_cells.size();
 	for(int i=0; i<cellcount; i++){

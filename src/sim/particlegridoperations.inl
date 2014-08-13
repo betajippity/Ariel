@@ -20,9 +20,11 @@ namespace fluidCore {
 //====================================
 
 //Forward declarations for externed inlineable methods
-extern inline void SplatParticlesToMACGrid(ParticleGrid* sgrid, std::vector<Particle*>& particles,
+extern inline void SplatParticlesToMACGrid(ParticleGrid* sgrid, 
+										   tbb::concurrent_vector<Particle*>& particles,
 										   MacGrid* mgrid);
-extern inline void SplatMACGridToParticles(std::vector<Particle*>& particles, MacGrid* mgrid);
+extern inline void SplatMACGridToParticles(tbb::concurrent_vector<Particle*>& particles, 
+										   MacGrid* mgrid);
 extern inline void EnforceBoundaryVelocity(MacGrid* mgrid);
 extern inline glm::vec3 InterpolateVelocity(glm::vec3 p, MacGrid* mgrid);
 inline float CheckWall(Grid<int>* A, const int& x, const int& y, const int& z);
@@ -130,7 +132,7 @@ glm::vec3 InterpolateVelocity(glm::vec3 p, MacGrid* mgrid){
 	return u;
 }
 
-void SplatMACGridToParticles(std::vector<Particle*>& particles, MacGrid* mgrid){
+void SplatMACGridToParticles(tbb::concurrent_vector<Particle*>& particles, MacGrid* mgrid){
 	unsigned int particleCount = particles.size();
 	tbb::parallel_for(tbb::blocked_range<unsigned int>(0,particleCount),
 		[=](const tbb::blocked_range<unsigned int>& r){
@@ -141,7 +143,7 @@ void SplatMACGridToParticles(std::vector<Particle*>& particles, MacGrid* mgrid){
 	);
 }
 
-void SplatParticlesToMACGrid(ParticleGrid* sgrid, std::vector<Particle*>& particles, 
+void SplatParticlesToMACGrid(ParticleGrid* sgrid, tbb::concurrent_vector<Particle*>& particles, 
 							 MacGrid* mgrid){
 	
 	float RE = 1.4f; //sharpen kernel weight

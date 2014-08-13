@@ -20,7 +20,8 @@ namespace fluidCore {
 //====================================
 
 //Forward declarations for externed inlineable methods
-extern inline void ResampleParticles(ParticleGrid* pgrid, std::vector<Particle*>& particles, 
+extern inline void ResampleParticles(ParticleGrid* pgrid, 
+									 tbb::concurrent_vector<Particle*>& particles, 
 									 sceneCore::Scene* scene, const float& frame, const float& dt,
 									 const float& re, const glm::vec3& dimensions);
 inline glm::vec3 Resample(ParticleGrid* pgrid, const glm::vec3& p, const glm::vec3& u, float re, 
@@ -31,7 +32,7 @@ inline glm::vec3 Resample(ParticleGrid* pgrid, const glm::vec3& p, const glm::ve
 // Function Implementations
 //====================================
 
-void ResampleParticles(ParticleGrid* pgrid, std::vector<Particle*>& particles, 
+    void ResampleParticles(ParticleGrid* pgrid, tbb::concurrent_vector<Particle*>& particles,
 					   sceneCore::Scene* scene, const float& frame, const float& dt, 
 					   const float& re, const glm::vec3& dimensions){
 	int nx = (int)dimensions.x; int ny = (int)dimensions.y; int nz = (int)dimensions.z;

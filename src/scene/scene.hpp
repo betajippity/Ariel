@@ -8,6 +8,8 @@
 #define SCENE_HPP
 
 #include <vector>
+#include <tbb/tbb.h>
+#include <tbb/concurrent_vector.h>
 #include "../utilities/utilities.h"
 #include "../grid/macgrid.inl"
 #include "../geom/mesh.hpp"
@@ -27,7 +29,7 @@ class Scene {
 		~Scene();
 
 		// void AddSolidObject(objCore::Obj* object, const int& startFrame, const int& endFrame);
-		void GenerateParticles(std::vector<fluidCore::Particle*>& particles, 
+		void GenerateParticles(tbb::concurrent_vector<fluidCore::Particle*>& particles, 
 							   const glm::vec3& dimensions, const float& density, 
 							   fluidCore::ParticleGrid* pgrid, const int& frame);
 
@@ -43,9 +45,9 @@ class Scene {
 
 		// void ProjectPointsToSolidSurface(std::vector<glm::vec3>& points);
 
-		void ExportParticles(std::vector<fluidCore::Particle*> particles, const float& maxd, 
-							 const int& frame, const bool& VDB, const bool& OBJ, 
-							 const bool& PARTIO);
+		void ExportParticles(tbb::concurrent_vector<fluidCore::Particle*> particles, 
+							 const float& maxd, const int& frame, const bool& VDB, 
+							 const bool& OBJ, const bool& PARTIO);
 
 		//new stuff
 		std::vector<geomCore::Geom*>& GetSolidGeoms();
@@ -64,9 +66,12 @@ class Scene {
 		std::string						m_vdbPath;
 		std::string						m_partioPath;
 
+		tbb::mutex                      m_particleLock;
+
 	private:
 		void AddParticle(const glm::vec3& pos, const geomtype& type, const float& thickness, 
-						 const float& scale, std::vector<fluidCore::Particle*>& particles, 
+						 const float& scale, 
+						 tbb::concurrent_vector<fluidCore::Particle*>* particles, 
 						 const int& frame);
 
 		std::vector< objCore::Obj* >		m_solidObjects;

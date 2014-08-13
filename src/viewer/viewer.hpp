@@ -105,35 +105,35 @@ class Viewer{
 		static void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
 		//Cached data
-		bool 								m_loaded;
-		bool 								m_runrender;
-		glm::vec2 							m_resolution;
-		GLFWwindow* 						m_window;
-		std::vector<VboData> 				m_vbos;
-		std::map<std::string, int> 			m_vbokeys;
-		std::map<std::string, glm::vec2> 	m_frameranges;
-		GLCamera 							m_cam;
-		std::vector<fluidCore::Particle*>* 	m_particles;
-		std::vector<rayCore::Ray>       	m_rays;
-        std::vector<glm::vec3>          	m_rayendpoints;
+		bool 											m_loaded;
+		bool 											m_runrender;
+		glm::vec2 										m_resolution;
+		GLFWwindow* 									m_window;
+		std::vector<VboData> 							m_vbos;
+		std::map<std::string, int> 						m_vbokeys;
+		std::map<std::string, glm::vec2> 				m_frameranges;
+		GLCamera 										m_cam;
+		tbb::concurrent_vector<fluidCore::Particle*>* 	m_particles;
+		std::vector<rayCore::Ray>       				m_rays;
+        std::vector<glm::vec3>          				m_rayendpoints;
 
-    	fluidCore::FlipSim* 				m_sim;
-    	bool 								m_siminitialized;
-    	bool 								m_drawobjects;
-    	bool 								m_drawInvalid;
+    	fluidCore::FlipSim* 							m_sim;
+    	bool 											m_siminitialized;
+    	bool 											m_drawobjects;
+    	bool 											m_drawInvalid;
     	
-    	unsigned char* 						m_bitmapData;
-    	bool 								m_dumpFramebuffer;
-    	bool 								m_dumpReady;
-    	bool 								m_pause;
-    	tbb::mutex 							m_framebufferWriteLock;
-    	int 								m_framebufferScale;
+    	unsigned char* 									m_bitmapData;
+    	bool 											m_dumpFramebuffer;
+    	bool 											m_dumpReady;
+    	bool 											m_pause;
+    	tbb::mutex 										m_framebufferWriteLock;
+    	int 											m_framebufferScale;
 
-    	bool 								m_dumpVDB;
-    	bool 								m_dumpOBJ;
-    	bool 								m_dumpPARTIO;
+    	bool 											m_dumpVDB;
+    	bool 											m_dumpOBJ;
+    	bool 											m_dumpPARTIO;
 
-    	unsigned int 						m_currentFrame;
+    	unsigned int 									m_currentFrame;
 };
 }
 

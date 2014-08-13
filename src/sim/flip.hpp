@@ -26,11 +26,11 @@ class FlipSim{
 		void Init();
 		void Step(bool saveVDB, bool saveOBJ, bool savePARTIO);
 
-		std::vector<Particle*>* GetParticles();
+		tbb::concurrent_vector<Particle*>* GetParticles();
 		glm::vec3 GetDimensions();
 		sceneCore::Scene* GetScene();
 
-		int							m_frame;
+		int										m_frame;
 
 	private:
 		void ComputeDensity();
@@ -45,22 +45,22 @@ class FlipSim{
 		bool IsCellFluid(const int& x, const int& y, const int& z);
         void StepParticle(Particle* p, const glm::vec3& velocity);
 
-		glm::vec3					m_dimensions;
-		std::vector<Particle*>		m_particles;
-		MacGrid						m_mgrid;
-		MacGrid						m_mgrid_previous;
-		ParticleGrid*				m_pgrid;
+		glm::vec3								m_dimensions;
+		tbb::concurrent_vector<Particle*>		m_particles;
+		MacGrid									m_mgrid;
+		MacGrid									m_mgrid_previous;
+		ParticleGrid*							m_pgrid;
 
-		int							m_subcell;
-		float						m_density;
-		float						m_max_density;
-		float						m_densitythreshold;
-		float						m_picflipratio;
+		int										m_subcell;
+		float									m_density;
+		float									m_max_density;
+		float									m_densitythreshold;
+		float									m_picflipratio;
 
-		sceneCore::Scene*			m_scene;
+		sceneCore::Scene*						m_scene;
 
-		bool						m_verbose;
-		float						m_stepsize;
+		bool									m_verbose;
+		float									m_stepsize;
 };
 
 class FlipTask: public tbb::task {
@@ -69,10 +69,10 @@ class FlipTask: public tbb::task {
 
 		tbb::task* execute();
 	private:
-		FlipSim*					m_sim;
-		bool						m_dumpPARTIO;
-		bool						m_dumpOBJ;
-		bool						m_dumpVDB;
+		FlipSim*								m_sim;
+		bool									m_dumpPARTIO;
+		bool									m_dumpOBJ;
+		bool									m_dumpVDB;
 };
 }
 
