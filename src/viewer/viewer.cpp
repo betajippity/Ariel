@@ -156,7 +156,15 @@ void Viewer::UpdateParticles(){
                     }else if(m_particles->operator[](j)->m_type==SOLID){
                         colorData.push_back(glm::vec4(1,0,0,0));
                     }else{
-                        colorData.push_back(glm::vec4(c,c,1,0));
+                        if(m_particles->operator[](j)->m_temp2){
+                            colorData.push_back(glm::vec4(0,1,0,0));
+                        }else if(m_particles->operator[](j)->m_temp){
+                            colorData.push_back(glm::vec4(1,0,0,0));
+                        }else{
+                            colorData.push_back(glm::vec4(c,c,1,0));
+                        }
+                        
+
                     }
                 }
             // }

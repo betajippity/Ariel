@@ -25,13 +25,13 @@ class ParticleGrid{
 		~ParticleGrid();
 
 		//Sorting tools
-		void Sort(tbb::concurrent_vector<Particle*>& particles);
+		void Sort(std::vector<Particle*>& particles);
 		std::vector<Particle*> GetCellNeighbors(const glm::vec3& index, 
 												const glm::vec3& numberOfNeighbors);
 		std::vector<Particle*> GetWallNeighbors(const glm::vec3& index, 
 												const glm::vec3& numberOfNeighbors);
 
-		void MarkCellTypes(tbb::concurrent_vector<Particle*>& particles, Grid<int>* A, 
+		void MarkCellTypes(std::vector<Particle*>& particles, Grid<int>* A, 
 						   const float& density);
 		float CellSDF(const int& i, const int& j, const int& k, const float& density, 
 					  const geomtype& type);

@@ -26,14 +26,16 @@ class FlipSim{
 		void Init();
 		void Step(bool saveVDB, bool saveOBJ, bool savePARTIO);
 
-		tbb::concurrent_vector<Particle*>* GetParticles();
+		std::vector<Particle*>* GetParticles();
 		glm::vec3 GetDimensions();
 		sceneCore::Scene* GetScene();
 
 		int										m_frame;
 
 	private:
-		void ComputeDensity();
+        void StoreTempParticleVelocities();
+        void CheckParticleSolidConstraints();
+        void ComputeDensity();
 		void ApplyExternalForces();
 		void SubtractPreviousGrid();
 		void StorePreviousGrid();
@@ -43,10 +45,9 @@ class FlipSim{
 		void SolvePicFlip();
 		void AdvectParticles();
 		bool IsCellFluid(const int& x, const int& y, const int& z);
-        void StepParticle(Particle* p, const glm::vec3& velocity);
 
 		glm::vec3								m_dimensions;
-		tbb::concurrent_vector<Particle*>		m_particles;
+		std::vector<Particle*>					m_particles;
 		MacGrid									m_mgrid;
 		MacGrid									m_mgrid_previous;
 		ParticleGrid*							m_pgrid;

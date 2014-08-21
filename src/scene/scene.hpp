@@ -29,7 +29,7 @@ class Scene {
 		~Scene();
 
 		// void AddSolidObject(objCore::Obj* object, const int& startFrame, const int& endFrame);
-		void GenerateParticles(tbb::concurrent_vector<fluidCore::Particle*>& particles, 
+		void GenerateParticles(std::vector<fluidCore::Particle*>& particles, 
 							   const glm::vec3& dimensions, const float& density, 
 							   fluidCore::ParticleGrid* pgrid, const int& frame);
 
@@ -45,7 +45,7 @@ class Scene {
 
 		// void ProjectPointsToSolidSurface(std::vector<glm::vec3>& points);
 
-		void ExportParticles(tbb::concurrent_vector<fluidCore::Particle*> particles, 
+		void ExportParticles(std::vector<fluidCore::Particle*> particles, 
 							 const float& maxd, const int& frame, const bool& VDB, 
 							 const bool& OBJ, const bool& PARTIO);
 
@@ -70,9 +70,7 @@ class Scene {
 
 	private:
 		void AddParticle(const glm::vec3& pos, const geomtype& type, const float& thickness, 
-						 const float& scale, 
-						 tbb::concurrent_vector<fluidCore::Particle*>* particles, 
-						 const int& frame);
+						 const float& scale, const int& frame);
 
 		std::vector< objCore::Obj* >		m_solidObjects;
 
@@ -91,8 +89,13 @@ class Scene {
 		std::vector<geomCore::Geom*>								m_solids;
 		std::vector<geomCore::Geom*>								m_liquids;
 
-		bool 														m_highresSolidParticles;
-		unsigned int 												m_solidParticlesIndexOffset;									
+		tbb::concurrent_vector<fluidCore::Particle*>				m_liquidParticles;
+		tbb::concurrent_vector<fluidCore::Particle*>				m_permaSolidParticles;
+		tbb::concurrent_vector<fluidCore::Particle*>				m_solidParticles;
+
+		bool 														m_highresSolidParticles;	
+		unsigned int 												m_liquidParticleCount;
+
 };
 }
 

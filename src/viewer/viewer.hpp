@@ -113,7 +113,7 @@ class Viewer{
 		std::map<std::string, int> 						m_vbokeys;
 		std::map<std::string, glm::vec2> 				m_frameranges;
 		GLCamera 										m_cam;
-		tbb::concurrent_vector<fluidCore::Particle*>* 	m_particles;
+		std::vector<fluidCore::Particle*>* 	            m_particles;
 		std::vector<rayCore::Ray>       				m_rays;
         std::vector<glm::vec3>          				m_rayendpoints;
 

@@ -101,6 +101,13 @@ HOST DEVICE void MeshContainer::Intersect(const rayCore::Ray& r,
     // result.Transform(transform);
 }
 
+HOST DEVICE bool MeshContainer::IsDynamic(){
+    if(m_numberOfFrames==1 && m_prePersist==true && m_postPersist==true){
+        return false;
+    }
+    return true;
+}
+
 //====================================
 // AnimatedMeshContainer Class
 //====================================
@@ -212,5 +219,9 @@ HOST DEVICE void AnimatedMeshContainer::Intersect(const rayCore::Ray& r,
     unsigned int lowerFrame = glm::floor(clampedFrame);
     m_meshFrames[lowerFrame]->Traverse(transformedR, result);
     result.Transform(transform);
+}
+
+HOST DEVICE bool AnimatedMeshContainer::IsDynamic(){
+    return true;
 }
 }

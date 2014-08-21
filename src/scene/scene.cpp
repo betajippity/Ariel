@@ -5,10 +5,7 @@
 // Implements scene.hpp
 
 #include <openvdb/openvdb.h>
-#include <openvdb/tools/Interpolation.h>
 #include <openvdb/tools/MeshToVolume.h>
-#include <openvdb/tools/LevelSetSphere.h>
-#include <openvdb/tools/Composite.h>
 #include <partio/Partio.h>
 #include "scene.hpp"
 
@@ -18,7 +15,7 @@ Scene::Scene(){
 	m_solidLevelSet = new fluidCore::LevelSet();
 	m_liquidLevelSet = new fluidCore::LevelSet();
 	m_highresSolidParticles = true;
-	m_solidParticlesIndexOffset = 0;
+	m_liquidParticleCount = 0;
 }
 
 Scene::~Scene(){
@@ -34,7 +31,7 @@ void Scene::SetPaths(const std::string& imagePath, const std::string& meshPath,
 	m_partioPath = partioPath;
 }
 
-void Scene::ExportParticles(tbb::concurrent_vector<fluidCore::Particle*> particles, 
+void Scene::ExportParticles(std::vector<fluidCore::Particle*> particles, 
 							const float& maxd, const int& frame, const bool& VDB, const bool& OBJ, 
 							const bool& PARTIO){
 	unsigned int particlesCount = particles.size();
@@ -210,40 +207,30 @@ void Scene::BuildLevelSets(const int& frame){
 }
 
 unsigned int Scene::GetLiquidParticleCount(){
-	return m_solidParticlesIndexOffset;
+	return m_liquidParticleCount;
 }
 
-void Scene::GenerateParticles(tbb::concurrent_vector<fluidCore::Particle*>& particles,
+void Scene::GenerateParticles(std::vector<fluidCore::Particle*>& particles,
 							  const glm::vec3& dimensions, const float& density, 
 							  fluidCore::ParticleGrid* pgrid, const int& frame){
-	m_particleLock.lock();
 
 	float maxdimension = glm::max(glm::max(dimensions.x, dimensions.y), dimensions.z);
 
 	float thickness = 1.0f/maxdimension;
 	float w = density*thickness;
 
-	//this is beyond stupid but it's the only way to make this work for now
-	std::vector<fluidCore::Particle*> fluidParticles;
-	fluidParticles.reserve(m_solidParticlesIndexOffset);
-	fluidParticles.insert(fluidParticles.end(), particles.begin(), 
-						  particles.begin()+m_solidParticlesIndexOffset);
-	tbb::concurrent_vector<fluidCore::Particle*>().swap(particles);
-	particles.reserve(m_solidParticlesIndexOffset*4);
+    //store list of pointers to particles we need to delete for later deletion in the locked block
+    std::vector<fluidCore::Particle*> particlesToDelete;
+    particlesToDelete.reserve(m_solidParticles.size()+m_permaSolidParticles.size());
+    particlesToDelete.insert(particlesToDelete.end(), m_solidParticles.begin(), m_solidParticles.end());
+    particlesToDelete.insert(particlesToDelete.end(), m_permaSolidParticles.begin(),
+                             m_permaSolidParticles.end());
 
-	tbb::concurrent_vector<fluidCore::Particle*>* pp = &particles;	
-
-	tbb::parallel_for(tbb::blocked_range<unsigned int>(0,m_solidParticlesIndexOffset),
-		[=](const tbb::blocked_range<unsigned int>& r){
-			for(unsigned int i=r.begin(); i!=r.end(); ++i){	
-				pp->push_back(fluidParticles[i]);
-			}
-		}
-	);
-
-	std::vector<fluidCore::Particle*>().swap(fluidParticles);
-
-	//place fluid particles
+    //swap-clear vectors
+    tbb::concurrent_vector<fluidCore::Particle*>().swap(m_solidParticles);
+    tbb::concurrent_vector<fluidCore::Particle*>().swap(m_permaSolidParticles);
+    
+    //place fluid particles
 	if(m_liquids.size()>0){
 		tbb::parallel_for(tbb::blocked_range<unsigned int>(0,(dimensions.x+1)/density),
 			[=](const tbb::blocked_range<unsigned int>& r){
@@ -254,16 +241,14 @@ void Scene::GenerateParticles(tbb::concurrent_vector<fluidCore::Particle*>& part
 							float y = (j*w)+(w/2.0f);
 							float z = (k*w)+(w/2.0f);
 							AddParticle(glm::vec3(x,y,z), FLUID, 3.0f/maxdimension, maxdimension, 
-										pp, frame);
+										frame);
 						}
 					}
 				}
 			}
 		);
 	}
-	std::cout << "Fluid particles: " << particles.size() << std::endl;
-	m_solidParticlesIndexOffset = particles.size();
-
+	//std::cout << "Fluid particles: " << m_liquidParticles.size() << std::endl;
 
 	if(m_highresSolidParticles==false){
 		if(m_solids.size()>0){
@@ -277,7 +262,7 @@ void Scene::GenerateParticles(tbb::concurrent_vector<fluidCore::Particle*>& part
                                 float y = j*w+w/2.0f;
                                 float z = k*w+w/2.0f;
                                 AddParticle(glm::vec3(x,y,z), SOLID, 3.0f/maxdimension,
-                                            maxdimension, pp, frame);
+                                            maxdimension, frame);
                             }
                         }
                     }
@@ -295,7 +280,7 @@ void Scene::GenerateParticles(tbb::concurrent_vector<fluidCore::Particle*>& part
 								float y = (j*w)+(w/2.0f);
 								float z = (k*w)+(w/2.0f);
 								AddParticle(glm::vec3(x,y,z), SOLID, 3.0f/maxdimension, 
-											maxdimension, pp, frame);
+											maxdimension, frame);
 							}
 						}
 					}
@@ -303,7 +288,29 @@ void Scene::GenerateParticles(tbb::concurrent_vector<fluidCore::Particle*>& part
 			);
 		}
 	}
-    std::cout << "Solid+Fluid particles: " << particles.size() << std::endl;
+
+	m_particleLock.lock();
+   
+    //delete old particles 
+    unsigned int delParticleCount = particlesToDelete.size();
+	tbb::parallel_for(tbb::blocked_range<unsigned int>(0,delParticleCount),
+		[=](const tbb::blocked_range<unsigned int>& r){
+			for(unsigned int i=r.begin(); i!=r.end(); ++i){
+                delete particlesToDelete[i];
+            }
+        }
+    );
+
+    //add new particles to main particles list
+	std::vector<fluidCore::Particle*>().swap(particles);
+    particles.reserve(m_liquidParticles.size()+m_permaSolidParticles.size()+
+                      m_solidParticles.size()); 
+    particles.insert(particles.end(), m_liquidParticles.begin(), m_liquidParticles.end()); 
+    particles.insert(particles.end(), m_permaSolidParticles.begin(), m_permaSolidParticles.end());
+    particles.insert(particles.end(), m_solidParticles.begin(), m_solidParticles.end());
+    m_liquidParticleCount = m_liquidParticles.size();
+
+    //std::cout << "Solid+Fluid particles: " << particles.size() << std::endl;
 
     m_particleLock.unlock();
 }
@@ -363,9 +370,7 @@ rayCore::Intersection Scene::IntersectSolidGeoms(const rayCore::Ray& r){
 }
 
 void Scene::AddParticle(const glm::vec3& pos, const geomtype& type, const float& thickness, 
-						const float& scale, 
-						tbb::concurrent_vector<fluidCore::Particle*>* particles, 
-						const int& frame){
+						const float& scale, const int& frame){
 	bool inside = false;
 	bool temp = false; //used to flag frame-variant solid particles
 
@@ -397,7 +402,15 @@ void Scene::AddParticle(const glm::vec3& pos, const geomtype& type, const float&
 		p->m_mass = 1.0f;
 		p->m_invalid = false;
 		p->m_temp = temp;
-		particles->push_back(p);
+		if(type==FLUID){
+			m_liquidParticles.push_back(p);
+		}else if(type==SOLID){
+			if(p->m_temp==true){
+				m_solidParticles.push_back(p);
+			}else{
+				m_permaSolidParticles.push_back(p);
+			}
+		}
 	}
 }
 

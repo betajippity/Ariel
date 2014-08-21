@@ -42,8 +42,10 @@ struct Particle{
 	int				m_type;
 	glm::vec3		m_t;
 	glm::vec3		m_t2;
+    glm::vec3       m_pt; //copy of previous position used for bound checks
 	bool			m_invalid;
-	bool			m_temp;
+	bool            m_temp2;
+    bool			m_temp;
 };
 
 //Forward declarations for externed inlineable methods
