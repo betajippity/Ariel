@@ -39,6 +39,7 @@ class Aabb {
         double CalculateSurfaceArea();
         //"fast" as in only returns distance and not a full intersection           
         HOST DEVICE float FastIntersectionTest(const rayCore::Ray& r); 
+        HOST DEVICE Aabb Transform(const glm::mat4& transform);
 
         glm::vec3   m_min;
         glm::vec3   m_max;

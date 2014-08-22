@@ -222,7 +222,8 @@ void Scene::GenerateParticles(std::vector<fluidCore::Particle*>& particles,
     //store list of pointers to particles we need to delete for later deletion in the locked block
     std::vector<fluidCore::Particle*> particlesToDelete;
     particlesToDelete.reserve(m_solidParticles.size()+m_permaSolidParticles.size());
-    particlesToDelete.insert(particlesToDelete.end(), m_solidParticles.begin(), m_solidParticles.end());
+    particlesToDelete.insert(particlesToDelete.end(), m_solidParticles.begin(), 
+    						 m_solidParticles.end());
     particlesToDelete.insert(particlesToDelete.end(), m_permaSolidParticles.begin(),
                              m_permaSolidParticles.end());
 
@@ -231,6 +232,7 @@ void Scene::GenerateParticles(std::vector<fluidCore::Particle*>& particles,
     tbb::concurrent_vector<fluidCore::Particle*>().swap(m_permaSolidParticles);
     
     //place fluid particles
+    //for each fluid geom in the frame, loop through voxels in the geom's AABB to place particles
 	if(m_liquids.size()>0){
 		tbb::parallel_for(tbb::blocked_range<unsigned int>(0,(dimensions.x+1)/density),
 			[=](const tbb::blocked_range<unsigned int>& r){
@@ -249,6 +251,15 @@ void Scene::GenerateParticles(std::vector<fluidCore::Particle*>& particles,
 		);
 	}
 	//std::cout << "Fluid particles: " << m_liquidParticles.size() << std::endl;
+
+	
+    //place fluid particles
+	/*unsigned int liquidCount = m_liquids.size();
+    if(liquidCount>0){
+        for(unsigned int l=0; l<liquidCount; ++l){
+            
+        }
+	}*/	
 
 	if(m_highresSolidParticles==false){
 		if(m_solids.size()>0){
@@ -313,6 +324,26 @@ void Scene::GenerateParticles(std::vector<fluidCore::Particle*>& particles,
     //std::cout << "Solid+Fluid particles: " << particles.size() << std::endl;
 
     m_particleLock.unlock();
+}
+
+bool Scene::CheckPointInsideGeomByID(const glm::vec3& p, const float& frame, 
+									 const unsigned int& geomID){
+	if(geomID>m_geoms.size()-1){
+		rayCore::Ray r;
+		r.m_origin = p;
+		r.m_frame = frame;
+		r.m_direction = glm::normalize(glm::vec3(0,0,1));
+		unsigned int hits = 0;
+		spaceCore::HitCountTraverseAccumulator traverser(p);
+		m_geoms[geomID].Intersect(r, traverser);
+		bool hit = false;
+		if(traverser.m_intersection.m_hit==true){
+			if((traverser.m_numberOfHits)%2==1){
+				return true;	
+			}
+		}
+	}
+	return false;
 }
 
 bool Scene::CheckPointInsideSolidGeom(const glm::vec3& p, const float& frame, 

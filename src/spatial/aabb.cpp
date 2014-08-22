@@ -53,6 +53,35 @@ HOST DEVICE float Aabb::FastIntersectionTest(const rayCore::Ray& r){
     return tmin;
 }
 
+Aabb Aabb::Transform(const glm::mat4& transform){
+    //transform all corners of aabb
+    glm::vec3 tmin = glm::vec3(utilityCore::multiply(transform, glm::vec4(m_min, 1.0f)));            
+    glm::vec3 tmax = glm::vec3(utilityCore::multiply(transform, glm::vec4(m_max, 1.0f)));            
+    glm::vec3 tcentroid = glm::vec3(utilityCore::multiply(transform, 
+                                                          glm::vec4(m_centroid, 1.0f)));            
+    glm::vec3 m0 = glm::vec3(utilityCore::multiply(transform, 
+                                                   glm::vec4(m_max.x, m_min.y, m_min.z, 1.0f)));    
+    glm::vec3 m1 = glm::vec3(utilityCore::multiply(transform, 
+                                                   glm::vec4(m_max.x, m_min.y, m_max.z, 1.0f)));    
+    glm::vec3 m2 = glm::vec3(utilityCore::multiply(transform, 
+                                                   glm::vec4(m_max.x, m_max.y, m_min.z, 1.0f)));    
+    glm::vec3 m3 = glm::vec3(utilityCore::multiply(transform, 
+                                                   glm::vec4(m_min.x, m_min.y, m_max.z, 1.0f)));    
+    glm::vec3 m4 = glm::vec3(utilityCore::multiply(transform, 
+                                                   glm::vec4(m_min.x, m_max.y, m_min.z, 1.0f)));    
+    glm::vec3 m5 = glm::vec3(utilityCore::multiply(transform, 
+                                                   glm::vec4(m_min.x, m_max.y, m_max.z, 1.0f)));
+    //build new aabb, return
+    Aabb a;
+    a.m_min = glm::min(glm::min(glm::min(tmin, tmax), glm::min(m0, m1)), 
+                       glm::min(glm::min(m2, m3), glm::min(m4, m5)));
+    a.m_max = glm::max(glm::max(glm::max(tmin, tmax), glm::max(m0, m1)), 
+                       glm::max(glm::max(m2, m3), glm::max(m4, m5)));
+    a.m_id = m_id;
+    a.m_centroid = tcentroid; 
+    return a; 
+}
+
 double Aabb::CalculateSurfaceArea(){
 	double xlength = m_max.x-m_min.x;
 	double ylength = m_max.y-m_min.y;

@@ -60,6 +60,8 @@ class GeomInterface {
 		HOST DEVICE virtual bool GetTransforms(const float& frame, glm::mat4& transform,
 											   glm::mat4& inversetransform) = 0;
         HOST DEVICE virtual bool IsDynamic() = 0;
+
+        HOST DEVICE virtual spaceCore::Aabb GetAabb(const float& frame) = 0;        
 };
 
 class GeomTransform {

@@ -73,6 +73,8 @@ class MeshContainer: public virtual GeomInterface {
         HOST DEVICE spaceCore::Bvh<objCore::Obj>* GetMeshFrame(const float& frame);
         HOST DEVICE bool IsDynamic();
         
+        HOST DEVICE spaceCore::Aabb GetAabb(const float& frame);        
+        
         spaceCore::Bvh<objCore::Obj>**                  m_meshFrames;
         GeomTransform**                                 m_geomTransforms;
         unsigned int                                    m_numberOfFrames;
@@ -106,6 +108,8 @@ class AnimatedMeshContainer: public virtual GeomInterface {
         HOST DEVICE float GetInterpolationWeight(const float& frame);
         HOST DEVICE bool IsDynamic();
 
+        HOST DEVICE spaceCore::Aabb GetAabb(const float& frame);        
+        
         spaceCore::Bvh<objCore::InterpolatedObj>**      m_meshFrames;
         GeomTransform**                                 m_geomTransforms;
         unsigned int                                    m_numberOfFrames;

@@ -63,6 +63,16 @@ HOST DEVICE spaceCore::Bvh<objCore::Obj>* MeshContainer::GetMeshFrame(const floa
     return m_meshFrames[lowerFrame];
 }
 
+HOST DEVICE spaceCore::Aabb MeshContainer::GetAabb(const float& frame){
+    glm::mat4 transform;
+    glm::mat4 inverse;
+    if(GetTransforms(frame, transform, inverse)==true){
+                
+    }else{
+        return spaceCore::Aabb();
+    }
+}       
+
 HOST DEVICE bool MeshContainer::GetTransforms(const float& frame, glm::mat4& transform,
                                               glm::mat4& inversetransform){
     //translate frame into local frame space
@@ -97,8 +107,8 @@ HOST DEVICE void MeshContainer::Intersect(const rayCore::Ray& r,
     }
     rayCore::Ray transformedR = r.Transform(inversetransform);
     //run intersection, transform result back into worldspace
-    GetMeshFrame(r.m_frame)->Traverse(r, result);
-    // result.Transform(transform);
+    GetMeshFrame(r.m_frame)->Traverse(transformedR, result);
+    result.Transform(transform);
 }
 
 HOST DEVICE bool MeshContainer::IsDynamic(){
@@ -147,6 +157,16 @@ HOST DEVICE AnimatedMeshContainer::AnimatedMeshContainer(AnimatedMeshContainerDa
 
 HOST DEVICE AnimatedMeshContainer::~AnimatedMeshContainer(){
 
+}
+
+HOST DEVICE spaceCore::Aabb AnimatedMeshContainer::GetAabb(const float& frame){
+    glm::mat4 transform;
+    glm::mat4 inverse;
+    if(GetTransforms(frame, transform, inverse)==true){
+        
+    }else{
+        return spaceCore::Aabb();
+    }
 }
 
 HOST DEVICE GeomType AnimatedMeshContainer::GetType(){
