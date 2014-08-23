@@ -224,8 +224,8 @@ void Scene::GenerateParticles(std::vector<fluidCore::Particle*>& particles,
     particlesToDelete.reserve(m_solidParticles.size()+m_permaSolidParticles.size());
     particlesToDelete.insert(particlesToDelete.end(), m_solidParticles.begin(), 
     						 m_solidParticles.end());
-    particlesToDelete.insert(particlesToDelete.end(), m_permaSolidParticles.begin(),
-                             m_permaSolidParticles.end());
+    // particlesToDelete.insert(particlesToDelete.end(), m_permaSolidParticles.begin(),
+    //                          m_permaSolidParticles.end());
 
     //swap-clear vectors
     tbb::concurrent_vector<fluidCore::Particle*>().swap(m_solidParticles);
@@ -233,71 +233,90 @@ void Scene::GenerateParticles(std::vector<fluidCore::Particle*>& particles,
     
     //place fluid particles
     //for each fluid geom in the frame, loop through voxels in the geom's AABB to place particles
-	if(m_liquids.size()>0){
-		tbb::parallel_for(tbb::blocked_range<unsigned int>(0,(dimensions.x+1)/density),
-			[=](const tbb::blocked_range<unsigned int>& r){
-				for(unsigned int i=r.begin(); i!=r.end(); ++i){	
-				  	for(unsigned int j = 0; j<(dimensions.y+1) / density; ++j){
-						for(unsigned int k = 0; k<(dimensions.z+1) / density; ++k){
-							float x = (i*w)+(w/2.0f);
-							float y = (j*w)+(w/2.0f);
-							float z = (k*w)+(w/2.0f);
-							AddParticle(glm::vec3(x,y,z), FLUID, 3.0f/maxdimension, maxdimension, 
-										frame);
-						}
-					}
-				}
-			}
-		);
-	}
-	//std::cout << "Fluid particles: " << m_liquidParticles.size() << std::endl;
-
-	
-    //place fluid particles
-	/*unsigned int liquidCount = m_liquids.size();
-    if(liquidCount>0){
-        for(unsigned int l=0; l<liquidCount; ++l){
-            
-        }
-	}*/	
-
-	if(m_highresSolidParticles==false){
-		if(m_solids.size()>0){
-		    w = 1.0f/maxdimension;
-                tbb::parallel_for(tbb::blocked_range<unsigned int>(0,dimensions.x),
-                [=](const tbb::blocked_range<unsigned int>& r){
-                    for(unsigned int i=r.begin(); i!=r.end(); ++i){	
-                        for(unsigned int j = 0; j < dimensions.y; j++) {
-                            for(unsigned int k=0; k < dimensions.z; k++ ) {
-                                float x = i*w+w/2.0f;
-                                float y = j*w+w/2.0f;
-                                float z = k*w+w/2.0f;
-                                AddParticle(glm::vec3(x,y,z), SOLID, 3.0f/maxdimension,
+	unsigned int liquidCount = m_liquids.size();
+    for(unsigned int l=0; l<liquidCount; ++l){
+        spaceCore::Aabb liquidaabb = m_liquids[l]->m_geom->GetAabb(frame);        
+        if(m_liquids[l]->m_geom->IsInFrame(frame)){
+            //clip AABB to sim boundaries, account for density
+            glm::vec3 lmin = glm::floor(liquidaabb.m_min);
+            glm::vec3 lmax = glm::ceil(liquidaabb.m_max);
+            lmin = glm::max(lmin, glm::vec3(0.0f))/density;             
+            lmax = glm::min(lmax, dimensions+glm::vec3(1.0f))/density;
+		    //place particles in AABB
+            tbb::parallel_for(tbb::blocked_range<unsigned int>(lmin.x,lmax.x),
+			    [=](const tbb::blocked_range<unsigned int>& r){
+				    for(unsigned int i=r.begin(); i!=r.end(); ++i){	
+				  	    for(unsigned int j = lmin.y; j<lmax.y; ++j){
+						    for(unsigned int k = lmin.z; k<lmax.z; ++k){
+							    float x = (i*w)+(w/2.0f);
+							    float y = (j*w)+(w/2.0f);
+							    float z = (k*w)+(w/2.0f);
+							    AddParticle(glm::vec3(x,y,z), FLUID, 3.0f/maxdimension, 
                                             maxdimension, frame);
                             }
                         }
                     }
                 }
-			);
-		}
+            );
+        }   
+    }
+
+	if(m_highresSolidParticles==false){
+		unsigned int solidCount = m_solids.size();
+	    for(unsigned int l=0; l<solidCount; ++l){
+	        spaceCore::Aabb solidaabb = m_solids[l]->m_geom->GetAabb(frame);        
+	        if(m_solids[l]->m_geom->IsInFrame(frame)){
+	            //clip AABB to sim boundaries
+	            glm::vec3 lmin = glm::floor(solidaabb.m_min);
+	            glm::vec3 lmax = glm::ceil(solidaabb.m_max);
+	            lmin = glm::max(lmin, glm::vec3(0.0f));             
+	            lmax = glm::min(lmax, dimensions+glm::vec3(1.0f));
+			    //place particles in AABB
+	            tbb::parallel_for(tbb::blocked_range<unsigned int>(lmin.x,lmax.x),
+				    [=](const tbb::blocked_range<unsigned int>& r){
+					    for(unsigned int i=r.begin(); i!=r.end(); ++i){	
+					  	    for(unsigned int j = lmin.y; j<lmax.y; ++j){
+							    for(unsigned int k = lmin.z; k<lmax.z; ++k){
+	                                float x = i*w+w/2.0f;
+	                                float y = j*w+w/2.0f;
+	                                float z = k*w+w/2.0f;
+	                                AddParticle(glm::vec3(x,y,z), SOLID, 3.0f/maxdimension,
+	                                            maxdimension, frame);
+	                            }
+	                        }
+	                    }
+	                }
+	            );
+	        }   
+	    }
 	}else{
-		if(m_solids.size()>0){
-			tbb::parallel_for(tbb::blocked_range<unsigned int>(0,(dimensions.x+1)/density),
-				[=](const tbb::blocked_range<unsigned int>& r){
-					for(unsigned int i=r.begin(); i!=r.end(); ++i){	
-					  	for(unsigned int j = 0; j<(dimensions.y+1) / density; ++j){
-							for(unsigned int k = 0; k<(dimensions.z+1) / density; ++k){
-								float x = (i*w)+(w/2.0f);
-								float y = (j*w)+(w/2.0f);
-								float z = (k*w)+(w/2.0f);
-								AddParticle(glm::vec3(x,y,z), SOLID, 3.0f/maxdimension, 
-											maxdimension, frame);
-							}
-						}
-					}
-				}
-			);
-		}
+		unsigned int solidCount = m_solids.size();
+	    for(unsigned int l=0; l<solidCount; ++l){
+	        spaceCore::Aabb solidaabb = m_solids[l]->m_geom->GetAabb(frame);        
+	        if(m_solids[l]->m_geom->IsInFrame(frame)){
+	            //clip AABB to sim boundaries, account for density
+	            glm::vec3 lmin = glm::floor(solidaabb.m_min);
+	            glm::vec3 lmax = glm::ceil(solidaabb.m_max);
+	            lmin = glm::max(lmin, glm::vec3(0.0f))/density;             
+	            lmax = glm::min(lmax, dimensions+glm::vec3(1.0f))/density;
+			    //place particles in AABB
+	            tbb::parallel_for(tbb::blocked_range<unsigned int>(lmin.x,lmax.x),
+				    [=](const tbb::blocked_range<unsigned int>& r){
+					    for(unsigned int i=r.begin(); i!=r.end(); ++i){	
+					  	    for(unsigned int j = lmin.y; j<lmax.y; ++j){
+							    for(unsigned int k = lmin.z; k<lmax.z; ++k){
+								    float x = (i*w)+(w/2.0f);
+								    float y = (j*w)+(w/2.0f);
+								    float z = (k*w)+(w/2.0f);
+								    AddParticle(glm::vec3(x,y,z), SOLID, 3.0f/maxdimension, 
+	                                            maxdimension, frame);
+	                            }
+	                        }
+	                    }
+	                }
+	            );
+	        }   
+	    }
 	}
 
 	m_particleLock.lock();

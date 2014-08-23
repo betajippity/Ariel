@@ -67,11 +67,21 @@ HOST DEVICE spaceCore::Aabb MeshContainer::GetAabb(const float& frame){
     glm::mat4 transform;
     glm::mat4 inverse;
     if(GetTransforms(frame, transform, inverse)==true){
-                
+        spaceCore::Aabb box = GetMeshFrame(frame)->m_nodes[1].m_bounds;
+        return box.Transform(transform);        
     }else{
         return spaceCore::Aabb();
     }
 }       
+
+HOST DEVICE bool MeshContainer::IsInFrame(const float& frame){
+    float clampedFrame = (frame - float(m_frameOffset)) / float(m_frameInterval);
+    if((clampedFrame<0.0f && m_prePersist==false) || 
+       (clampedFrame>=m_numberOfFrames && m_postPersist==false)){
+        return false;
+    }
+    return true;
+}
 
 HOST DEVICE bool MeshContainer::GetTransforms(const float& frame, glm::mat4& transform,
                                               glm::mat4& inversetransform){
@@ -163,7 +173,8 @@ HOST DEVICE spaceCore::Aabb AnimatedMeshContainer::GetAabb(const float& frame){
     glm::mat4 transform;
     glm::mat4 inverse;
     if(GetTransforms(frame, transform, inverse)==true){
-        
+        spaceCore::Aabb box = GetMeshFrame(frame)->m_nodes[1].m_bounds;
+        return box.Transform(transform);        
     }else{
         return spaceCore::Aabb();
     }
@@ -175,6 +186,15 @@ HOST DEVICE GeomType AnimatedMeshContainer::GetType(){
 
 HOST DEVICE unsigned int AnimatedMeshContainer::GetID(){
     return m_id;
+}
+
+HOST DEVICE bool AnimatedMeshContainer::IsInFrame(const float& frame){
+    float clampedFrame = (frame - float(m_frameOffset)) / float(m_frameInterval);
+    if((clampedFrame<0.0f && m_prePersist==false) || 
+       (clampedFrame>=m_numberOfFrames && m_postPersist==false)){
+        return false;
+    }
+    return true;
 }
 
 HOST DEVICE bool AnimatedMeshContainer::GetTransforms(const float& frame, glm::mat4& transform,

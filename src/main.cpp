@@ -18,7 +18,7 @@ int main(int argc, char** argv){
 	cout << "" << endl;
 	cout << "===================================================" << endl;
 	cout << "Ariel: FLIP Fluid Simulator" << endl;
-	cout << "Version 0.1.14.24b" << endl;
+	cout << "Version 0.2.14.34a" << endl;
 	cout << "Copyright (C) Yining Karl Li. All rights reserved." << endl;
 	cout << "===================================================" << endl;
 	cout << "" << endl;

@@ -72,6 +72,7 @@ class MeshContainer: public virtual GeomInterface {
                                        glm::mat4& inversetransform);
         HOST DEVICE spaceCore::Bvh<objCore::Obj>* GetMeshFrame(const float& frame);
         HOST DEVICE bool IsDynamic();
+        HOST DEVICE bool IsInFrame(const float& frame);
         
         HOST DEVICE spaceCore::Aabb GetAabb(const float& frame);        
         
@@ -107,6 +108,7 @@ class AnimatedMeshContainer: public virtual GeomInterface {
         HOST DEVICE spaceCore::Bvh<objCore::InterpolatedObj>* GetMeshFrame(const float& frame);
         HOST DEVICE float GetInterpolationWeight(const float& frame);
         HOST DEVICE bool IsDynamic();
+        HOST DEVICE bool IsInFrame(const float& frame);
 
         HOST DEVICE spaceCore::Aabb GetAabb(const float& frame);        
         
