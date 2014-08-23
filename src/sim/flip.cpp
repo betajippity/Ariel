@@ -187,7 +187,7 @@ void FlipSim::CheckParticleSolidConstraints(){
 		[=](const tbb::blocked_range<unsigned int>& r){
 			for(unsigned int p=r.begin(); p!=r.end(); ++p){	
                 rayCore::Ray r;
-	            r.m_origin = m_particles[p]->m_p * maxd;
+	            r.m_origin = m_particles[p]->m_pt * maxd;
 	            r.m_frame = m_frame;
 	            r.m_direction = glm::normalize(m_particles[p]->m_p - 
                                                m_particles[p]->m_pt);

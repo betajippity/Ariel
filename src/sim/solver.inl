@@ -333,7 +333,7 @@ void SolveConjugateGradient(MacGrid& mgrid, Grid<float>* PC, int subcell, const 
         //Output progress
         float rate = 1.0f - glm::max(0.0f,glm::min(1.0f,(error1-eps)/(error0-eps)));
         if(verbose){
-        	std::cout << "PCG Iteration " << k+1 << ": " << 100.0f*pow(rate,6) << "%% solved" 
+        	std::cout << "PCG Iteration " << k+1 << ": " << 100.0f*pow(rate,6) << "% solved" 
         			  << std::endl;
         }
         if(error1<=eps){
