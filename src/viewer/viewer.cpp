@@ -140,7 +140,7 @@ void Viewer::UpdateParticles(){
         float maxd = glm::max(glm::max(gridSize.x, gridSize.z), gridSize.y);
 
         unsigned int lpsize = m_sim->GetScene()->GetLiquidParticleCount();
-
+        
         for(unsigned int j=0; j<lpsize; j++){
             // if(m_particles->operator[](j)->m_type==FLUID){
                 if(!m_particles->operator[](j)->m_invalid || 

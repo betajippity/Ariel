@@ -68,8 +68,10 @@ class Scene {
 		tbb::mutex                                                  m_particleLock;
 
 	private:
-		void AddParticle(const glm::vec3& pos, const geomtype& type, const float& thickness, 
-						 const float& scale, const int& frame);
+		void AddLiquidParticle(const glm::vec3& pos, const float& thickness, const float& scale, 
+							   const int& frame, const unsigned int& liquidGeomID);
+		void AddSolidParticle(const glm::vec3& pos, const float& thickness, const float& scale, 
+							  const int& frame, const unsigned int& solidGeomID);
 
 		fluidCore::LevelSet*			                            m_solidLevelSet;
 		fluidCore::LevelSet*			                            m_liquidLevelSet;

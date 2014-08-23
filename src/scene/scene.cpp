@@ -221,15 +221,11 @@ void Scene::GenerateParticles(std::vector<fluidCore::Particle*>& particles,
 
     //store list of pointers to particles we need to delete for later deletion in the locked block
     std::vector<fluidCore::Particle*> particlesToDelete;
-    particlesToDelete.reserve(m_solidParticles.size()+m_permaSolidParticles.size());
+    particlesToDelete.reserve(m_solidParticles.size());
     particlesToDelete.insert(particlesToDelete.end(), m_solidParticles.begin(), 
     						 m_solidParticles.end());
-    // particlesToDelete.insert(particlesToDelete.end(), m_permaSolidParticles.begin(),
-    //                          m_permaSolidParticles.end());
 
-    //swap-clear vectors
     tbb::concurrent_vector<fluidCore::Particle*>().swap(m_solidParticles);
-    tbb::concurrent_vector<fluidCore::Particle*>().swap(m_permaSolidParticles);
     
     //place fluid particles
     //for each fluid geom in the frame, loop through voxels in the geom's AABB to place particles
@@ -251,8 +247,8 @@ void Scene::GenerateParticles(std::vector<fluidCore::Particle*>& particles,
 							    float x = (i*w)+(w/2.0f);
 							    float y = (j*w)+(w/2.0f);
 							    float z = (k*w)+(w/2.0f);
-							    AddParticle(glm::vec3(x,y,z), FLUID, 3.0f/maxdimension, 
-                                            maxdimension, frame);
+							    AddLiquidParticle(glm::vec3(x,y,z), 3.0f/maxdimension, maxdimension, 
+							    				  frame, m_liquids[l]->m_id);
                             }
                         }
                     }
@@ -265,7 +261,8 @@ void Scene::GenerateParticles(std::vector<fluidCore::Particle*>& particles,
 		unsigned int solidCount = m_solids.size();
 	    for(unsigned int l=0; l<solidCount; ++l){
 	        spaceCore::Aabb solidaabb = m_solids[l]->m_geom->GetAabb(frame);        
-	        if(m_solids[l]->m_geom->IsInFrame(frame)){
+	        if((frame==0 && m_solids[l]->m_geom->IsDynamic()==false) || 
+        	   (m_solids[l]->m_geom->IsDynamic()==true && m_solids[l]->m_geom->IsInFrame(frame))){
 	            //clip AABB to sim boundaries
 	            glm::vec3 lmin = glm::floor(solidaabb.m_min);
 	            glm::vec3 lmax = glm::ceil(solidaabb.m_max);
@@ -280,8 +277,8 @@ void Scene::GenerateParticles(std::vector<fluidCore::Particle*>& particles,
 	                                float x = i*w+w/2.0f;
 	                                float y = j*w+w/2.0f;
 	                                float z = k*w+w/2.0f;
-	                                AddParticle(glm::vec3(x,y,z), SOLID, 3.0f/maxdimension,
-	                                            maxdimension, frame);
+	                                AddSolidParticle(glm::vec3(x,y,z), 3.0f/maxdimension,
+	                                            	 maxdimension, frame, m_solids[l]->m_id);
 	                            }
 	                        }
 	                    }
@@ -293,7 +290,8 @@ void Scene::GenerateParticles(std::vector<fluidCore::Particle*>& particles,
 		unsigned int solidCount = m_solids.size();
 	    for(unsigned int l=0; l<solidCount; ++l){
 	        spaceCore::Aabb solidaabb = m_solids[l]->m_geom->GetAabb(frame);        
-	        if(m_solids[l]->m_geom->IsInFrame(frame)){
+	        if((frame==0 && m_solids[l]->m_geom->IsDynamic()==false) || 
+        	   (m_solids[l]->m_geom->IsDynamic()==true && m_solids[l]->m_geom->IsInFrame(frame))){
 	            //clip AABB to sim boundaries, account for density
 	            glm::vec3 lmin = glm::floor(solidaabb.m_min);
 	            glm::vec3 lmax = glm::ceil(solidaabb.m_max);
@@ -308,8 +306,8 @@ void Scene::GenerateParticles(std::vector<fluidCore::Particle*>& particles,
 								    float x = (i*w)+(w/2.0f);
 								    float y = (j*w)+(w/2.0f);
 								    float z = (k*w)+(w/2.0f);
-								    AddParticle(glm::vec3(x,y,z), SOLID, 3.0f/maxdimension, 
-	                                            maxdimension, frame);
+								    AddSolidParticle(glm::vec3(x,y,z), 3.0f/maxdimension, 
+	                                            	 maxdimension, frame, m_solids[l]->m_id);
 	                            }
 	                        }
 	                    }
@@ -347,7 +345,7 @@ void Scene::GenerateParticles(std::vector<fluidCore::Particle*>& particles,
 
 bool Scene::CheckPointInsideGeomByID(const glm::vec3& p, const float& frame, 
 									 const unsigned int& geomID){
-	if(geomID>m_geoms.size()-1){
+	if(geomID<m_geoms.size()){
 		rayCore::Ray r;
 		r.m_origin = p;
 		r.m_frame = frame;
@@ -419,47 +417,44 @@ rayCore::Intersection Scene::IntersectSolidGeoms(const rayCore::Ray& r){
 	return bestHit;
 }
 
-void Scene::AddParticle(const glm::vec3& pos, const geomtype& type, const float& thickness, 
-						const float& scale, const int& frame){
-	bool inside = false;
-	bool temp = false; //used to flag frame-variant solid particles
-
-	if(type==FLUID){
-		glm::vec3 worldpos = pos*scale;
-		unsigned int liquidGeomID;
-		if(CheckPointInsideLiquidGeom(pos*scale, frame, liquidGeomID)){
-			inside = true;
-			//if particles are in a solid, don't generate them
-			unsigned int solidGeomID;
-			if(CheckPointInsideSolidGeom(pos*scale, frame, solidGeomID)){
-				inside = false;
-			}
-		}
-	}else if(type==SOLID){
+void Scene::AddLiquidParticle(const glm::vec3& pos, const float& thickness, const float& scale, 
+							  const int& frame, const unsigned int& liquidGeomID){
+	glm::vec3 worldpos = pos*scale;
+	if(CheckPointInsideGeomByID(worldpos, frame, liquidGeomID)==true){
+		//if particles are in a solid, don't generate them
 		unsigned int solidGeomID;
-		if(CheckPointInsideSolidGeom(pos*scale, frame, solidGeomID)){
-			inside = true;
+		if(CheckPointInsideSolidGeom(worldpos, frame, solidGeomID)==false){
+			fluidCore::Particle* p = new fluidCore::Particle;
+			p->m_p = pos;
+			p->m_u = glm::vec3(0,0,0);
+			p->m_n = glm::vec3(0,0,0);
+			p->m_density = 10.0f;
+			p->m_type = FLUID;
+			p->m_mass = 1.0f;
+			p->m_invalid = false;
+			m_liquidParticles.push_back(p);
 		}
 	}
+}
 
-	if(inside){
+void Scene::AddSolidParticle(const glm::vec3& pos, const float& thickness, const float& scale, 
+							 const int& frame, const unsigned int& solidGeomID){
+	glm::vec3 worldpos = pos*scale;
+	if(CheckPointInsideGeomByID(worldpos, frame, solidGeomID)==true){
 		fluidCore::Particle* p = new fluidCore::Particle;
 		p->m_p = pos;
 		p->m_u = glm::vec3(0,0,0);
 		p->m_n = glm::vec3(0,0,0);
 		p->m_density = 10.0f;
-		p->m_type = type;
+		p->m_type = SOLID;
 		p->m_mass = 1.0f;
 		p->m_invalid = false;
-		p->m_temp = temp;
-		if(type==FLUID){
-			m_liquidParticles.push_back(p);
-		}else if(type==SOLID){
-			if(p->m_temp==true){
-				m_solidParticles.push_back(p);
-			}else{
-				m_permaSolidParticles.push_back(p);
-			}
+		if(frame==0 && m_geoms[solidGeomID].m_geom->IsDynamic()==false){
+			m_permaSolidParticles.push_back(p);
+		}else if(m_geoms[solidGeomID].m_geom->IsDynamic()==true){
+			m_solidParticles.push_back(p);
+		}else{
+			delete p;
 		}
 	}
 }
