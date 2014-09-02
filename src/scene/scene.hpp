@@ -89,8 +89,7 @@ class Scene {
 		tbb::concurrent_vector<fluidCore::Particle*>				m_liquidParticles;
 		tbb::concurrent_vector<fluidCore::Particle*>				m_permaSolidParticles;
 		tbb::concurrent_vector<fluidCore::Particle*>				m_solidParticles;
-
-		bool 														m_highresSolidParticles;	
+	
 		unsigned int 												m_liquidParticleCount;
 
 };

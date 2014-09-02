@@ -140,7 +140,7 @@ void Viewer::UpdateParticles(){
         float maxd = glm::max(glm::max(gridSize.x, gridSize.z), gridSize.y);
 
         unsigned int lpsize = m_sim->GetScene()->GetLiquidParticleCount();
-        
+        // lpsize = m_particles->size();
         for(unsigned int j=0; j<lpsize; j++){
             // if(m_particles->operator[](j)->m_type==FLUID){
                 if(!m_particles->operator[](j)->m_invalid || 
@@ -156,7 +156,8 @@ void Viewer::UpdateParticles(){
                     }else if(m_particles->operator[](j)->m_type==SOLID){
                         colorData.push_back(glm::vec4(1,0,0,0));
                     }else{
-                        if(m_particles->operator[](j)->m_temp2){
+                        if(m_particles->operator[](j)->m_temp2 &&
+                           !m_particles->operator[](j)->m_temp){
                             colorData.push_back(glm::vec4(0,1,0,0));
                         }else if(m_particles->operator[](j)->m_temp){
                             colorData.push_back(glm::vec4(1,0,0,0));
@@ -264,20 +265,20 @@ void Viewer::MainLoop(){
                 glPopMatrix();
             }
 
-            // glPushMatrix();
-            //     glTranslatef(-res.x/2, 0, -res.y/2);
-            //     //draw rays
-            //     for(unsigned int i=0; i<m_rays.size(); i++){
-            //         glm::vec3 origin = m_rays[i].m_origin;
-            //         glm::vec3 distantPoint = m_rayendpoints[i];
-            //         glLineWidth(1.0f);
-            //         glBegin(GL_LINES);
-            //             glColor4f(0.0f, 1.0f, 1.0f, 0.0f);
-            //             glVertex3f(origin.x, origin.y, origin.z);
-            //             glVertex3f(distantPoint.x, distantPoint.y, distantPoint.z); 
-            //         glEnd();
-            //     }
-            // glPopMatrix();
+            glPushMatrix();
+                glTranslatef(-res.x/2, 0, -res.y/2);
+                //draw rays
+                for(unsigned int i=0; i<m_rays.size(); i++){
+                    glm::vec3 origin = m_rays[i].m_origin;
+                    glm::vec3 distantPoint = m_rayendpoints[i];
+                    glLineWidth(1.0f);
+                    glBegin(GL_LINES);
+                        glColor4f(0.0f, 1.0f, 1.0f, 0.0f);
+                        glVertex3f(origin.x, origin.y, origin.z);
+                        glVertex3f(distantPoint.x, distantPoint.y, distantPoint.z); 
+                    glEnd();
+                }
+            glPopMatrix();
 
             //draw unit axis
             glLineWidth(2.0f);
@@ -338,19 +339,29 @@ void Viewer::UpdateInputs(){
         }
         if(doCamera==true){
             if(glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_LEFT) == 1){
-                glm::mat4 m = utilityCore::buildTransformationMatrix(glm::vec3(0), m_cam.m_rotate, 
-                                                                     glm::vec3(1,1,1));
-                glm::vec3 view = glm::normalize(glm::vec3(m*glm::vec4(0,0,-1,0)));
-                glm::vec3 lookatPoint = m_cam.m_translate + view*m_cam.m_lookat;
+                if(glfwGetKey(m_window, GLFW_KEY_Z) == GLFW_PRESS){
+                    glm::mat4 m = utilityCore::buildTransformationMatrix(glm::vec3(0), m_cam.m_rotate,
+                                                                         glm::vec3(1,1,1));
+                    glm::vec3 up = glm::normalize(glm::vec3(m*glm::vec4(0,1,0,0)));
+                    glm::vec3 right = glm::normalize(glm::vec3(m*glm::vec4(-1,0,0,0)));
+                    
+                    m_cam.m_translate = m_cam.m_translate + (d.x * right * m_cam.m_panSpeed);
+                    m_cam.m_translate = m_cam.m_translate + (d.y * up * m_cam.m_panSpeed);
+                }else{
+                    glm::mat4 m = utilityCore::buildTransformationMatrix(glm::vec3(0), m_cam.m_rotate,
+                                                                         glm::vec3(1,1,1));
+                    glm::vec3 view = glm::normalize(glm::vec3(m*glm::vec4(0,0,-1,0)));
+                    glm::vec3 lookatPoint = m_cam.m_translate + view*m_cam.m_lookat;
 
-                m_cam.m_rotate.x += -d.y * m_cam.m_rotateSpeed;
-                m_cam.m_rotate.y += -d.x * m_cam.m_rotateSpeed;
+                    m_cam.m_rotate.x += -d.y * m_cam.m_rotateSpeed;
+                    m_cam.m_rotate.y += -d.x * m_cam.m_rotateSpeed;
 
-                m = utilityCore::buildTransformationMatrix(glm::vec3(0), m_cam.m_rotate, 
-                                                           glm::vec3(1,1,1));
-                view = glm::normalize(glm::vec3(m*glm::vec4(0,0,1,0)));
+                    m = utilityCore::buildTransformationMatrix(glm::vec3(0), m_cam.m_rotate, 
+                                                               glm::vec3(1,1,1));
+                    view = glm::normalize(glm::vec3(m*glm::vec4(0,0,1,0)));
 
-                m_cam.m_translate = lookatPoint +  view*m_cam.m_lookat;
+                    m_cam.m_translate = lookatPoint +  view*m_cam.m_lookat;
+                }
             }
             if(glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_RIGHT) == 1){
                 glm::mat4 m = utilityCore::buildTransformationMatrix(glm::vec3(0), m_cam.m_rotate, 
@@ -386,7 +397,7 @@ void Viewer::UpdateInputs(){
                 rayCore::Ray r = perspCam.Raycast(glm::vec2(x,y), glm::vec4(0), 
                                                   frame); 
                 float distance = 1000000000.0f;
-                std::vector<geomCore::Geom*> liquids = m_sim->GetScene()->GetLiquidGeoms();
+                std::vector<geomCore::Geom*> liquids = m_sim->GetScene()->GetSolidGeoms();
                 unsigned int liquidCount = liquids.size();
                 for(unsigned int i=0; i<liquidCount; i++){
                     spaceCore::HitCountTraverseAccumulator result(r.m_origin);

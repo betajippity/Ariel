@@ -156,9 +156,9 @@ void ParticleGrid::Sort(std::vector<Particle*>& particles){
 		pos.x = (int)glm::max(0.0f, glm::min((int)maxd-1.0f, int(maxd)*pos.x));
 		pos.y = (int)glm::max(0.0f, glm::min((int)maxd-1.0f, int(maxd)*pos.y));
 		pos.z = (int)glm::max(0.0f, glm::min((int)maxd-1.0f, int(maxd)*pos.z));
-
+        
 		int cellindex = m_grid->GetCell(pos);
-	
+        
 		if(cellindex>=0){ //if grid has value here, a cell already exists for it
 			m_cells[cellindex].push_back(p);
 		}else{ //if grid has no value, create new cell and push index to grid
