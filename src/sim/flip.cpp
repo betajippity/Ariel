@@ -82,12 +82,6 @@ void FlipSim::StoreTempParticleVelocities(){
 		[=](const tbb::blocked_range<unsigned int>& r){
 			for(unsigned int p=r.begin(); p!=r.end(); ++p){	
 				m_particles[p]->m_pt = m_particles[p]->m_p;
-
-				if(m_frame==2){
-
-                m_particles[p]->m_temp = false;
-			    m_particles[p]->m_temp2 = false;
-				}
             }
 		}
 	);
@@ -187,46 +181,53 @@ void FlipSim::Step(bool saveVDB, bool saveOBJ, bool savePARTIO){
 
 void FlipSim::CheckParticleSolidConstraints(){
 	float maxd = glm::max(glm::max(m_dimensions.x, m_dimensions.z), m_dimensions.y);
-	if(m_frame>1){
     unsigned int particlecount = m_particles.size();   
-  for(unsigned int p=0; p<particlecount; p++){ 
-  //   tbb::parallel_for(tbb::blocked_range<unsigned int>(0,particlecount),
-		// [=](const tbb::blocked_range<unsigned int>& r){
-		// 	for(unsigned int p=r.begin(); p!=r.end(); ++p){	
+  	// for(unsigned int p=0; p<particlecount; p++){ 
+    tbb::parallel_for(tbb::blocked_range<unsigned int>(0,particlecount),
+		[=](const tbb::blocked_range<unsigned int>& r){
+			for(unsigned int p=r.begin(); p!=r.end(); ++p){	
+
+				m_particles[p]->m_temp = false;
+   				m_particles[p]->m_temp2 = false;
+
                 rayCore::Ray r;
 	            r.m_origin = m_particles[p]->m_pt * maxd;
 	            r.m_frame = m_frame;
 	            r.m_direction = glm::normalize(m_particles[p]->m_p - 
                                                m_particles[p]->m_pt);
 	            float d = glm::length(m_particles[p]->m_p - m_particles[p]->m_pt);
-	            
-	            rayCore::Intersection hit = m_scene->IntersectSolidGeoms(r);
-	            // float re = 1.5f*m_density/maxd;
-                if(hit.m_hit==true){
-                    float solidDistance = glm::length(r.m_origin - 
-                                                      hit.m_point);
-                    float velocityDistance = glm::length(m_particles[p]->m_p - 
-                                                         m_particles[p]->m_pt) * maxd;
-                    if(solidDistance<velocityDistance){
-                        m_particles[p]->m_p = m_particles[p]->m_pt;
-                        m_particles[p]->m_temp2 = true;
-                    }
-                }    
-                unsigned int id;
-                if(m_scene->CheckPointInsideSolidGeom(r.m_origin, m_frame, id)==true){
-                    m_particles[p]->m_temp = true;
-                    m_particles[p]->m_p = m_particles[p]->m_pt - glm::normalize(r.m_direction)*d;
-                }
+	            float rmtest = glm::length(r.m_direction);
 
-                if(m_particles[p]->m_p.x!=m_particles[p]->m_p.x ||
-                   m_particles[p]->m_p.y!=m_particles[p]->m_p.y ||
-                   m_particles[p]->m_p.z!=m_particles[p]->m_p.z){
-                	m_particles[p]->m_p = m_particles[p]->m_pt;
-                }
-            }
-	// 	}
-	// );
-        }
+	            if(rmtest==rmtest){
+		            rayCore::Intersection hit = m_scene->IntersectSolidGeoms(r);
+		            // float re = 1.5f*m_density/maxd;
+		            unsigned int id;
+		            float u_dir = glm::length(m_particles[p]->m_u);
+	                if(hit.m_hit==true){
+	                    float solidDistance = glm::length(r.m_origin - 
+	                                                      hit.m_point);
+	                    float velocityDistance = glm::length(m_particles[p]->m_p - 
+	                                                         m_particles[p]->m_pt) * maxd;
+	                    if(solidDistance<velocityDistance){
+	                        m_particles[p]->m_p = (r.m_origin + 
+	                        					   r.m_direction * .90f * solidDistance)/maxd;
+	                        m_particles[p]->m_u = 2.0f*glm::dot(r.m_direction, hit.m_normal)*
+	                        					  hit.m_normal-glm::normalize(r.m_direction);
+	                        m_particles[p]->m_u = glm::normalize(m_particles[p]->m_u) * u_dir;
+	                        // m_particles[p]->m_temp2 = true;
+	                    }
+	                }    
+	                r.m_origin = m_particles[p]->m_p * maxd;
+	                if(m_scene->CheckPointInsideSolidGeom(r.m_origin, m_frame, id)==true){
+	                    // m_particles[p]->m_temp = true;
+                    	m_particles[p]->m_u = -glm::normalize(r.m_direction) * u_dir;
+                    	m_particles[p]->m_p = m_particles[p]->m_pt + 
+                    						  m_particles[p]->m_u * m_stepsize;
+	                }
+	            }
+	        }
+		}
+	);
 }
 
 void FlipSim::AdvectParticles(){

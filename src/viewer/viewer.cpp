@@ -151,21 +151,19 @@ void Viewer::UpdateParticles(){
                                  1.0f*glm::max((.7f-m_particles->operator[](j)->m_density),
                                  0.0f));
                     bool invalid = m_particles->operator[](j)->m_invalid;
+
                     if(invalid){
                         colorData.push_back(glm::vec4(1,1,0,0));
                     }else if(m_particles->operator[](j)->m_type==SOLID){
                         colorData.push_back(glm::vec4(1,0,0,0));
                     }else{
-                        if(m_particles->operator[](j)->m_temp2 &&
-                           !m_particles->operator[](j)->m_temp){
+                        /*if(m_particles->operator[](j)->m_temp2){
                             colorData.push_back(glm::vec4(0,1,0,0));
                         }else if(m_particles->operator[](j)->m_temp){
                             colorData.push_back(glm::vec4(1,0,0,0));
-                        }else{
+                        }else{*/
                             colorData.push_back(glm::vec4(c,c,1,0));
-                        }
-                        
-
+                        //}
                     }
                 }
             // }
@@ -262,10 +260,11 @@ void Viewer::MainLoop(){
                     }
                     glDisableClientState(GL_VERTEX_ARRAY);
                     glDisableClientState(GL_COLOR_ARRAY);
+
                 glPopMatrix();
             }
 
-            glPushMatrix();
+            /*glPushMatrix();
                 glTranslatef(-res.x/2, 0, -res.y/2);
                 //draw rays
                 for(unsigned int i=0; i<m_rays.size(); i++){
@@ -278,7 +277,7 @@ void Viewer::MainLoop(){
                         glVertex3f(distantPoint.x, distantPoint.y, distantPoint.z); 
                     glEnd();
                 }
-            glPopMatrix();
+            glPopMatrix();*/
 
             //draw unit axis
             glLineWidth(2.0f);
@@ -403,7 +402,7 @@ void Viewer::UpdateInputs(){
                     spaceCore::HitCountTraverseAccumulator result(r.m_origin);
                     geomCore::Geom* geom = liquids[i];
                     geom->Intersect(r, result);
-                    // std::cout << result.m_numberOfHits << std::endl;
+                    // std::cout << i << " " << result.m_numberOfHits << std::endl;
                     if(result.m_intersection.m_hit==true){
                         float hitDistance = glm::length(r.m_origin - result.m_intersection.m_point);
                         distance = glm::min(hitDistance, distance);
