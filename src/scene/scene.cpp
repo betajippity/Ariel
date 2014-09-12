@@ -230,7 +230,10 @@ void Scene::GenerateParticles(std::vector<fluidCore::Particle*>& particles,
     //for each fluid geom in the frame, loop through voxels in the geom's AABB to place particles
 	unsigned int liquidCount = m_liquids.size();
     for(unsigned int l=0; l<liquidCount; ++l){
-        spaceCore::Aabb liquidaabb = m_liquids[l]->m_geom->GetAabb(frame);        
+
+        spaceCore::Aabb liquidaabb = m_liquids[l]->m_geom->GetAabb(frame);   
+        glm::vec3 liquidvelocity = m_liquidStartingVelocities[l]; 
+
         if(m_liquids[l]->m_geom->IsInFrame(frame)){
             //clip AABB to sim boundaries, account for density
             glm::vec3 lmin = glm::floor(liquidaabb.m_min);
@@ -246,7 +249,8 @@ void Scene::GenerateParticles(std::vector<fluidCore::Particle*>& particles,
 							    float x = (i*w)+(w/2.0f);
 							    float y = (j*w)+(w/2.0f);
 							    float z = (k*w)+(w/2.0f);
-							    AddLiquidParticle(glm::vec3(x,y,z), 3.0f/maxdimension, maxdimension, 
+							    AddLiquidParticle(glm::vec3(x,y,z), liquidvelocity, 
+							    				  3.0f/maxdimension, maxdimension, 
 							    				  frame, m_liquids[l]->m_id);
                             }
                         }
@@ -384,8 +388,9 @@ rayCore::Intersection Scene::IntersectSolidGeoms(const rayCore::Ray& r){
 	return bestHit;
 }
 
-void Scene::AddLiquidParticle(const glm::vec3& pos, const float& thickness, const float& scale, 
-							  const int& frame, const unsigned int& liquidGeomID){
+void Scene::AddLiquidParticle(const glm::vec3& pos, const glm::vec3& vel, const float& thickness, 
+							  const float& scale, const int& frame, 
+							  const unsigned int& liquidGeomID){
 	glm::vec3 worldpos = pos*scale;
 	if(CheckPointInsideGeomByID(worldpos, frame, liquidGeomID)==true){
 		//if particles are in a solid, don't generate them
@@ -393,8 +398,8 @@ void Scene::AddLiquidParticle(const glm::vec3& pos, const float& thickness, cons
 		if(CheckPointInsideSolidGeom(worldpos, frame, solidGeomID)==false){
 			fluidCore::Particle* p = new fluidCore::Particle;
 			p->m_p = pos;
-			p->m_u = glm::vec3(0,0,0);
-			p->m_n = glm::vec3(0,0,0);
+			p->m_u = vel;
+			p->m_n = glm::vec3(0.0f);
 			p->m_density = 10.0f;
 			p->m_type = FLUID;
 			p->m_mass = 1.0f;
@@ -410,8 +415,8 @@ void Scene::AddSolidParticle(const glm::vec3& pos, const float& thickness, const
 	if(CheckPointInsideGeomByID(worldpos, frame, solidGeomID)==true){
 		fluidCore::Particle* p = new fluidCore::Particle;
 		p->m_p = pos;
-		p->m_u = glm::vec3(0,0,0);
-		p->m_n = glm::vec3(0,0,0);
+		p->m_u = glm::vec3(0.0f);
+		p->m_n = glm::vec3(0.0f);
 		p->m_density = 10.0f;
 		p->m_type = SOLID;
 		p->m_mass = 10.0f;

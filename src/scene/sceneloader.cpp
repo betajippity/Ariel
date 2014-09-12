@@ -154,8 +154,17 @@ void SceneLoader::LoadSim(const Json::Value& jsonsim){
 	std::string id = jsonsim["geom"].asString();
 	unsigned int geomID = m_linkNames["geom_"+id];
 	geomCore::Geom* geomnode = &m_s->m_geoms[geomID];
+	//load velocity
+	glm::vec3 velocity = glm::vec3(0.0f);
+	if(jsonsim.isMember("velocity")){
+		velocity.x = jsonsim["velocity"]["x"].asFloat();
+		velocity.y = jsonsim["velocity"]["y"].asFloat();
+		velocity.z = jsonsim["velocity"]["z"].asFloat();
+	}
+	//check object type and add
 	if(strcmp(jsonsim["type"].asString().c_str(), "liquid")==0){
 		m_s->m_liquids.push_back(geomnode);
+		m_s->m_liquidStartingVelocities.push_back(velocity);
 	}else if(strcmp(jsonsim["type"].asString().c_str(), "solid")==0){
 		m_s->m_solids.push_back(geomnode);
 	}

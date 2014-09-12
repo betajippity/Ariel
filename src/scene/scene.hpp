@@ -68,8 +68,9 @@ class Scene {
 		tbb::mutex                                                  m_particleLock;
 
 	private:
-		void AddLiquidParticle(const glm::vec3& pos, const float& thickness, const float& scale, 
-							   const int& frame, const unsigned int& liquidGeomID);
+		void AddLiquidParticle(const glm::vec3& pos, const glm::vec3& vel, const float& thickness, 
+							   const float& scale, const int& frame, 
+							   const unsigned int& liquidGeomID);
 		void AddSolidParticle(const glm::vec3& pos, const float& thickness, const float& scale, 
 							  const int& frame, const unsigned int& solidGeomID);
 
@@ -84,7 +85,8 @@ class Scene {
 		std::vector<geomCore::MeshContainer>						m_meshContainers;
 		std::vector<geomCore::AnimatedMeshContainer>				m_animmeshContainers;
 		std::vector<geomCore::Geom*>								m_solids;
-		std::vector<geomCore::Geom*>								m_liquids;
+		std::vector<geomCore::Geom*>								m_liquids;	
+		std::vector<glm::vec3>										m_liquidStartingVelocities;
 
 		tbb::concurrent_vector<fluidCore::Particle*>				m_liquidParticles;
 		tbb::concurrent_vector<fluidCore::Particle*>				m_permaSolidParticles;
