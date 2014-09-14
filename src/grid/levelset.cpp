@@ -84,7 +84,7 @@ void LevelSet::LevelSetFromMesh(objCore::Obj* mesh, const glm::mat4& m){
 	for(unsigned int i=0; i<mesh->m_numberOfPolys; i++){
 		glm::uvec4 poly = mesh->m_polyVertexIndices[i];
 		openvdb::Vec4I vdbpoly(poly[0]-1, poly[1]-1, poly[2]-1, poly[3]-1);
-		if(poly[0]==poly[3] || poly[3]<0){
+		if(poly[0]==poly[3] || poly[3]==0){
 			vdbpoly[3] = openvdb::util::INVALID_IDX;
 		}
 		vdbpolys.push_back(vdbpoly);
@@ -137,8 +137,6 @@ void LevelSet::WriteObjToFile(std::string filename){
 	std::vector<glm::uvec4> faces;
 	faces.reserve(facesCount);
 
-	unsigned int test = 5;
-
 	for(unsigned int i=0; i<vdbFacesCount; i++){
 		unsigned int count = vdbFaces[i].numQuads();
 		for(unsigned int j=0; j<count; j++){
@@ -149,7 +147,7 @@ void LevelSet::WriteObjToFile(std::string filename){
 		count = vdbFaces[i].numTriangles();
 		for(unsigned int j=0; j<count; j++){
 			openvdb::Vec3I vdbface = vdbFaces[i].triangle(j);
-			glm::uvec4 f(vdbface[0]+1, vdbface[1]+1, vdbface[2]+1, -1);
+			glm::uvec4 f(vdbface[0]+1, vdbface[1]+1, vdbface[2]+1, 0);
 			faces.push_back(f);
 		}
 	}
