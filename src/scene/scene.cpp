@@ -14,12 +14,14 @@ namespace sceneCore{
 Scene::Scene(){
 	m_solidLevelSet = new fluidCore::LevelSet();
 	m_liquidLevelSet = new fluidCore::LevelSet();
+	m_permaSolidLevelSet = new fluidCore::LevelSet();
 	m_liquidParticleCount = 0;
 }
 
 Scene::~Scene(){
 	delete m_solidLevelSet;
 	delete m_liquidLevelSet;
+	delete m_permaSolidLevelSet;
 }
 
 void Scene::SetPaths(const std::string& imagePath, const std::string& meshPath, 
@@ -97,8 +99,6 @@ void Scene::ExportParticles(std::vector<fluidCore::Particle*> particles,
 		}
 		delete fluidSDF;
 	}
-
-	
 }
 
 void Scene::AddExternalForce(glm::vec3 force){
@@ -117,12 +117,88 @@ std::vector<geomCore::Geom*>& Scene::GetLiquidGeoms(){
 	return m_liquids;
 }
 
+void Scene::BuildPermaSolidGeomLevelSet(){
+	delete m_permaSolidLevelSet;
+	m_permaSolidLevelSet = new fluidCore::LevelSet();
 
-void Scene::BuildLevelSets(const int& frame){
-	delete m_liquidLevelSet;
-	m_liquidLevelSet = new fluidCore::LevelSet();
+	unsigned int solidObjectsCount = m_solids.size();
+	bool permaSolidSDFCreated = false;
+	for(unsigned int i=0; i<solidObjectsCount; i++){
+		GeomType type = m_solids[i]->m_geom->GetType();
+	    if(type==MESH && m_solids[i]->m_geom->IsDynamic()==false){
+	    	glm::mat4 transform;
+			glm::mat4 inversetransform;	
+			if(m_solids[i]->m_geom->GetTransforms(0, transform, inversetransform)==true){
+				geomCore::MeshContainer* m = dynamic_cast<geomCore::MeshContainer*>
+	        									 			 (m_solids[i]->m_geom);
+        		objCore::Obj* o = &m->GetMeshFrame(0)->m_basegeom;
+        		if(permaSolidSDFCreated==false){
+        			delete m_solidLevelSet;
+        			m_permaSolidLevelSet = new fluidCore::LevelSet(o, transform);
+        			permaSolidSDFCreated = true;
+        		}else{
+        			fluidCore::LevelSet* objectSDF = new fluidCore::LevelSet(o, transform);
+					m_permaSolidLevelSet->Merge(*objectSDF);
+					delete objectSDF;
+        		}
+			}
+	    }
+	}
+}
+
+void Scene::BuildSolidGeomLevelSet(const int& frame){
 	delete m_solidLevelSet;
 	m_solidLevelSet = new fluidCore::LevelSet();
+	//build levelsets for all varying geoms, then merge in cached permanent solid level set
+	unsigned int solidObjectsCount = m_solids.size();
+	bool solidSDFCreated = false;
+	for(unsigned int i=0; i<solidObjectsCount; i++){
+		if(m_solids[i]->m_geom->IsDynamic()==true){		
+			glm::mat4 transform;
+			glm::mat4 inversetransform;
+			if(m_solids[i]->m_geom->GetTransforms((float)frame, transform, inversetransform)==true){
+	        	GeomType type = m_solids[i]->m_geom->GetType();
+	        	if(type==MESH){
+	        		geomCore::MeshContainer* m = dynamic_cast<geomCore::MeshContainer*>
+	        									 			 (m_solids[i]->m_geom);
+	        		objCore::Obj* o = &m->GetMeshFrame((float)frame)->m_basegeom;
+	        		if(solidSDFCreated==false){
+	        			delete m_solidLevelSet;
+	        			m_solidLevelSet = new fluidCore::LevelSet(o, transform);
+	        			solidSDFCreated = true;
+	        		}else{
+	        			fluidCore::LevelSet* objectSDF = new fluidCore::LevelSet(o, transform);
+						m_solidLevelSet->Merge(*objectSDF);
+						delete objectSDF;
+	        		}
+	        	}else if(type==ANIMMESH){
+	        		geomCore::AnimatedMeshContainer* m = dynamic_cast
+	        											 <geomCore::AnimatedMeshContainer*>
+	        									 		 (m_solids[i]->m_geom);
+	        		objCore::InterpolatedObj* o = &m->GetMeshFrame((float)frame)->m_basegeom;
+	        		float interpolationWeight = m->GetInterpolationWeight((float)frame);
+	        		if(solidSDFCreated==false){
+	        			delete m_solidLevelSet;
+	        			m_solidLevelSet = new fluidCore::LevelSet(o, interpolationWeight,
+	        													   transform);
+	        			solidSDFCreated = true;
+	        		}else{
+	        			fluidCore::LevelSet* objectSDF = 
+	        									new fluidCore::LevelSet(o, interpolationWeight,
+	        													   		transform);
+						m_solidLevelSet->Merge(*objectSDF);
+						delete objectSDF;
+	        		}
+	        	}
+	    	}
+	    }
+	}
+	m_solidLevelSet->Merge(*m_permaSolidLevelSet);
+}
+
+void Scene::BuildLiquidGeomLevelSet(const int& frame){
+	delete m_liquidLevelSet;
+	m_liquidLevelSet = new fluidCore::LevelSet();
 
 	unsigned int liquidObjectsCount = m_liquids.size();
 	bool liquidSDFCreated = false;
@@ -163,46 +239,11 @@ void Scene::BuildLevelSets(const int& frame){
         	}
     	}
 	}
+}
 
-	unsigned int solidObjectsCount = m_solids.size();
-	bool solidSDFCreated = false;
-	for(unsigned int i=0; i<solidObjectsCount; i++){
-		glm::mat4 transform;
-		glm::mat4 inversetransform;
-		if(m_solids[i]->m_geom->GetTransforms((float)frame, transform, inversetransform)==true){
-        	GeomType type = m_solids[i]->m_geom->GetType();
-        	if(type==MESH){
-        		geomCore::MeshContainer* m = dynamic_cast<geomCore::MeshContainer*>
-        									 			 (m_solids[i]->m_geom);
-        		objCore::Obj* o = &m->GetMeshFrame((float)frame)->m_basegeom;
-        		if(solidSDFCreated==false){
-        			delete m_solidLevelSet;
-        			m_solidLevelSet = new fluidCore::LevelSet(o, transform);
-        			solidSDFCreated = true;
-        		}else{
-        			fluidCore::LevelSet* objectSDF = new fluidCore::LevelSet(o, transform);
-					m_solidLevelSet->Merge(*objectSDF);
-					delete objectSDF;
-        		}
-        	}else if(type==ANIMMESH){
-        		geomCore::AnimatedMeshContainer* m=dynamic_cast<geomCore::AnimatedMeshContainer*>
-        									 			 		  (m_solids[i]->m_geom);
-        		objCore::InterpolatedObj* o = &m->GetMeshFrame((float)frame)->m_basegeom;
-        		float interpolationWeight = m->GetInterpolationWeight((float)frame);
-        		if(solidSDFCreated==false){
-        			delete m_solidLevelSet;
-        			m_solidLevelSet = new fluidCore::LevelSet(o, interpolationWeight,
-        													   transform);
-        			solidSDFCreated = true;
-        		}else{
-        			fluidCore::LevelSet* objectSDF = new fluidCore::LevelSet(o,interpolationWeight,
-        													   				 transform);
-					m_solidLevelSet->Merge(*objectSDF);
-					delete objectSDF;
-        		}
-        	}
-    	}
-	}
+void Scene::BuildLevelSets(const int& frame){
+	BuildLiquidGeomLevelSet(frame);
+	BuildSolidGeomLevelSet(frame);
 }
 
 unsigned int Scene::GetLiquidParticleCount(){

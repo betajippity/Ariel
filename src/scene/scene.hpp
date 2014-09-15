@@ -40,6 +40,10 @@ class Scene {
 		fluidCore::LevelSet* GetLiquidLevelSet();
 
 		void BuildLevelSets(const int& frame);
+		void BuildLiquidGeomLevelSet(const int& frame);
+		void BuildSolidGeomLevelSet(const int& frame);
+		void BuildPermaSolidGeomLevelSet();
+
 		void SetPaths(const std::string& imagePath, const std::string& meshPath, 
 					  const std::string& vdbPath, const std::string& partioPath);
 
@@ -75,6 +79,7 @@ class Scene {
 							  const int& frame, const unsigned int& solidGeomID);
 
 		fluidCore::LevelSet*			                            m_solidLevelSet;
+		fluidCore::LevelSet*			                            m_permaSolidLevelSet;
 		fluidCore::LevelSet*			                            m_liquidLevelSet;
 		std::vector<glm::vec3>			                            m_externalForces;
 

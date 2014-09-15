@@ -122,7 +122,7 @@ HOST DEVICE void MeshContainer::Intersect(const rayCore::Ray& r,
 }
 
 HOST DEVICE bool MeshContainer::IsDynamic(){
-    if(m_prePersist==true && m_postPersist==true){
+    if(m_prePersist==true && m_postPersist==true && m_numberOfFrames==1){
         return false;
     }
     return true;

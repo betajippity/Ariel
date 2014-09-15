@@ -40,6 +40,7 @@ FlipSim::~FlipSim(){
 }
 
 void FlipSim::Init(){
+	m_scene->BuildPermaSolidGeomLevelSet();
 	//We need to figure out maximum particle pressure, 
 	//so we generate a bunch of temporary particles
 	//inside of a known area, sort them back onto the underlying grid, and calculate the density
