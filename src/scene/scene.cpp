@@ -133,7 +133,7 @@ void Scene::BuildPermaSolidGeomLevelSet(){
 	        									 			 (m_solids[i]->m_geom);
         		objCore::Obj* o = &m->GetMeshFrame(0)->m_basegeom;
         		if(permaSolidSDFCreated==false){
-        			delete m_solidLevelSet;
+        			delete m_permaSolidLevelSet;
         			m_permaSolidLevelSet = new fluidCore::LevelSet(o, transform);
         			permaSolidSDFCreated = true;
         		}else{
@@ -193,7 +193,11 @@ void Scene::BuildSolidGeomLevelSet(const int& frame){
 	    	}
 	    }
 	}
-	m_solidLevelSet->Merge(*m_permaSolidLevelSet);
+	if(solidSDFCreated==false){
+		m_solidLevelSet->Copy(*m_permaSolidLevelSet);
+	}else{
+		m_solidLevelSet->Merge(*m_permaSolidLevelSet);
+	}
 }
 
 void Scene::BuildLiquidGeomLevelSet(const int& frame){

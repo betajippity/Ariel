@@ -92,8 +92,8 @@ void FlipSim::Step(bool saveVDB, bool saveOBJ, bool savePARTIO){
 	m_frame++;	
 	std::cout << "Simulating Step: " << m_frame << "..." << std::endl;
 	
-	// m_scene->BuildLevelSets(m_frame);
 	m_scene->GenerateParticles(m_particles, m_dimensions, m_density, m_pgrid, m_frame);
+	m_scene->BuildSolidGeomLevelSet(m_frame);
 
     StoreTempParticleVelocities();
 	m_pgrid->Sort(m_particles);
