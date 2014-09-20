@@ -172,22 +172,23 @@ void LevelSet::WriteObjToFile(std::string filename){
 	delete mesh;
 }
 
-void LevelSet::ProjectPointsToSurface(std::vector<glm::vec3>& points){
-	std::vector<openvdb::Vec3R> vdbpoints;
+void LevelSet::ProjectPointsToSurface(std::vector<Particle*>& particles, const float& pscale){
+	unsigned int pointsCount = particles.size();
+	std::vector<openvdb::Vec3R> vdbpoints(pointsCount);
 	std::vector<float> distances;
-	unsigned int pointsCount = points.size();
-	vdbpoints.reserve(pointsCount);
 	distances.reserve(pointsCount);
 	for(unsigned int i=0; i<pointsCount; i++){
-		openvdb::Vec3s vdbvertex(points[i].x, points[i].y, points[i].z);
-		vdbpoints.push_back(vdbvertex);
+		glm::vec3 p = particles[i]->m_p * pscale;
+		openvdb::Vec3s vdbvertex(p.x, p.y, p.z);
+		vdbpoints[i] = vdbvertex;
 	}
 	openvdb::tools::ClosestSurfacePoint<openvdb::FloatGrid> csp;
 	openvdb::util::NullInterrupter n;
 	csp.initialize(*m_vdbgrid, 0.0f, &n);
 	csp.searchAndReplace(vdbpoints, distances);
 	for(unsigned int i=0; i<pointsCount; i++){
-		points[i] = glm::vec3(vdbpoints[i][0], vdbpoints[i][1], vdbpoints[i][2]);
+		vdbpoints[i] = vdbpoints[i]/pscale;
+		particles[i]->m_p = glm::vec3(vdbpoints[i][0], vdbpoints[i][1], vdbpoints[i][2]);
 	}
 }
 

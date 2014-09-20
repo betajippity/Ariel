@@ -28,7 +28,6 @@ class Scene {
 		Scene();
 		~Scene();
 
-		// void AddSolidObject(objCore::Obj* object, const int& startFrame, const int& endFrame);
 		void GenerateParticles(std::vector<fluidCore::Particle*>& particles, 
 							   const glm::vec3& dimensions, const float& density, 
 							   fluidCore::ParticleGrid* pgrid, const int& frame);

@@ -99,7 +99,7 @@ class LevelSet{
 		void Merge(LevelSet& ls);
 		void Copy(LevelSet& ls);
 
-		void ProjectPointsToSurface(std::vector<glm::vec3>& points);
+		void ProjectPointsToSurface(std::vector<Particle*>& particles, const float& pscale);
 
 		void WriteObjToFile(std::string filename);
 		void WriteVDBGridToFile(std::string filename);

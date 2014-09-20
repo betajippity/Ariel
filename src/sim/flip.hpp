@@ -35,6 +35,7 @@ class FlipSim{
 	private:
         void StoreTempParticleVelocities();
         void CheckParticleSolidConstraints();
+        void AdjustParticlesStuckInSolids();
         void ComputeDensity();
 		void ApplyExternalForces();
 		void SubtractPreviousGrid();

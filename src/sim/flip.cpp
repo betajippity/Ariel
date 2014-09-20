@@ -92,8 +92,12 @@ void FlipSim::Step(bool saveVDB, bool saveOBJ, bool savePARTIO){
 	m_frame++;	
 	std::cout << "Simulating Step: " << m_frame << "..." << std::endl;
 	
+	float maxd = glm::max(glm::max(m_dimensions.x, m_dimensions.z), m_dimensions.y);
+
 	m_scene->GenerateParticles(m_particles, m_dimensions, m_density, m_pgrid, m_frame);
 	m_scene->BuildSolidGeomLevelSet(m_frame);
+
+	AdjustParticlesStuckInSolids();
 
     StoreTempParticleVelocities();
 	m_pgrid->Sort(m_particles);
@@ -112,72 +116,69 @@ void FlipSim::Step(bool saveVDB, bool saveOBJ, bool savePARTIO){
 	
 	CheckParticleSolidConstraints();
 	StoreTempParticleVelocities();
-	float maxd = glm::max(glm::max(m_dimensions.x, m_dimensions.z), m_dimensions.y);
 	float h = m_density/maxd;
 	ResampleParticles(m_pgrid, m_particles, m_scene, m_frame, m_stepsize, h, m_dimensions);
 
 	CheckParticleSolidConstraints();
-    
- //    unsigned int particlecount = m_particles.size();
-
-	
- //    //mark particles as inside walls or out of bounds
-	// tbb::parallel_for(tbb::blocked_range<unsigned int>(0,particlecount),
-	// 	[=](const tbb::blocked_range<unsigned int>& r){
-	// 		for(unsigned int p=r.begin(); p!=r.end(); ++p){	
-	// 			m_particles[p]->m_invalid = false;
-	// 			glm::vec3 t = m_particles[p]->m_p*maxd;
-	// 			if(t.x>m_dimensions.x || t.y>m_dimensions.y || t.z>m_dimensions.z){
-	// 				m_particles[p]->m_invalid = true;
-	// 			}
-	// 			if(t.x<0 || t.y<0 || t.z<0){
-	// 				m_particles[p]->m_invalid = true;
-	// 			}
-	// 			// if(m_mgrid.m_A->GetCell(t)==SOLID){
-	// 			// 	m_particles[p]->m_invalid = true;
-	// 			// }
-	// 		}
-	// 	}
-	// );
-
-	//Remove fluid particles that are only valid in this frame
-	// for(std::vector<Particle *>::iterator iter=m_particles.begin(); iter!=m_particles.end();) {
-	// 	Particle &p = **iter;
-	// 	if( p.m_temp ) {
-	// 		delete *iter;
-	// 		iter = m_particles.erase(iter);
-	// 	} else {
-	// 		iter ++;
-	// 	}
-	// }
-
-	//Attempt to push particles in walls out 
-	// particlecount = m_particles.size();
-	// std::vector<glm::vec3> stuckPositions;
-	// std::vector<Particle*> stuckParticles;
-
-	// for(unsigned int p=0; p<particlecount; p++){
-	// 	if(m_particles[p]->m_invalid && m_particles[p]->m_type == FLUID){
-	// 		stuckParticles.push_back(m_particles[p]);
-	// 		stuckPositions.push_back(m_particles[p]->m_p*maxd);
-	// 	}
-	// }
-
-	// // m_scene->ProjectPointsToSolidSurface(stuckPositions);
-
-	// particlecount = stuckPositions.size();
-	// for(unsigned int p=0; p<particlecount; p++){
-	// 	if(glm::length(stuckPositions[p] - stuckParticles[p]->m_p*maxd)>0.0001f){
-	// 		float penaltyForce = 10.0f;
-	// 		glm::vec3 vdir = stuckPositions[p] - stuckParticles[p]->m_p*maxd;
-	// 		stuckParticles[p]->m_p = stuckPositions[p]/maxd;
-	// 		stuckParticles[p]->m_u = vdir*penaltyForce;
-	// 	}
-	// }
 
 	if(saveVDB || saveOBJ || savePARTIO){
 		m_scene->ExportParticles(m_particles, maxd, m_frame, saveVDB, saveOBJ, savePARTIO);
 	}
+}
+
+void FlipSim::AdjustParticlesStuckInSolids(){
+	float maxd = glm::max(glm::max(m_dimensions.x, m_dimensions.z), m_dimensions.y);
+	unsigned int particleCount = m_particles.size();
+	//pushi_back to vectors doesn't play nice with lambdas for some reason, so we have to
+	//do something a little bit convoluted here...
+	bool* particleInSolidChecks = new bool[particleCount];
+	tbb::parallel_for(tbb::blocked_range<unsigned int>(0,particleCount),
+		[=](const tbb::blocked_range<unsigned int>& r){
+			for(unsigned int p=r.begin(); p!=r.end(); ++p){	
+				particleInSolidChecks[p] = false;
+				if(m_particles[p]->m_type==FLUID){
+					glm::vec3 point = m_particles[p]->m_p * maxd;
+					unsigned int id;
+					if(m_scene->CheckPointInsideSolidGeom(point, m_frame, id)==true){
+						particleInSolidChecks[p] = true;
+					}
+				}
+			}
+		}
+	);
+	//build vector of particles we need to adjust
+	std::vector<Particle*> stuckParticles;
+	stuckParticles.reserve(particleCount);	
+	for(unsigned int p=0; p<particleCount; p++){
+		if(particleInSolidChecks[p]==true){
+			stuckParticles.push_back(m_particles[p]);
+			m_particles[p]->m_pt = m_particles[p]->m_p;
+		}
+	}
+	delete particleInSolidChecks;
+	//figure out direction to nearest surface from levelset, then raycast for a precise result
+	std::cout << "test levelset " << stuckParticles.size() << " " << particleCount << std::endl;
+	m_scene->GetSolidLevelSet()->ProjectPointsToSurface(stuckParticles, maxd);
+	// std::cout << "proj" << std::endl;
+	unsigned int stuckCount = stuckParticles.size();
+	for(unsigned int p=0; p<stuckCount; p++){
+		rayCore::Ray r;
+		r.m_origin = m_particles[p]->m_pt * maxd;
+		r.m_frame = m_frame;
+        r.m_direction = glm::normalize(m_particles[p]->m_p - 
+                               		   m_particles[p]->m_pt);
+        float d = glm::length(m_particles[p]->m_p - m_particles[p]->m_pt);
+        float raynulltest = glm::length(r.m_direction);
+        if(raynulltest==raynulltest){
+        	rayCore::Intersection hit = m_scene->IntersectSolidGeoms(r);
+        	float nearestDistance = glm::length(r.m_origin - hit.m_point);
+        	m_particles[p]->m_p = (r.m_origin + r.m_direction * 1.05f * nearestDistance)/maxd;
+        	float u_dir = glm::length(m_particles[p]->m_u);
+        	m_particles[p]->m_u = glm::normalize(r.m_direction) * u_dir;
+        }
+	}
+	// std::cout << "test clear" << std::endl;
+	stuckParticles.clear();
 }
 
 void FlipSim::CheckParticleSolidConstraints(){
@@ -187,45 +188,45 @@ void FlipSim::CheckParticleSolidConstraints(){
     tbb::parallel_for(tbb::blocked_range<unsigned int>(0,particlecount),
 		[=](const tbb::blocked_range<unsigned int>& r){
 			for(unsigned int p=r.begin(); p!=r.end(); ++p){	
+				if(m_particles[p]->m_type==FLUID){
+					m_particles[p]->m_temp = false;
+	   				m_particles[p]->m_temp2 = false;
 
-				m_particles[p]->m_temp = false;
-   				m_particles[p]->m_temp2 = false;
+	                rayCore::Ray r;
+		            r.m_origin = m_particles[p]->m_pt * maxd;
+		            r.m_frame = m_frame;
+		            r.m_direction = glm::normalize(m_particles[p]->m_p - 
+	                                               m_particles[p]->m_pt);
+		            float d = glm::length(m_particles[p]->m_p - m_particles[p]->m_pt);
+		            float raynulltest = glm::length(r.m_direction);
 
-                rayCore::Ray r;
-	            r.m_origin = m_particles[p]->m_pt * maxd;
-	            r.m_frame = m_frame;
-	            r.m_direction = glm::normalize(m_particles[p]->m_p - 
-                                               m_particles[p]->m_pt);
-	            float d = glm::length(m_particles[p]->m_p - m_particles[p]->m_pt);
-	            float rmtest = glm::length(r.m_direction);
-
-	            if(rmtest==rmtest){
-		            rayCore::Intersection hit = m_scene->IntersectSolidGeoms(r);
-		            // float re = 1.5f*m_density/maxd;
-		            unsigned int id;
-		            float u_dir = glm::length(m_particles[p]->m_u);
-	                if(hit.m_hit==true){
-	                    float solidDistance = glm::length(r.m_origin - 
-	                                                      hit.m_point);
-	                    float velocityDistance = glm::length(m_particles[p]->m_p - 
-	                                                         m_particles[p]->m_pt) * maxd;
-	                    if(solidDistance<velocityDistance){
-	                        m_particles[p]->m_p = (r.m_origin + 
-	                        					   r.m_direction * .90f * solidDistance)/maxd;
-	                        m_particles[p]->m_u = 2.0f*glm::dot(r.m_direction, hit.m_normal)*
-	                        					  hit.m_normal-glm::normalize(r.m_direction);
-	                        m_particles[p]->m_u = glm::normalize(m_particles[p]->m_u) * u_dir;
-	                        // m_particles[p]->m_temp2 = true;
-	                    }
-	                }    
-	                r.m_origin = m_particles[p]->m_p * maxd;
-	                if(m_scene->CheckPointInsideSolidGeom(r.m_origin, m_frame, id)==true){
-	                    // m_particles[p]->m_temp = true;
-                    	m_particles[p]->m_u = -glm::normalize(r.m_direction) * u_dir;
-                    	m_particles[p]->m_p = m_particles[p]->m_pt + 
-                    						  m_particles[p]->m_u * m_stepsize;
-	                }
-	            }
+		            if(raynulltest==raynulltest){
+			            rayCore::Intersection hit = m_scene->IntersectSolidGeoms(r);
+			            float u_dir = glm::length(m_particles[p]->m_u);
+		                if(hit.m_hit==true){
+		                    float solidDistance = glm::length(r.m_origin - 
+		                                                      hit.m_point);
+		                    float velocityDistance = glm::length(m_particles[p]->m_p - 
+		                                                         m_particles[p]->m_pt) * maxd;
+		                    if(solidDistance<velocityDistance){
+		                        m_particles[p]->m_p = (r.m_origin + 
+		                        					   r.m_direction * .90f * solidDistance)/maxd;
+		                        m_particles[p]->m_u = 2.0f*glm::dot(r.m_direction, hit.m_normal)*
+		                        					  hit.m_normal-glm::normalize(r.m_direction);
+		                        m_particles[p]->m_u = glm::normalize(m_particles[p]->m_u) * u_dir;
+		                        // m_particles[p]->m_temp2 = true;
+		                    }
+		                }    
+		                r.m_origin = m_particles[p]->m_p * maxd;
+		                unsigned int id;
+		                if(m_scene->CheckPointInsideSolidGeom(r.m_origin, m_frame, id)==true){
+		                    // m_particles[p]->m_temp = true;
+	                    	m_particles[p]->m_u = -glm::normalize(r.m_direction) * u_dir;
+	                    	m_particles[p]->m_p = m_particles[p]->m_pt + 
+	                    						  m_particles[p]->m_u * m_stepsize;
+		                }
+		            }
+		        }
 	        }
 		}
 	);
@@ -287,34 +288,6 @@ void FlipSim::AdvectParticles(){
 			}
 		}
 	);
-
-	//remove stuck particles
-	/*std::vector<unsigned int> repositionList;
-	for(unsigned int n=0; n<particles.size(); n++){
-		particle& p = *particles[n];
-		bool reposition = false;
-		if(p.type==FLUID){
-			unsigned int i = (unsigned int)glm::min(x-1.0f,0.0f);
-			unsigned int j = (unsigned int)glm::min(y-1.0f,0.0f);
-			unsigned int k = (unsigned int)glm::min(z-1.0f,0.0f);
-
-			//reposition particles stuck on walls
-			if(mgrid.A->getCell(i,j,k)){
-				reposition = true;
-			}
-
-			i = glm::min(x-3.0f, glm::max(2.0f, p.p.x*maxd));
-        	j = glm::min(y-3.0f, glm::max(2.0f, p.p.y*maxd));
-       		k = glm::min(z-3.0f, glm::max(2.0f, p.p.z*maxd));
-       		if(p.density < densitythreshold && mgrid.A->getCell(i,glm::max(0,j-1),k) == SOLID ||
-       										   mgrid.A->getCell(i,glm::min(y-1,j+1),k) == SOLID){
-       			reposition = true;
-       		}
-		}
-		if(reposition==true){
-			repositionList.push_back(n);
-		}
-	}*/
 }
 
 void FlipSim::SolvePicFlip(){
