@@ -16,13 +16,13 @@ namespace geomCore {
 //====================================
 
 class MeshGen{
-	public:
-		//Initializers
-		MeshGen(){};
-		virtual ~MeshGen(){};
+    public:
+        //Initializers
+        MeshGen(){};
+        virtual ~MeshGen(){};
 
-		//Interactions
-		virtual void Tesselate(objCore::Obj* o) = 0;
+        //Interactions
+        virtual void Tesselate(objCore::Obj* o) = 0;
 };
 }
 

@@ -310,7 +310,7 @@ template <typename T> float Bvh<T>::FindBestSplit(BvhNode& node,
     }
     leftCount = left;
     rightCount = right;
-	delete [] candidates;
+    delete [] candidates;
     return bestSplit;
 }
 

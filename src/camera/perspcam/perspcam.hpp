@@ -43,7 +43,7 @@ struct PerspectiveCameraData {
 class PerspectiveCamera: public virtual CameraInterface {
     public:
         HOST DEVICE PerspectiveCamera();
-		HOST DEVICE PerspectiveCamera(const glm::uvec2& resolution, const glm::vec2& fov, 
+    HOST DEVICE PerspectiveCamera(const glm::uvec2& resolution, const glm::vec2& fov, 
                                       const unsigned int& iterations, 
                                       const unsigned int& traceDepth, 
                                       const unsigned int& numberOfFrames, CameraFrame** camFrames);
@@ -59,10 +59,10 @@ class PerspectiveCamera: public virtual CameraInterface {
         HOST DEVICE float GetAperture(const unsigned int& frame);
         HOST DEVICE float GetFocal(const unsigned int& frame);
         HOST DEVICE glm::vec3 GetTranslation(const unsigned int& frame);
-		HOST DEVICE glm::vec3 GetRotation(const unsigned int& frame);
-		HOST DEVICE glm::vec3 GetView(const unsigned int& frame);
-		HOST DEVICE glm::vec3 GetUp(const unsigned int& frame);
-		HOST DEVICE float GetLookat(const unsigned int& frame);
+    HOST DEVICE glm::vec3 GetRotation(const unsigned int& frame);
+    HOST DEVICE glm::vec3 GetView(const unsigned int& frame);
+    HOST DEVICE glm::vec3 GetUp(const unsigned int& frame);
+    HOST DEVICE float GetLookat(const unsigned int& frame);
         HOST DEVICE unsigned int GetID();
         HOST DEVICE CameraType GetType();
         HOST DEVICE glm::uvec2 GetResolution();
@@ -71,12 +71,12 @@ class PerspectiveCamera: public virtual CameraInterface {
         HOST DEVICE unsigned int GetTraceDepth();
         
         glm::uvec2          m_resolution;
-		glm::vec2           m_fov;
-		unsigned int        m_iterations;
-		unsigned int        m_traceDepth;
-		unsigned int        m_numberOfFrames;
-		CameraFrame**       m_camFrames;
-		unsigned int        m_id;
+    glm::vec2           m_fov;
+    unsigned int        m_iterations;
+    unsigned int        m_traceDepth;
+    unsigned int        m_numberOfFrames;
+    CameraFrame**       m_camFrames;
+    unsigned int        m_id;
 };
 }
 

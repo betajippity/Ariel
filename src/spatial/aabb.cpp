@@ -83,10 +83,10 @@ Aabb Aabb::Transform(const glm::mat4& transform){
 }
 
 double Aabb::CalculateSurfaceArea(){
-	double xlength = m_max.x-m_min.x;
-	double ylength = m_max.y-m_min.y;
-	double zlength = m_max.z-m_min.z;
-	return 2.0f*((xlength*ylength)+(ylength*zlength)+(zlength*xlength));
+    double xlength = m_max.x-m_min.x;
+    double ylength = m_max.y-m_min.y;
+    double zlength = m_max.z-m_min.z;
+    return 2.0f*((xlength*ylength)+(ylength*zlength)+(zlength*xlength));
 }
 
 void Aabb::SetContents(const glm::vec3& min, const glm::vec3& max, const glm::vec3& centroid,

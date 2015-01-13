@@ -67,13 +67,13 @@ extern inline int compareMilliseconds(int referenceTime);
 extern inline glm::mat4 buildTransformationMatrix(glm::vec3 translation, glm::vec3 rotation, 
                                                   glm::vec3 scale);
 extern inline glm::mat4 buildInverseTransformationMatrix(glm::vec3 translation, 
-														 glm::vec3 rotation, glm::vec3 scale);
+                                                         glm::vec3 rotation, glm::vec3 scale);
 HOST DEVICE extern inline glm::vec4 multiply(glm::mat4 m, glm::vec4 v);
 HOST DEVICE extern inline glm::mat4 buildTranslation(glm::vec3 translation);
 HOST DEVICE extern inline glm::mat4 buildRotation(float radian, glm::vec3 axis);
 HOST DEVICE extern inline glm::mat4 buildScale(glm::vec3 scale);
 extern inline glm::vec3 calculateKabschRotation(glm::vec3 mov0, glm::vec3 mov1, glm::vec3 mov2, 
-												glm::vec3 ref0, glm::vec3 ref1, glm::vec3 ref2);
+                                                glm::vec3 ref0, glm::vec3 ref1, glm::vec3 ref2);
 
 //GLM Printers
 extern inline void printMat4(glm::mat4);
@@ -82,7 +82,7 @@ extern inline void printVec3(glm::vec3);
 
 //Useful stuff for GL
 extern inline void fovToPerspective(float fovy, float aspect, float zNear, glm::vec2& xBounds, 
-									glm::vec2& yBounds);
+                                    glm::vec2& yBounds);
 
 //IO Stuff
 extern inline std::string readFileAsString(std::string filename);

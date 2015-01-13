@@ -13,16 +13,16 @@ namespace geomCore {
 //====================================
 // Class Declarations
 //====================================
-	
+    
 class CubeGen: public MeshGen {
-	public:
-		//Initializers
-		CubeGen();
-		~CubeGen();
+    public:
+        //Initializers
+        CubeGen();
+        ~CubeGen();
 
-		//Getters
-		void Tesselate(objCore::Obj* o);
-		void Tesselate(objCore::Obj* o, const glm::vec3& lowerCorner, const glm::vec3& upperCorner);
+        //Getters
+        void Tesselate(objCore::Obj* o);
+        void Tesselate(objCore::Obj* o, const glm::vec3& lowerCorner, const glm::vec3& upperCorner);
 };
 }
 

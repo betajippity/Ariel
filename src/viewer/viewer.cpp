@@ -26,7 +26,7 @@ void Viewer::Load(fluidCore::FlipSim* sim, const bool& retina){
 
 void Viewer::Load(fluidCore::FlipSim* sim, const bool& retina, const glm::vec2& resolution, 
                   const glm::vec3& camrotate, const glm::vec3& camtranslate, 
-				  const glm::vec2& camfov, const float& camlookat){
+                  const glm::vec2& camfov, const float& camlookat){
     m_resolution = resolution;
 
     m_cam.m_zoomSpeed = 0.1f;
@@ -339,7 +339,8 @@ void Viewer::UpdateInputs(){
         if(doCamera==true){
             if(glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_LEFT) == 1){
                 if(glfwGetKey(m_window, GLFW_KEY_Z) == GLFW_PRESS){
-                    glm::mat4 m = utilityCore::buildTransformationMatrix(glm::vec3(0), m_cam.m_rotate,
+                    glm::mat4 m = utilityCore::buildTransformationMatrix(glm::vec3(0), 
+                                                                         m_cam.m_rotate,
                                                                          glm::vec3(1,1,1));
                     glm::vec3 up = glm::normalize(glm::vec3(m*glm::vec4(0,1,0,0)));
                     glm::vec3 right = glm::normalize(glm::vec3(m*glm::vec4(-1,0,0,0)));
@@ -347,7 +348,8 @@ void Viewer::UpdateInputs(){
                     m_cam.m_translate = m_cam.m_translate + (d.x * right * m_cam.m_panSpeed);
                     m_cam.m_translate = m_cam.m_translate + (d.y * up * m_cam.m_panSpeed);
                 }else{
-                    glm::mat4 m = utilityCore::buildTransformationMatrix(glm::vec3(0), m_cam.m_rotate,
+                    glm::mat4 m = utilityCore::buildTransformationMatrix(glm::vec3(0), 
+                                                                         m_cam.m_rotate,
                                                                          glm::vec3(1,1,1));
                     glm::vec3 view = glm::normalize(glm::vec3(m*glm::vec4(0,0,-1,0)));
                     glm::vec3 lookatPoint = m_cam.m_translate + view*m_cam.m_lookat;
@@ -558,6 +560,7 @@ bool Viewer::Init(){
         return false;
     }
 
+    glfwWindowHint(GLFW_SAMPLES, 32);
     m_window = glfwCreateWindow(m_resolution.x, m_resolution.y, "Ariel: now with 100% more FLIP!", 
                               NULL, NULL);
     if(!m_window){
@@ -588,8 +591,8 @@ bool Viewer::Init(){
 }
 
 VboData Viewer::CreateVBO(VboData& data, float* vertices, const unsigned int& vertexcount, 
-						  float* colors, const unsigned int& colorcount, const GLenum& type, 
-						  const std::string& key){
+                          float* colors, const unsigned int& colorcount, const GLenum& type, 
+                          const std::string& key){
     data.m_size = vertexcount;
     glGenBuffers(1, &data.m_vboID);
     glGenBuffers(1, &data.m_cboID);
@@ -652,7 +655,7 @@ bool Viewer::CreateVBOFromAnimmeshContainer(geomCore::AnimatedMeshContainer* o, 
                            o1->m_vertices[int(f[2])-1] * lerpWeight;
             glm::vec3 p3 = o0->m_vertices[int(f[3])-1] * (1.0f-lerpWeight) +
                            o1->m_vertices[int(f[3])-1] * lerpWeight;
-            if(f[3]-1<0){
+            if(int(f[3])-1>=0){
                 p3 = p0;
             }
             vertexData.push_back(p0);

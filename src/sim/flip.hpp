@@ -18,63 +18,63 @@ namespace fluidCore {
 //====================================
 
 class FlipSim{
-	public:
-		FlipSim(const glm::vec3& maxres, const float& density, const float& stepsize, 
-				sceneCore::Scene* scene, const bool& verbose);
-		~FlipSim();
+    public:
+        FlipSim(const glm::vec3& maxres, const float& density, const float& stepsize, 
+                sceneCore::Scene* scene, const bool& verbose);
+        ~FlipSim();
 
-		void Init();
-		void Step(bool saveVDB, bool saveOBJ, bool savePARTIO);
+        void Init();
+        void Step(bool saveVDB, bool saveOBJ, bool savePARTIO);
 
-		std::vector<Particle*>* GetParticles();
-		glm::vec3 GetDimensions();
-		sceneCore::Scene* GetScene();
+        std::vector<Particle*>* GetParticles();
+        glm::vec3 GetDimensions();
+        sceneCore::Scene* GetScene();
 
-		int										m_frame;
+        int                                     m_frame;
 
-	private:
+    private:
         void StoreTempParticleVelocities();
         void CheckParticleSolidConstraints();
         void AdjustParticlesStuckInSolids();
         void ComputeDensity();
-		void ApplyExternalForces();
-		void SubtractPreviousGrid();
-		void StorePreviousGrid();
-		void SubtractPressureGradient();
-		void ExtrapolateVelocity();
-		void Project();
-		void SolvePicFlip();
-		void AdvectParticles();
-		bool IsCellFluid(const int& x, const int& y, const int& z);
+        void ApplyExternalForces();
+        void SubtractPreviousGrid();
+        void StorePreviousGrid();
+        void SubtractPressureGradient();
+        void ExtrapolateVelocity();
+        void Project();
+        void SolvePicFlip();
+        void AdvectParticles();
+        bool IsCellFluid(const int& x, const int& y, const int& z);
 
-		glm::vec3								m_dimensions;
-		std::vector<Particle*>					m_particles;
-		MacGrid									m_mgrid;
-		MacGrid									m_mgrid_previous;
-		ParticleGrid*							m_pgrid;
+        glm::vec3                               m_dimensions;
+        std::vector<Particle*>                  m_particles;
+        MacGrid                                 m_mgrid;
+        MacGrid                                 m_mgrid_previous;
+        ParticleGrid*                           m_pgrid;
 
-		int										m_subcell;
-		float									m_density;
-		float									m_max_density;
-		float									m_densitythreshold;
-		float									m_picflipratio;
+        int                                     m_subcell;
+        float                                   m_density;
+        float                                   m_max_density;
+        float                                   m_densitythreshold;
+        float                                   m_picflipratio;
 
-		sceneCore::Scene*						m_scene;
+        sceneCore::Scene*                       m_scene;
 
-		bool									m_verbose;
-		float									m_stepsize;
+        bool                                    m_verbose;
+        float                                   m_stepsize;
 };
 
 class FlipTask: public tbb::task {
-	public:
-		FlipTask(FlipSim* sim, bool dumpVDB, bool dumpOBJ, bool dumpPARTIO);
+    public:
+        FlipTask(FlipSim* sim, bool dumpVDB, bool dumpOBJ, bool dumpPARTIO);
 
-		tbb::task* execute();
-	private:
-		FlipSim*								m_sim;
-		bool									m_dumpPARTIO;
-		bool									m_dumpOBJ;
-		bool									m_dumpVDB;
+        tbb::task* execute();
+    private:
+        FlipSim*                                m_sim;
+        bool                                    m_dumpPARTIO;
+        bool                                    m_dumpOBJ;
+        bool                                    m_dumpVDB;
 };
 }
 

@@ -33,32 +33,32 @@ class GeomTransform;
 class GeomInterface;
 
 class Geom {
-	public:
-		HOST DEVICE Geom();
-		HOST DEVICE Geom(GeomInterface* geom);
-		HOST DEVICE ~Geom();
+    public:
+        HOST DEVICE Geom();
+        HOST DEVICE Geom(GeomInterface* geom);
+        HOST DEVICE ~Geom();
 
-		HOST DEVICE void SetContents(GeomInterface* geom);
+        HOST DEVICE void SetContents(GeomInterface* geom);
         HOST DEVICE void Intersect(const rayCore::Ray& r, 
-        						   spaceCore::TraverseAccumulator& result);
+                                   spaceCore::TraverseAccumulator& result);
         HOST DEVICE GeomType GetType();
 
-		GeomInterface*  	    m_geom;
-		unsigned int    		m_id;
+        GeomInterface*          m_geom;
+        unsigned int            m_id;
 };
 
 class GeomInterface {
-	public:
-		HOST DEVICE GeomInterface(){};
-		HOST DEVICE ~GeomInterface(){};
+    public:
+        HOST DEVICE GeomInterface(){};
+        HOST DEVICE ~GeomInterface(){};
 
-		HOST DEVICE virtual void Intersect(const rayCore::Ray& r,
-										   spaceCore::TraverseAccumulator& result) = 0;
-		HOST DEVICE virtual GeomType GetType() = 0;
-		HOST DEVICE virtual unsigned int GetID() = 0;
+        HOST DEVICE virtual void Intersect(const rayCore::Ray& r,
+                                           spaceCore::TraverseAccumulator& result) = 0;
+        HOST DEVICE virtual GeomType GetType() = 0;
+        HOST DEVICE virtual unsigned int GetID() = 0;
 
-		HOST DEVICE virtual bool GetTransforms(const float& frame, glm::mat4& transform,
-											   glm::mat4& inversetransform) = 0;
+        HOST DEVICE virtual bool GetTransforms(const float& frame, glm::mat4& transform,
+                                               glm::mat4& inversetransform) = 0;
         HOST DEVICE virtual bool IsDynamic() = 0;
         HOST DEVICE virtual bool IsInFrame(const float& frame) = 0;
 
@@ -66,16 +66,16 @@ class GeomInterface {
 };
 
 class GeomTransform {
-	public:
-		GeomTransform();
-		GeomTransform(const glm::vec3& t, const glm::vec3& r, const glm::vec3& s);
-		~GeomTransform();
+    public:
+        GeomTransform();
+        GeomTransform(const glm::vec3& t, const glm::vec3& r, const glm::vec3& s);
+        ~GeomTransform();
 
-		void SetContents(const glm::vec3& t, const glm::vec3& r, const glm::vec3& s);
+        void SetContents(const glm::vec3& t, const glm::vec3& r, const glm::vec3& s);
 
-		glm::vec3                   m_translation;
-		glm::vec3                   m_rotation;
-		glm::vec3                   m_scale;
+        glm::vec3                   m_translation;
+        glm::vec3                   m_rotation;
+        glm::vec3                   m_scale;
         unsigned int                m_id;
 };
 

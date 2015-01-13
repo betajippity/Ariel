@@ -13,23 +13,23 @@ namespace geomCore {
 //====================================
 // Class Declarations
 //====================================
-	
+    
 class SphereGen: public MeshGen {
-	public:
-		//Initializers
-		SphereGen();
-		SphereGen(const unsigned int& subdivCount);
-		~SphereGen();
+    public:
+        //Initializers
+        SphereGen();
+        SphereGen(const unsigned int& subdivCount);
+        ~SphereGen();
 
-		//Getters
-		void Tesselate(objCore::Obj* o);
-		void Tesselate(objCore::Obj* o, const glm::vec3& center, const float& radius);
+        //Getters
+        void Tesselate(objCore::Obj* o);
+        void Tesselate(objCore::Obj* o, const glm::vec3& center, const float& radius);
 
-		//Data
-		int m_subdivs;
+        //Data
+        int m_subdivs;
 
-	private:
-		glm::vec3 GetPointOnSphereByAngles(const float& angle1, const float& angle2);
+    private:
+        glm::vec3 GetPointOnSphereByAngles(const float& angle1, const float& angle2);
 };
 }
 

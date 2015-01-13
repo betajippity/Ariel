@@ -36,9 +36,9 @@ struct Point {
     Point(){}
 
     Point(const glm::vec3& p, const glm::vec3& n, const glm::vec2& u){
-    	m_position = p;
-    	m_normal = n;
-    	m_uv = u;
+        m_position = p;
+        m_normal = n;
+        m_uv = u;
     }
 };
     
@@ -53,34 +53,34 @@ struct Poly {
 
     //Builds a quad struct with the given data
     Poly(const Point& v0, const Point& v1, const Point& v2, const Point& v3){
-    	m_vertex0 = v0;
-    	m_vertex1 = v1;
-    	m_vertex2 = v2;
-    	m_vertex3 = v3;
+        m_vertex0 = v0;
+        m_vertex1 = v1;
+        m_vertex2 = v2;
+        m_vertex3 = v3;
     }
 
     Poly(const Point& v0, const Point& v1, const Point& v2, const Point& v3, 
          const unsigned int& id){
-    	m_vertex0 = v0;
-    	m_vertex1 = v1;
-    	m_vertex2 = v2;
-    	m_vertex3 = v3;
+        m_vertex0 = v0;
+        m_vertex1 = v1;
+        m_vertex2 = v2;
+        m_vertex3 = v3;
         m_id = id;
     }
 
     //Builds a triangle struct with the given data
     Poly(const Point& v0, const Point& v1, const Point& v2){
-    	m_vertex0 = v0;
-    	m_vertex1 = v1;
-    	m_vertex2 = v2;
-    	m_vertex3 = v0; //in a triangle, the fourth vertex is the same as the first
+        m_vertex0 = v0;
+        m_vertex1 = v1;
+        m_vertex2 = v2;
+        m_vertex3 = v0; //in a triangle, the fourth vertex is the same as the first
     }
 
     Poly(const Point& v0, const Point& v1, const Point& v2, const unsigned int& id){
-    	m_vertex0 = v0;
-    	m_vertex1 = v1;
-    	m_vertex2 = v2;
-    	m_vertex3 = v0; //in a triangle, the fourth vertex is the same as the firsit
+        m_vertex0 = v0;
+        m_vertex1 = v1;
+        m_vertex2 = v2;
+        m_vertex3 = v0; //in a triangle, the fourth vertex is the same as the firsit
         m_id = id;
     }
 };
@@ -90,19 +90,19 @@ struct Poly {
 //====================================
 
 class Obj {
-	public:
-		Obj();
-		Obj(const std::string& filename);
-		~Obj();
+    public:
+        Obj();
+        Obj(const std::string& filename);
+        ~Obj();
 
-		void BakeTransform(const glm::mat4& transform);
+        void BakeTransform(const glm::mat4& transform);
 
-		bool ReadObj(const std::string& filename);
-		bool WriteObj(const std::string& filename);
+        bool ReadObj(const std::string& filename);
+        bool WriteObj(const std::string& filename);
 
-		HOST DEVICE Poly GetPoly(const unsigned int& polyIndex);
-		HOST DEVICE static Poly TransformPoly(const Poly& p, const glm::mat4& m);
-		HOST DEVICE static Point TransformPoint(const Point& p, const glm::mat4& m);
+        HOST DEVICE Poly GetPoly(const unsigned int& polyIndex);
+        HOST DEVICE static Poly TransformPoly(const Poly& p, const glm::mat4& m);
+        HOST DEVICE static Point TransformPoint(const Point& p, const glm::mat4& m);
 
         //Standard interface functions for accel. structures
         HOST DEVICE rayCore::Intersection IntersectElement(const unsigned int& primID,
@@ -121,21 +121,21 @@ class Obj {
                                                                         const glm::vec2& u2,
                                                                         const rayCore::Ray& r);
 
-		unsigned int    m_numberOfVertices;
-	    glm::vec3*      m_vertices;
-	    unsigned int    m_numberOfNormals;
-	    glm::vec3*      m_normals;
-	    unsigned int    m_numberOfUVs;
-	    glm::vec2*      m_uvs;
-	    unsigned int    m_numberOfPolys;
-	    glm::uvec4*     m_polyVertexIndices;
-	    glm::uvec4*     m_polyNormalIndices;
-	    glm::uvec4*     m_polyUVIndices;
+        unsigned int    m_numberOfVertices;
+        glm::vec3*      m_vertices;
+        unsigned int    m_numberOfNormals;
+        glm::vec3*      m_normals;
+        unsigned int    m_numberOfUVs;
+        glm::vec2*      m_uvs;
+        unsigned int    m_numberOfPolys;
+        glm::uvec4*     m_polyVertexIndices;
+        glm::uvec4*     m_polyNormalIndices;
+        glm::uvec4*     m_polyUVIndices;
         unsigned int    m_id;
         bool            m_keep;
         
-	private:
-		void PrereadObj(const std::string& filename);
+    private:
+        void PrereadObj(const std::string& filename);
         HOST DEVICE rayCore::Intersection TriangleTest(const unsigned int& polyIndex, 
                                                        const rayCore::Ray& r, 
                                                        const bool& checkQuad);
