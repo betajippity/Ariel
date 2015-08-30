@@ -43,11 +43,12 @@ set(VDBLIBS ${HALF} ${LIBZ} ${TBB})
 set(CORELIBS ${GLFW_LIBRARY} ${GLUT_LIBRARY} ${OPENGL_LIBRARY} ${GLEW_LIBRARY} ${OPENVDB}
    ${VDBLIBS} ${PARTIO})
 
-# Mac OS X specific hacks/fixes
+# OSX-specific hacks/fixes
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    #Link IOKit
+    #Link IOKit because this is where we get GL stuff for OSX
+    set(COREVIDEO "-framework CoreVideo")
     set(IOKIT "-framework IOKit")
-    set(CORELIBS ${CORELIBS} ${IOKIT})
+    set(CORELIBS ${CORELIBS} ${IOKIT} ${COREVIDEO})
 endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
 # Linux specific hacks/fixes
