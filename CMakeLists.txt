@@ -38,10 +38,11 @@ find_library(PARTIO "partio")
 find_library(TBB "tbb")
 find_library(HALF "half")
 find_library(LIBZ "z")
+find_library(JSONCPP "jsoncpp")
 
 set(VDBLIBS ${HALF} ${LIBZ} ${TBB})
 set(CORELIBS ${GLFW_LIBRARY} ${GLUT_LIBRARY} ${OPENGL_LIBRARY} ${GLEW_LIBRARY} ${OPENVDB}
-   ${VDBLIBS} ${PARTIO})
+   ${VDBLIBS} ${PARTIO} ${JSONCPP})
 
 # OSX-specific hacks/fixes
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -99,7 +100,6 @@ set(SOURCE_FILES "src/main.cpp"
                  "src/spatial/spatial.cpp"
                  "${NUPARU}/src/stb_image/stb_image.c"
                  "${NUPARU}/src/stb_image/stb_image_write.c"
-                 "${NUPARU}/src/json/jsoncpp.cpp"
                  "${NUPARU}/src/rmsd/rmsd.c"
                  )
 
